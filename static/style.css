@@ -2150,6 +2150,7 @@ body {
     flex-direction: column;
     overflow-y: auto;
     min-height: 0;
+    width: 100%;
 }
 
 #content-description.active,
@@ -2161,60 +2162,15 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
     background: var(--bg);
-}
-
-.ai-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    background: #f0f4ff;
-    border-bottom: 1px solid #d0dffe;
-    flex-shrink: 0;
-}
-
-.ai-panel-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1a3a8f;
-}
-
-.ai-panel-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-2);
-}
-
-.ai-tab {
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-3);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-}
-
-.ai-tab.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-    background: var(--bg);
-}
-
-.ai-tab-content {
-    display: none;
-}
-
-.ai-tab-content.active {
-    display: block;
+    box-sizing: border-box;
 }
 
 .ai-panel-body {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 24px;
 }
 
 .ai-code-block {
@@ -2248,13 +2204,140 @@ body {
 }
 
 .ai-chat-area {
-    margin-top: 12px;
-    max-height: 200px;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 16px;
+    padding-bottom: 24px;
 }
+
+.chat-bubble {
+    padding: 14px 18px;
+    border-radius: 12px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+.chat-bubble p {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.chat-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.chat-bubble.user {
+    background: var(--primary);
+    color: #ffffff;
+    align-self: flex-end;
+    max-width: 80%;
+    border-bottom-right-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.chat-bubble.ai {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    align-self: flex-start;
+    width: 100%;
+    max-width: 100%;
+    border-bottom-left-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.chat-bubble.ai.loading {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    color: var(--text-3);
+    box-shadow: none;
+    background: transparent;
+    border: none;
+}
+
+.chat-bubble ul,
+.chat-bubble ol {
+    margin-top: 0;
+    margin-bottom: 12px;
+    padding-left: 24px;
+}
+
+.chat-bubble li {
+    margin-bottom: 6px;
+}
+
+.chat-bubble h1,
+.chat-bubble h2,
+.chat-bubble h3,
+.chat-bubble h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: inherit;
+    line-height: 1.3;
+    font-weight: 600;
+}
+
+.chat-bubble h1 {
+    font-size: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+}
+
+.chat-bubble h2 {
+    font-size: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+}
+
+.chat-bubble h3 {
+    font-size: 16px;
+}
+
+.chat-bubble h4 {
+    font-size: 15px;
+}
+
+.chat-bubble pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+    border: 1px solid var(--border);
+}
+
+.chat-bubble.user pre {
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    color: #fff;
+}
+
+.chat-bubble code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--bg-3);
+    color: #e11d48;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.chat-bubble.user code {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.chat-bubble pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+}
+
 
 /* Problem View refinement */
 .problem-content-split {
@@ -2344,7 +2427,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 200px;
     overflow-y: auto;
     padding-right: 2px;
 }

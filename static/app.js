@@ -1159,16 +1159,13 @@ class LeetCodeApp {
         const problemDescription = this.currentProblem.content || this.currentProblem.description || '';
         const testCases = this.parseTestCases(this.currentProblem.example_test_cases || '');
 
-        // Get the starter code with function signature
         const snippets = this.currentProblem.code_snippets || [];
         const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
         const starterCode = pythonSnippet ? pythonSnippet.code : '';
 
-        // Show loading state
         this.aiBtn.disabled = true;
         this.aiBtn.innerHTML = '<span class="btn-icon">⟳</span> Generating...';
 
-        // Open the panel immediately with a loading skeleton
         this.showAIPanelLoading();
 
         try {
@@ -1192,22 +1189,31 @@ class LeetCodeApp {
             }
 
             if (result.solution) {
-                const sol = result.solution;
-                // sol is either { code, walkthrough, data_structures, key_syntax } (structured) or a raw string
-                const codeStr = typeof sol === 'string' ? sol : (sol.code || '');
-                const walkthrough = typeof sol === 'object' ? (sol.walkthrough || []) : [];
-                const dataStructures = typeof sol === 'object' ? (sol.data_structures || []) : [];
-                const keySyntax = typeof sol === 'object' ? (sol.key_syntax || []) : [];
+                const solutionText = typeof result.solution === 'string' ? result.solution : (result.solution.code || '');
 
-                // Strip markdown fences if AI still wrapped in them
-                let cleanCode = codeStr.replace(/^```python\n/, '').replace(/^```\n/, '').replace(/```$/, '').trim();
+                const chatArea = document.getElementById('aiChatArea');
+                const loadingBubble = chatArea.querySelector('.chat-bubble.loading');
+                if (loadingBubble) loadingBubble.remove();
 
-                // Store solution for "Use This" button
-                this._lastAiCode = cleanCode;
+                const aiBubble = document.createElement('div');
+                aiBubble.className = 'chat-bubble ai';
+                aiBubble.innerHTML = this.renderAiExplanation(solutionText);
+                chatArea.appendChild(aiBubble);
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+                const codeMatch = solutionText.match(/```(?:python)?\n([\s\S]*?)```/i);
+                if (codeMatch) {
+                    this._lastAiCode = codeMatch[1].trim();
+                } else {
+                    this._lastAiCode = solutionText;
+                }
+
                 this._currentProblemTitle = problemTitle;
-                this._lastAiFullSolution = cleanCode;
 
-                this.showAIPanel(cleanCode, walkthrough, dataStructures, keySyntax);
+                const useBtn = document.getElementById('copyToEditorBtn');
+                if (useBtn && codeMatch) {
+                    useBtn.style.display = 'inline-flex';
+                }
             }
 
         } catch (error) {
@@ -1223,41 +1229,31 @@ class LeetCodeApp {
     showAIPanelLoading() {
         const aiTabBtn = document.getElementById('aiTabBtn');
         if (aiTabBtn) aiTabBtn.style.display = 'flex';
-        
+
         this.switchDescriptionTab('ai-solution');
 
-        // Activate code tab within AI panel
-        this._switchAiTab('code');
-
-        // Skeleton
-        const codeEl = document.getElementById('aiSolutionCode');
-        if (codeEl) codeEl.innerHTML = '<span class="ai-loading-text">⟳ Generating solution…</span>';
-
-        const walkEl = document.getElementById('aiWalkthrough');
-        if (walkEl) walkEl.innerHTML = '<span class="ai-loading-text">⟳ Generating walkthrough…</span>';
-
-        const dsEl = document.getElementById('aiDataStructures');
-        if (dsEl) dsEl.innerHTML = '';
-
-        const syntaxEl = document.getElementById('aiKeySyntax');
-        if (syntaxEl) syntaxEl.innerHTML = '';
-
-        // Clear chat
-        const chatArea = document.getElementById('aiChatArea');
-        if (chatArea) chatArea.innerHTML = '';
-
-        // Wire up tabs
-        document.querySelectorAll('.ai-tab').forEach(tab => {
-            tab.onclick = (e) => {
-                e.stopPropagation();
-                this._switchAiTab(tab.dataset.tab);
-            };
-        });
-
-        // Wire "Use This" button
         const useBtn = document.getElementById('copyToEditorBtn');
-        if (useBtn) {
-            useBtn.onclick = () => {
+        if (useBtn) useBtn.style.display = 'none';
+
+        const chatArea = document.getElementById('aiChatArea');
+        if (chatArea) {
+            chatArea.innerHTML = '';
+
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble user';
+            userBubble.textContent = "Can you show me a solution for this problem?";
+            chatArea.appendChild(userBubble);
+
+            const aiBubble = document.createElement('div');
+            aiBubble.className = 'chat-bubble ai loading';
+            aiBubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+            chatArea.appendChild(aiBubble);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        const useActionBtn = document.getElementById('copyToEditorBtn');
+        if (useActionBtn) {
+            useActionBtn.onclick = () => {
                 if (this._lastAiCode) {
                     this.setEditorValue(this._lastAiCode);
                     this.showToast('AI solution inserted into editor', 'success');
@@ -1266,7 +1262,6 @@ class LeetCodeApp {
             };
         }
 
-        // Wire ask input
         const askInput = document.getElementById('aiAskInput');
         const askSend = document.getElementById('aiAskSendBtn');
         if (askInput && askSend) {
@@ -1283,60 +1278,10 @@ class LeetCodeApp {
         }
     }
 
-    showAIPanel(code, walkthrough, dataStructures, keySyntax) {
-        const codeEl = document.getElementById('aiSolutionCode');
-        if (codeEl) codeEl.textContent = code;
-
-        const walkEl = document.getElementById('aiWalkthrough');
-        if (walkEl) {
-            if (walkthrough && walkthrough.length > 0) {
-                const mdText = walkthrough.map(step => `- ${step}`).join('\n');
-                walkEl.innerHTML = window.marked ? marked.parse(mdText) : walkthrough.map(step => `<li>${this.escapeHtml(step)}</li>`).join('');
-            } else {
-                walkEl.innerHTML = '<span style="color:var(--text-3)">No walkthrough available.</span>';
-            }
-        }
-
-        const dsEl = document.getElementById('aiDataStructures');
-        if (dsEl) {
-            if (dataStructures && dataStructures.length > 0) {
-                dsEl.innerHTML = dataStructures.map(item => `
-                    <div class="key-syntax-card">
-                        <strong>${this.escapeHtml(item.name || '')}</strong>
-                        <div class="key-syntax-meaning">${window.marked ? marked.parse(item.why || '') : this.escapeHtml(item.why || '')}</div>
-                    </div>
-                `).join('');
-            } else {
-                dsEl.innerHTML = '<p style="color:var(--text-3)">No specific data structures noted.</p>';
-            }
-        }
-
-        const syntaxEl = document.getElementById('aiKeySyntax');
-        if (syntaxEl) {
-            if (keySyntax && keySyntax.length > 0) {
-                syntaxEl.innerHTML = keySyntax.map(item => `
-                    <div class="key-syntax-card">
-                        <code class="key-syntax-snippet">${this.escapeHtml(item.snippet || '')}</code>
-                        <div class="key-syntax-meaning">${window.marked ? marked.parse(item.meaning || '') : this.escapeHtml(item.meaning || '')}</div>
-                    </div>
-                `).join('');
-            } else {
-                syntaxEl.innerHTML = '<p style="color:var(--text-3)">No key syntax noted.</p>';
-            }
-        }
-    }
-
     closeAIPanel() {
         const aiTabBtn = document.getElementById('aiTabBtn');
         if (aiTabBtn) aiTabBtn.style.display = 'none';
         this.switchDescriptionTab('description');
-    }
-
-    _switchAiTab(tabName) {
-        document.querySelectorAll('.ai-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
-        document.querySelectorAll('.ai-tab-content').forEach(c => {
-            c.classList.toggle('active', c.id === `aiTab-${tabName}`);
-        });
     }
 
     async handleAiAsk(question) {

@@ -363,7 +363,7 @@ Starter code (use EXACT class and method signature):
 {starter_code}
 ```""" if starter_code else ""
 
-        prompt = f"""You are a Python tutor helping a beginner who struggles with syntax. Solve this LeetCode problem.
+        prompt = f"""You are a helpful Python tutor helping a beginner. Solve this LeetCode problem.
 
 Problem: {problem_title}
 Description: {problem_description[:2000]}
@@ -372,33 +372,12 @@ Test Cases:
 {test_cases_str}
 {signature_block}
 
-RETURN A JSON OBJECT (no markdown, no prose, just raw JSON) in this exact format:
-{{
-  "code": "<full Python solution with comments on every line>",
-  "walkthrough": [
-    "Step 1: <plain English explanation of the first key part>",
-    "Step 2: ...",
-    "Step 3: ..."
-  ],
-  "data_structures": [
-    {{"name": "<Data Structure Name>", "why": "<Why this data structure is optimal here>"}}
-  ],
-  "key_syntax": [
-    {{"snippet": "<short code snippet>", "meaning": "<what it means in plain English>"}}
-  ]
-}}
-
+Respond in clean Markdown format. Give a brief, easy-to-understand explanation of the logic, followed by the Python 3 code.
 Rules for the code:
-- Keep exact class/method signature from starter code
-- Add a # comment on EVERY line explaining what it does
-- Use simple variable names (seen, result, current)
-- Add Time/Space complexity as a comment at the top
-
-Rules for walkthrough: 3-5 steps, plain English, no jargon.
-Rules for data_structures: Detail 1-2 core data structures used.
-Rules for key_syntax: pick 3-5 Python syntax patterns used (dict, enumerate, zip, etc.) and explain them simply.
-
-Output ONLY the raw JSON. No markdown fences. No text before or after."""
+- Keep exact class/method signature from starter code.
+- Add Time/Space complexity comments at the top.
+- Include helpful comments if needed.
+"""
 
         try:
             if not OPENROUTER_API_KEY:
@@ -440,26 +419,7 @@ Output ONLY the raw JSON. No markdown fences. No text before or after."""
                 self.send_json({"error": "Empty response from AI"}, 500)
                 return
 
-            # Try to parse as JSON; fall back to returning raw solution string
-            content = content.strip()
-            # Strip markdown fences if present
-            import re
-            json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', content, re.DOTALL)
-            if json_match:
-                content = json_match.group(1).strip()
-            elif content.startswith("```"):
-                content = content.split("\n", 1)[-1].rstrip("`").rstrip()
-            
-            if content.startswith("json"):
-                content = content[4:].strip()
-                
-            try:
-                parsed = json.loads(content)
-                self.send_json({"solution": parsed})
-            except json.JSONDecodeError as e:
-                print(f"JSONDecodeError: {e}. Content was: {content[:200]}...")
-                # Fall back: treat the whole content as code
-                self.send_json({"solution": {"code": content, "walkthrough": [], "data_structures": [], "key_syntax": []}})
+            self.send_json({"solution": content.strip()})
 
         except requests.exceptions.Timeout:
             self.send_json({"error": "Request timed out. Please try again."}, 504)

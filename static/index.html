@@ -142,45 +142,22 @@
                                 <!-- AI Solution Content -->
                                 <div id="content-ai-solution" class="tab-content">
                                     <div class="ai-solution-container">
-                                        <div class="ai-panel-header">
-                                            <div class="ai-panel-header-left">
-                                                <span class="ai-panel-icon">✨</span>
-                                                <span class="ai-panel-title">AI Solution</span>
-                                            </div>
-                                            <div class="ai-panel-header-right">
-                                                <button class="btn btn-primary btn-sm" id="copyToEditorBtn">↳ Use This
-                                                    Solution</button>
-                                            </div>
-                                        </div>
-                                        <!-- Tabs: Code / Walkthrough / Data Structures / Syntax -->
-                                        <div class="ai-panel-tabs">
-                                            <button class="ai-tab active" data-tab="code">Code</button>
-                                            <button class="ai-tab" data-tab="walkthrough">Walkthrough</button>
-                                            <button class="ai-tab" data-tab="datastructures">Data Structures</button>
-                                            <button class="ai-tab" data-tab="syntax">Key Syntax</button>
-                                        </div>
+                                        <!-- Single Chat Interface -->
                                         <div class="ai-panel-body">
-                                            <div class="ai-tab-content active" id="aiTab-code">
-                                                <pre class="ai-code-block" id="aiSolutionCode"></pre>
-                                            </div>
-                                            <div class="ai-tab-content" id="aiTab-walkthrough">
-                                                <div class="ai-walkthrough-list" id="aiWalkthrough"></div>
-                                            </div>
-                                            <div class="ai-tab-content" id="aiTab-datastructures">
-                                                <div class="ai-datastructures-list" id="aiDataStructures"></div>
-                                            </div>
-                                            <div class="ai-tab-content" id="aiTab-syntax">
-                                                <div class="ai-syntax-list" id="aiKeySyntax"></div>
+                                            <div class="ai-chat-area" id="aiChatArea">
+                                                <!-- AI messages go here -->
                                             </div>
                                         </div>
                                         <!-- Ask AI inline chat -->
                                         <div class="ai-ask-bar">
                                             <div class="ai-ask-input-row">
                                                 <input type="text" id="aiAskInput" class="ai-ask-input"
-                                                    placeholder="Ask about this solution..." />
+                                                    placeholder="Ask about this solution or problem..." />
+                                                <button class="btn btn-outline btn-sm" id="copyToEditorBtn"
+                                                    style="display:none;" title="Paste AI Solution into Editor">↳ Use
+                                                    Solution</button>
                                                 <button class="btn btn-primary btn-sm" id="aiAskSendBtn">Ask</button>
                                             </div>
-                                            <div class="ai-chat-area" id="aiChatArea"></div>
                                         </div>
                                     </div>
                                 </div>
