@@ -1,0 +1,948 @@
+{
+  "phases": [
+    {
+      "id": 1,
+      "name": "Foundations",
+      "subtitle": "Building Blocks",
+      "startDay": 1,
+      "endDay": 15,
+      "icon": "🧱",
+      "description": "Arrays & Hashing, Two Pointers, Sliding Window, Prefix Sum",
+      "days": [
+        {
+          "day": 1,
+          "title": "Arrays & Hashing I",
+          "focus": "Hash maps for O(1) lookups",
+          "tips": [
+            "Use hash sets for O(1) membership testing",
+            "Use hash maps for counting frequencies",
+            "Consider space-time tradeoffs"
+          ],
+          "problems": [
+            {"leetcodeId": "1", "title": "Two Sum", "difficulty": "Easy"},
+            {"leetcodeId": "217", "title": "Contains Duplicate", "difficulty": "Easy"},
+            {"leetcodeId": "242", "title": "Valid Anagram", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 2,
+          "title": "Arrays & Hashing II",
+          "focus": "Grouping and counting patterns",
+          "tips": [
+            "Group anagrams using sorted string as key",
+            "Use hash map for counting occurrences",
+            "Think about what makes items 'the same'"
+          ],
+          "problems": [
+            {"leetcodeId": "49", "title": "Group Anagrams", "difficulty": "Medium"},
+            {"leetcodeId": "347", "title": "Top K Frequent Elements", "difficulty": "Medium"},
+            {"leetcodeId": "238", "title": "Product of Array Except Self", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 3,
+          "title": "Arrays & Hashing III",
+          "focus": "Encoding and array patterns",
+          "tips": [
+            "Encode strings to comparable keys",
+            "Precompute prefix/suffix products",
+            "Handle edge cases (empty arrays)"
+          ],
+          "problems": [
+            {"leetcodeId": "128", "title": "Longest Consecutive Sequence", "difficulty": "Medium"},
+            {"leetcodeId": "36", "title": "Valid Sudoku", "difficulty": "Medium"},
+            {"leetcodeId": "271", "title": "Encode and Decode Strings", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 4,
+          "title": "Two Pointers I",
+          "focus": "Basic two-pointer patterns",
+          "tips": [
+            "Use when array is sorted",
+            "One pointer from start, one from end",
+            "Move pointers based on comparison"
+          ],
+          "problems": [
+            {"leetcodeId": "125", "title": "Valid Palindrome", "difficulty": "Easy"},
+            {"leetcodeId": "167", "title": "Two Sum II - Input Array Is Sorted", "difficulty": "Medium"},
+            {"leetcodeId": "15", "title": "3Sum", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 5,
+          "title": "Two Pointers II",
+          "focus": "Advanced two-pointer patterns",
+          "tips": [
+            "Skip duplicates to avoid redundant results",
+            "Sort first when applicable",
+            "Think about when to advance each pointer"
+          ],
+          "problems": [
+            {"leetcodeId": "11", "title": "Container With Most Water", "difficulty": "Medium"},
+            {"leetcodeId": "42", "title": "Trapping Rain Water", "difficulty": "Hard"},
+            {"leetcodeId": "1679", "title": "Max Number of K-Sum Pairs", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 6,
+          "title": "Sliding Window I",
+          "focus": "Fixed-size sliding window",
+          "tips": [
+            "Maintain window of specific size",
+            "Add new element, remove old element",
+            "Track window sum/max/min efficiently"
+          ],
+          "problems": [
+            {"leetcodeId": "121", "title": "Best Time to Buy and Sell Stock", "difficulty": "Easy"},
+            {"leetcodeId": "2176", "title": "Count Equal and Divisible Pairs in Array", "difficulty": "Easy"},
+            {"leetcodeId": "643", "title": "Maximum Average Subarray I", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 7,
+          "title": "Sliding Window II",
+          "focus": "Dynamic-size sliding window",
+          "tips": [
+            "Expand window until condition is met",
+            "Shrink window when condition breaks",
+            "Track minimum/maximum valid window"
+          ],
+          "problems": [
+            {"leetcodeId": "3", "title": "Longest Substring Without Repeating Characters", "difficulty": "Medium"},
+            {"leetcodeId": "209", "title": "Minimum Size Subarray Sum", "difficulty": "Medium"},
+            {"leetcodeId": "1456", "title": "Maximum Number of Vowels in Substring", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 8,
+          "title": "Sliding Window III",
+          "focus": "Hard sliding window problems",
+          "tips": [
+            "Use monotonic queue for sliding window max/min",
+            "Practice shrinking window logic",
+            "Complex conditions require careful tracking"
+          ],
+          "problems": [
+            {"leetcodeId": "424", "title": "Longest Repeating Character Replacement", "difficulty": "Medium"},
+            {"leetcodeId": "76", "title": "Minimum Window Substring", "difficulty": "Hard"},
+            {"leetcodeId": "567", "title": "Permutation in String", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 9,
+          "title": "Prefix Sum I",
+          "focus": "Basic prefix sums",
+          "tips": [
+            "Precompute cumulative sums",
+            "Range sum = prefix[j] - prefix[i]",
+            "Useful for repeated range queries"
+          ],
+          "problems": [
+            {"leetcodeId": "724", "title": "Find Pivot Index", "difficulty": "Easy"},
+            {"leetcodeId": "1480", "title": "Running Sum of 1d Array", "difficulty": "Easy"},
+            {"leetcodeId": "303", "title": "Range Sum Query - Immutable", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 10,
+          "title": "Prefix Sum II",
+          "focus": "2D prefix sums",
+          "tips": [
+            "Extend prefix sum to 2D grids",
+            "Use inclusion-exclusion for rectangles",
+            "Precompute to answer queries in O(1)"
+          ],
+          "problems": [
+            {"leetcodeId": "560", "title": "Subarray Sum Equals K", "difficulty": "Medium"},
+            {"leetcodeId": "238", "title": "Product of Array Except Self", "difficulty": "Medium"},
+            {"leetcodeId": "304", "title": "Range Sum Query 2D - Immutable", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 11,
+          "title": "Practice Day I",
+          "focus": "Reinforce array patterns",
+          "tips": [
+            "Focus on pattern recognition",
+            "Time yourself on each problem",
+            "Review previous solutions"
+          ],
+          "problems": [
+            {"leetcodeId": "349", "title": "Intersection of Two Arrays", "difficulty": "Easy"},
+            {"leetcodeId": "350", "title": "Intersection of Two Arrays II", "difficulty": "Easy"},
+            {"leetcodeId": "929", "title": "Unique Email Addresses", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 12,
+          "title": "Practice Day II",
+          "focus": "Reinforce two-pointer patterns",
+          "tips": [
+            "Practice sorted array techniques",
+            "Skip duplicate logic",
+            "Pointer movement strategies"
+          ],
+          "problems": [
+            {"leetcodeId": "392", "title": "Is Subsequence", "difficulty": "Easy"},
+            {"leetcodeId": "45", "title": "Jump Game II", "difficulty": "Medium"},
+            {"leetcodeId": "1191", "title": "K-Concatenation Maximum Sum", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 13,
+          "title": "Practice Day III",
+          "focus": "Reinforce sliding window",
+          "tips": [
+            "Window size vs dynamic window",
+            "When to expand/shrink",
+            "Hash map with sliding window"
+          ],
+          "problems": [
+            {"leetcodeId": "1004", "title": "Max Consecutive Ones III", "difficulty": "Medium"},
+            {"leetcodeId": "1695", "title": "Maximum Erasure Value", "difficulty": "Medium"},
+            {"leetcodeId": "1248", "title": "Count Number of Nice Subarrays", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 14,
+          "title": "Review Day I",
+          "focus": "Phase 1 recap - Patterns",
+          "tips": [
+            "Review all hash map problems",
+            "Review all two-pointer problems",
+            "Review all sliding window problems"
+          ],
+          "problems": [
+            {"leetcodeId": "1", "title": "Two Sum", "difficulty": "Easy"},
+            {"leetcodeId": "15", "title": "3Sum", "difficulty": "Medium"},
+            {"leetcodeId": "3", "title": "Longest Substring Without Repeating", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 15,
+          "title": "Phase 1 Challenge",
+          "focus": "Test your foundations",
+          "tips": [
+            "Time yourself: 30-45 min per problem",
+            "Focus on clean, efficient code",
+            "Celebrate completing Phase 1!"
+          ],
+          "problems": [
+            {"leetcodeId": "128", "title": "Longest Consecutive Sequence", "difficulty": "Medium"},
+            {"leetcodeId": "42", "title": "Trapping Rain Water", "difficulty": "Hard"},
+            {"leetcodeId": "76", "title": "Minimum Window Substring", "difficulty": "Hard"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Core Data Structures",
+      "subtitle": "The Toolbelt",
+      "startDay": 16,
+      "endDay": 30,
+      "icon": "🛠️",
+      "description": "Linked List, Trees, Binary Search, Bit Manipulation",
+      "days": [
+        {
+          "day": 16,
+          "title": "Linked List I",
+          "focus": "Basic linked list operations",
+          "tips": [
+            "Use dummy node for head manipulations",
+            "Draw pointers before coding",
+            "Watch for null pointer exceptions"
+          ],
+          "problems": [
+            {"leetcodeId": "206", "title": "Reverse Linked List", "difficulty": "Easy"},
+            {"leetcodeId": "21", "title": "Merge Two Sorted Lists", "difficulty": "Easy"},
+            {"leetcodeId": "141", "title": "Linked List Cycle", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 17,
+          "title": "Linked List II",
+          "focus": "Two-pointer in linked lists",
+          "tips": [
+            "Fast/slow pointer for cycle detection",
+            "Find middle of list with fast/slow",
+            "Space constraints often require O(1)"
+          ],
+          "problems": [
+            {"leetcodeId": "142", "title": "Linked List Cycle II", "difficulty": "Medium"},
+            {"leetcodeId": "876", "title": "Middle of the Linked List", "difficulty": "Easy"},
+            {"leetcodeId": "143", "title": "Reorder List", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 18,
+          "title": "Linked List III",
+          "focus": "Advanced linked list patterns",
+          "tips": [
+            "Reversing portions of lists",
+            "Merging k lists requires priority queue",
+            "Practice careful pointer manipulation"
+          ],
+          "problems": [
+            {"leetcodeId": "19", "title": "Remove Nth Node From End", "difficulty": "Medium"},
+            {"leetcodeId": "23", "title": "Merge K Sorted Lists", "difficulty": "Hard"},
+            {"leetcodeId": "2", "title": "Add Two Numbers", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 19,
+          "title": "Linked List IV",
+          "focus": "Reversal and rotation",
+          "tips": [
+            "Reverse in groups of k",
+            "Handle edge cases (null, single node)",
+            "Recursive vs iterative approaches"
+          ],
+          "problems": [
+            {"leetcodeId": "24", "title": "Swap Nodes in Pairs", "difficulty": "Medium"},
+            {"leetcodeId": "25", "title": "Reverse Nodes in k-Group", "difficulty": "Hard"},
+            {"leetcodeId": "61", "title": "Rotate List", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 20,
+          "title": "Trees I",
+          "focus": "Tree traversals",
+          "tips": [
+            "Master DFS (in-order, pre-order, post-order)",
+            "Master BFS (level-order)",
+            "Recursive solutions are often simpler"
+          ],
+          "problems": [
+            {"leetcodeId": "226", "title": "Invert Binary Tree", "difficulty": "Easy"},
+            {"leetcodeId": "104", "title": "Maximum Depth of Binary Tree", "difficulty": "Easy"},
+            {"leetcodeId": "94", "title": "Binary Tree Inorder Traversal", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 21,
+          "title": "Trees II",
+          "focus": "Level order traversal",
+          "tips": [
+            "Use queue for BFS",
+            "Track level size for level-order",
+            "Use sentinel or nested loops"
+          ],
+          "problems": [
+            {"leetcodeId": "102", "title": "Binary Tree Level Order Traversal", "difficulty": "Medium"},
+            {"leetcodeId": "199", "title": "Binary Tree Right Side View", "difficulty": "Medium"},
+            {"leetcodeId": "103", "title": "Binary Tree Zigzag Level Order", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 22,
+          "title": "Trees III",
+          "focus": "Tree properties and validation",
+          "tips": [
+            "Validate BST property at each node",
+            "Lowest common ancestor requires ancestry check",
+            "Use min/max bounds for BST validation"
+          ],
+          "problems": [
+            {"leetcodeId": "98", "title": "Validate Binary Search Tree", "difficulty": "Medium"},
+            {"leetcodeId": "235", "title": "Lowest Common Ancestor of BST", "difficulty": "Easy"},
+            {"leetcodeId": "236", "title": "Lowest Common Ancestor of Binary Tree", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 23,
+          "title": "Trees IV",
+          "focus": "Path problems",
+          "tips": [
+            "Track running sum from root",
+            "Use backtracking for path sums",
+            "Prefix sum technique for trees"
+          ],
+          "problems": [
+            {"leetcodeId": "112", "title": "Path Sum", "difficulty": "Easy"},
+            {"leetcodeId": "113", "title": "Path Sum II", "difficulty": "Medium"},
+            {"leetcodeId": "437", "title": "Path Sum III", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 24,
+          "title": "Trees V",
+          "focus": "Tree construction",
+          "tips": [
+            "Build tree from traversals",
+            "In-order identifies left/right subtrees",
+            "Pre/post-order identifies root"
+          ],
+          "problems": [
+            {"leetcodeId": "105", "title": "Construct Binary Tree from Preorder", "difficulty": "Medium"},
+            {"leetcodeId": "106", "title": "Construct Binary Tree from Inorder", "difficulty": "Medium"},
+            {"leetcodeId": "572", "title": "Subtree of Another Tree", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 25,
+          "title": "Binary Search I",
+          "focus": "Standard binary search",
+          "tips": [
+            "Array must be sorted",
+            "Left inclusive, right exclusive",
+            "Be careful with overflow: mid = left + (right-left)//2"
+          ],
+          "problems": [
+            {"leetcodeId": "704", "title": "Binary Search", "difficulty": "Easy"},
+            {"leetcodeId": "35", "title": "Search Insert Position", "difficulty": "Easy"},
+            {"leetcodeId": "69", "title": "Sqrt(x)", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 26,
+          "title": "Binary Search II",
+          "focus": "Binary search on answer space",
+          "tips": [
+            "Search for min/max valid value",
+            "Design a predicate function",
+            "Think: what property makes value 'valid'?"
+          ],
+          "problems": [
+            {"leetcodeId": "374", "title": "Guess Number Higher or Lower", "difficulty": "Easy"},
+            {"leetcodeId": "441", "title": "Arranging Coins", "difficulty": "Easy"},
+            {"leetcodeId": "153", "title": "Find Minimum in Rotated Sorted Array", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 27,
+          "title": "Binary Search III",
+          "focus": "Advanced binary search",
+          "tips": [
+            "Search in 2D matrix",
+            "Find peak element",
+            "Consider rotated sorted arrays"
+          ],
+          "problems": [
+            {"leetcodeId": "74", "title": "Search a 2D Matrix", "difficulty": "Medium"},
+            {"leetcodeId": "240", "title": "Search a 2D Matrix II", "difficulty": "Medium"},
+            {"leetcodeId": "162", "title": "Find Peak Element", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 28,
+          "title": "Bit Manipulation I",
+          "focus": "Basic bit operations",
+          "tips": [
+            "& (AND), | (OR), ^ (XOR), ~ (NOT), <<, >>",
+            "XOR: a ^ a = 0, a ^ 0 = a",
+            "Use for counting, toggling bits"
+          ],
+          "problems": [
+            {"leetcodeId": "191", "title": "Number of 1 Bits", "difficulty": "Easy"},
+            {"leetcodeId": "338", "title": "Counting Bits", "difficulty": "Easy"},
+            {"leetcodeId": "190", "title": "Reverse Bits", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 29,
+          "title": "Bit Manipulation II",
+          "focus": "XOR patterns and bit tricks",
+          "tips": [
+            "XOR finds single different element",
+            "n & (n-1) clears lowest set bit",
+            "Use shifting for division by 2"
+          ],
+          "problems": [
+            {"leetcodeId": "136", "title": "Single Number", "difficulty": "Easy"},
+            {"leetcodeId": "268", "title": "Missing Number", "difficulty": "Easy"},
+            {"leetcodeId": "201", "title": "Bitwise AND of Numbers Range", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 30,
+          "title": "Phase 2 Challenge",
+          "focus": "Test your core knowledge",
+          "tips": [
+            "Mixed problems from Phase 2",
+            "Focus on clean implementations",
+            "You've built a strong foundation!"
+          ],
+          "problems": [
+            {"leetcodeId": "23", "title": "Merge K Sorted Lists", "difficulty": "Hard"},
+            {"leetcodeId": "98", "title": "Validate Binary Search Tree", "difficulty": "Medium"},
+            {"leetcodeId": "153", "title": "Find Minimum in Rotated Sorted Array", "difficulty": "Medium"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Advanced Structures",
+      "subtitle": "Leveling Up",
+      "startDay": 31,
+      "endDay": 45,
+      "icon": "⬆️",
+      "description": "Heap, Backtracking, Graphs (DFS/BFS), Advanced Graphs",
+      "days": [
+        {
+          "day": 31,
+          "title": "Heap I",
+          "focus": "Min-heap and max-heap basics",
+          "tips": [
+            "Heap in Python: heapq (min-heap by default)",
+            "For max-heap, push negative values",
+            "O(1) peek, O(log n) push/pop"
+          ],
+          "problems": [
+            {"leetcodeId": "703", "title": "Kth Largest Element in a Stream", "difficulty": "Easy"},
+            {"leetcodeId": "215", "title": "Kth Largest Element in an Array", "difficulty": "Medium"},
+            {"leetcodeId": "1046", "title": "Last Stone Weight", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 32,
+          "title": "Heap II",
+          "focus": "Heap for streaming data",
+          "tips": [
+            "Maintain k-sized heap",
+            "Min-heap for kth largest",
+            "Max-heap for kth smallest"
+          ],
+          "problems": [
+            {"leetcodeId": "973", "title": "K Closest Points to Origin", "difficulty": "Medium"},
+            {"leetcodeId": "2336", "title": "Smallest Number in Infinite Set", "difficulty": "Medium"},
+            {"leetcodeId": "1642", "title": "Furthest Building You Can Reach", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 33,
+          "title": "Heap III",
+          "focus": "Heap with custom comparators",
+          "tips": [
+            "Use tuples for custom ordering",
+            "Task scheduling patterns",
+            "Merge sorted streams"
+          ],
+          "problems": [
+            {"leetcodeId": "621", "title": "Task Scheduler", "difficulty": "Medium"},
+            {"leetcodeId": "355", "title": "Design Twitter", "difficulty": "Medium"},
+            {"leetcodeId": "253", "title": "Meeting Rooms II", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 34,
+          "title": "Backtracking I",
+          "focus": "Basic backtracking patterns",
+          "tips": [
+            "Explore all possibilities recursively",
+            "Backtrack = make choice, recurse, undo choice",
+            "Use for combinations, permutations"
+          ],
+          "problems": [
+            {"leetcodeId": "78", "title": "Subsets", "difficulty": "Medium"},
+            {"leetcodeId": "77", "title": "Combinations", "difficulty": "Medium"},
+            {"leetcodeId": "46", "title": "Permutations", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 35,
+          "title": "Backtracking II",
+          "focus": "Backtracking with constraints",
+          "tips": [
+            "Prune invalid paths early",
+            "Constraint satisfaction problems",
+            "Think about state representation"
+          ],
+          "problems": [
+            {"leetcodeId": "39", "title": "Combination Sum", "difficulty": "Medium"},
+            {"leetcodeId": "90", "title": "Subsets II", "difficulty": "Medium"},
+            {"leetcodeId": "40", "title": "Combination Sum II", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 36,
+          "title": "Backtracking III",
+          "focus": "Advanced backtracking",
+          "tips": [
+            "N-Queens pattern: place and check",
+            "Sudoku: fill empty cells",
+            "Word search: DFS with backtracking"
+          ],
+          "problems": [
+            {"leetcodeId": "51", "title": "N-Queens", "difficulty": "Hard"},
+            {"leetcodeId": "79", "title": "Word Search", "difficulty": "Medium"},
+            {"leetcodeId": "37", "title": "Sudoku Solver", "difficulty": "Hard"}
+          ]
+        },
+        {
+          "day": 37,
+          "title": "Graph BFS I",
+          "focus": "Basic graph BFS",
+          "tips": [
+            "Queue for BFS traversal",
+            "Visited set to avoid cycles",
+            "Level-by-level exploration"
+          ],
+          "problems": [
+            {"leetcodeId": "733", "title": "Flood Fill", "difficulty": "Easy"},
+            {"leetcodeId": "200", "title": "Number of Islands", "difficulty": "Medium"},
+            {"leetcodeId": "994", "title": "Rotting Oranges", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 38,
+          "title": "Graph BFS II",
+          "focus": "Shortest path problems",
+          "tips": [
+            "BFS gives shortest path in unweighted graphs",
+            "Track distance from source",
+            "Multi-source BFS possible"
+          ],
+          "problems": [
+            {"leetcodeId": "1091", "title": "Shortest Path in Binary Matrix", "difficulty": "Medium"},
+            {"leetcodeId": "863", "title": "Shortest Path to Get All Keys", "difficulty": "Medium"},
+            {"leetcodeId": "1162", "title": "As Far from Land as Possible", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 39,
+          "title": "Graph DFS I",
+          "focus": "Basic graph DFS",
+          "tips": [
+            "Stack for iterative DFS",
+            "Recursion for simpler code",
+            "Mark visited before or after recursion"
+          ],
+          "problems": [
+            {"leetcodeId": "695", "title": "Max Area of Island", "difficulty": "Medium"},
+            {"leetcodeId": "133", "title": "Clone Graph", "difficulty": "Medium"},
+            {"leetcodeId": "547", "title": "Number of Provinces", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 40,
+          "title": "Graph DFS II",
+          "focus": "Connected components",
+          "tips": [
+            "Find all connected components",
+            "Use union-find alternative",
+            "Path and cycle detection"
+          ],
+          "problems": [
+            {"leetcodeId": "323", "title": "Number of Connected Components", "difficulty": "Medium"},
+            {"leetcodeId": "684", "title": "Redundant Connection", "difficulty": "Medium"},
+            {"leetcodeId": "1557", "title": "Minimum Number of Vertices to Reach All", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 41,
+          "title": "Advanced Graph I",
+          "focus": "Topological sort",
+          "tips": [
+            "Kahn's algorithm: BFS with indegree",
+            "DFS-based: post-order ordering",
+            "Detect cycles in directed graphs"
+          ],
+          "problems": [
+            {"leetcodeId": "207", "title": "Course Schedule", "difficulty": "Medium"},
+            {"leetcodeId": "210", "title": "Course Schedule II", "difficulty": "Medium"},
+            {"leetcodeId": "1136", "title": "Parallel Courses", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 42,
+          "title": "Advanced Graph II",
+          "focus": "Dijkstra and shortest paths",
+          "tips": [
+            "Dijkstra for weighted shortest path",
+            "Use heap for efficient Dijkstra",
+            "Works only with non-negative weights"
+          ],
+          "problems": [
+            {"leetcodeId": "743", "title": "Network Delay Time", "difficulty": "Medium"},
+            {"leetcodeId": "1514", "title": "Path with Maximum Probability", "difficulty": "Medium"},
+            {"leetcodeId": "1631", "title": "Path With Minimum Effort", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 43,
+          "title": "Advanced Graph III",
+          "focus": "MST and Union-Find",
+          "tips": [
+            "Union-Find for connectivity",
+            "Path compression and union by rank",
+            "Kruskal's for MST"
+          ],
+          "problems": [
+            {"leetcodeId": "684", "title": "Redundant Connection", "difficulty": "Medium"},
+            {"leetcodeId": "1319", "title": "Number of Operations to Make Network", "difficulty": "Medium"},
+            {"leetcodeId": "1584", "title": "Min Cost to Connect All Points", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 44,
+          "title": "Graph Review",
+          "focus": "Phase 3 graph recap",
+          "tips": [
+            "Review BFS vs DFS use cases",
+            "Review Dijkstra implementation",
+            "Review topological sort patterns"
+          ],
+          "problems": [
+            {"leetcodeId": "200", "title": "Number of Islands", "difficulty": "Medium"},
+            {"leetcodeId": "207", "title": "Course Schedule", "difficulty": "Medium"},
+            {"leetcodeId": "743", "title": "Network Delay Time", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 45,
+          "title": "Phase 3 Challenge",
+          "focus": "Advanced structures test",
+          "tips": [
+            "Heap, backtracking, and graphs",
+            "Take your time, think carefully",
+            "Halfway to mastery!"
+          ],
+          "problems": [
+            {"leetcodeId": "51", "title": "N-Queens", "difficulty": "Hard"},
+            {"leetcodeId": "743", "title": "Network Delay Time", "difficulty": "Medium"},
+            {"leetcodeId": "621", "title": "Task Scheduler", "difficulty": "Medium"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Mastery & Polish",
+      "subtitle": "The Final Stretch",
+      "startDay": 46,
+      "endDay": 60,
+      "icon": "🏆",
+      "description": "1D/2D Dynamic Programming, Greedy, Intervals, Math & Geometry",
+      "days": [
+        {
+          "day": 46,
+          "title": "1D DP I",
+          "focus": "Basic DP patterns",
+          "tips": [
+            "Identify overlapping subproblems",
+            "Define recurrence relation",
+            "Use array or hash map for memoization"
+          ],
+          "problems": [
+            {"leetcodeId": "70", "title": "Climbing Stairs", "difficulty": "Easy"},
+            {"leetcodeId": "746", "title": "Min Cost Climbing Stairs", "difficulty": "Easy"},
+            {"leetcodeId": "198", "title": "House Robber", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 47,
+          "title": "1D DP II",
+          "focus": "Classic DP problems",
+          "tips": [
+            "Climb stairs with variable steps",
+            "Rob houses with constraints",
+            "Decode ways: think about choices"
+          ],
+          "problems": [
+            {"leetcodeId": "213", "title": "House Robber II", "difficulty": "Medium"},
+            {"leetcodeId": "91", "title": "Decode Ways", "difficulty": "Medium"},
+            {"leetcodeId": "740", "title": "Delete and Earn", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 48,
+          "title": "1D DP III",
+          "focus": "DP with choices",
+          "tips": [
+            "Count ways vs optimal value",
+            "Consider all valid choices at each step",
+            "State = what info needed to proceed"
+          ],
+          "problems": [
+            {"leetcodeId": "55", "title": "Jump Game", "difficulty": "Medium"},
+            {"leetcodeId": "45", "title": "Jump Game II", "difficulty": "Medium"},
+            {"leetcodeId": "131", "title": "Palindrome Partitioning", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 49,
+          "title": "2D DP I",
+          "focus": "Grid DP problems",
+          "tips": [
+            "DP[i][j] = answer using grid[0..i][0..j]",
+            "Think about: top, left, diagonal",
+            "Space optimization possible"
+          ],
+          "problems": [
+            {"leetcodeId": "62", "title": "Unique Paths", "difficulty": "Medium"},
+            {"leetcodeId": "64", "title": "Unique Paths II", "difficulty": "Medium"},
+            {"leetcodeId": "1143", "title": "Longest Common Subsequence", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 50,
+          "title": "2D DP II",
+          "focus": "String DP",
+          "tips": [
+            "LCS for common subsequence",
+            "Edit distance for transformations",
+            "Build solutions from smaller subproblems"
+          ],
+          "problems": [
+            {"leetcodeId": "72", "title": "Edit Distance", "difficulty": "Medium"},
+            {"leetcodeId": "516", "title": "Longest Palindromic Subsequence", "difficulty": "Medium"},
+            {"leetcodeId": "97", "title": "Interleaving String", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 51,
+          "title": "2D DP III",
+          "focus": "Hard DP problems",
+          "tips": [
+            "Multiple dimensions or constraints",
+            "Careful state definition is key",
+            "Consider if greedy works instead"
+          ],
+          "problems": [
+            {"leetcodeId": "300", "title": "Longest Increasing Subsequence", "difficulty": "Medium"},
+            {"leetcodeId": "115", "title": "Distinct Subsequences", "difficulty": "Hard"},
+            {"leetcodeId": "1277", "title": "Count Square Submatrices", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 52,
+          "title": "Greedy I",
+          "focus": "Interval problems",
+          "tips": [
+            "Sort intervals by start or end time",
+            "Use min-heap for concurrent tasks",
+            "Overlap detection patterns"
+          ],
+          "problems": [
+            {"leetcodeId": "253", "title": "Meeting Rooms II", "difficulty": "Medium"},
+            {"leetcodeId": "56", "title": "Merge Intervals", "difficulty": "Medium"},
+            {"leetcodeId": "57", "title": "Insert Interval", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 53,
+          "title": "Greedy II",
+          "focus": "Greedy selection",
+          "tips": [
+            "Make locally optimal choice",
+            "Prove greedy works: exchange argument",
+            "Sort first, then greedy selection"
+          ],
+          "problems": [
+            {"leetcodeId": "455", "title": "Assign Cookies", "difficulty": "Easy"},
+            {"leetcodeId": "121", "title": "Best Time to Buy Stock", "difficulty": "Easy"},
+            {"leetcodeId": "55", "title": "Jump Game", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 54,
+          "title": "Greedy III",
+          "focus": "Advanced greedy",
+          "tips": [
+            "Sometimes DP seems needed but greedy works",
+            "Think about invariants",
+            "Greedy with careful proof"
+          ],
+          "problems": [
+            {"leetcodeId": "134", "title": "Gas Station", "difficulty": "Medium"},
+            {"leetcodeId": "406", "title": "Queue Reconstruction by Height", "difficulty": "Medium"},
+            {"leetcodeId": "763", "title": "Partition Labels", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 55,
+          "title": "Math & Geometry I",
+          "focus": "Math fundamentals",
+          "tips": [
+            "Prime factorization patterns",
+            "GCD/LCM for divisibility",
+            "Modular arithmetic basics"
+          ],
+          "problems": [
+            {"leetcodeId": "9", "title": "Palindrome Number", "difficulty": "Easy"},
+            {"leetcodeId": "66", "title": "Plus One", "difficulty": "Easy"},
+            {"leetcodeId": "202", "title": "Happy Number", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 56,
+          "title": "Math & Geometry II",
+          "focus": "Number theory",
+          "tips": [
+            "Count primes with sieve",
+            "Happy number: detect cycles",
+            "Excel column to number conversion"
+          ],
+          "problems": [
+            {"leetcodeId": "204", "title": "Count Primes", "difficulty": "Medium"},
+            {"leetcodeId": "50", "title": "Pow(x, n)", "difficulty": "Medium"},
+            {"leetcodeId": "171", "title": "Excel Sheet Column Number", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 57,
+          "title": "Math & Geometry III",
+          "focus": "Geometry basics",
+          "tips": [
+            "Line equations: y = mx + b",
+            "Point representation",
+            "Overlap detection"
+          ],
+          "problems": [
+            {"leetcodeId": "149", "title": "Max Points on a Line", "difficulty": "Hard"},
+            {"leetcodeId": "223", "title": "Rectangle Area", "difficulty": "Medium"},
+            {"leetcodeId": "836", "title": "Rectangle Overlap", "difficulty": "Easy"}
+          ]
+        },
+        {
+          "day": 58,
+          "title": "Final Review I",
+          "focus": "DP and Greedy review",
+          "tips": [
+            "Review all DP patterns",
+            "Review greedy vs DP decision",
+            "Practice state definition"
+          ],
+          "problems": [
+            {"leetcodeId": "70", "title": "Climbing Stairs", "difficulty": "Easy"},
+            {"leetcodeId": "198", "title": "House Robber", "difficulty": "Medium"},
+            {"leetcodeId": "300", "title": "Longest Increasing Subsequence", "difficulty": "Medium"}
+          ]
+        },
+        {
+          "day": 59,
+          "title": "Final Review II",
+          "focus": "All patterns review",
+          "tips": [
+            "Pick your weakest areas",
+            "Time yourself seriously",
+            "Simulate interview conditions"
+          ],
+          "problems": [
+            {"leetcodeId": "42", "title": "Trapping Rain Water", "difficulty": "Hard"},
+            {"leetcodeId": "4", "title": "Median of Two Sorted Arrays", "difficulty": "Hard"},
+            {"leetcodeId": "10", "title": "Regular Expression Matching", "difficulty": "Hard"}
+          ]
+        },
+        {
+          "day": 60,
+          "title": "Final Challenge",
+          "focus": "Graduation day!",
+          "tips": [
+            "You've completed the 60-day roadmap!",
+            "You now know all major patterns",
+            "Keep practicing and good luck! 🎉"
+          ],
+          "problems": [
+            {"leetcodeId": "76", "title": "Minimum Window Substring", "difficulty": "Hard"},
+            {"leetcodeId": "23", "title": "Merge K Sorted Lists", "difficulty": "Hard"},
+            {"leetcodeId": "72", "title": "Edit Distance", "difficulty": "Medium"}
+          ]
+        }
+      ]
+    }
+  ]
+}

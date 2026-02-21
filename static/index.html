@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode Helper</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- CodeMirror 6 CSS is included in style.css -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button id="collapseBtn" class="collapse-btn" title="Toggle Sidebar">
+                    <span id="collapseIcon">◀</span>
+                </button>
+                <h1 class="logo">LeetCode Helper</h1>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-page="problems">Problems</button>
+                <button class="nav-tab" data-page="roadmap">Roadmap</button>
+            </nav>
+            <div class="header-right">
+                <!-- Settings Button -->
+                <button id="settingsBtn" class="btn btn-ghost" title="Settings">
+                    ⚙️
+                </button>
+            </div>
+        </header>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal" style="display: none;">
+            <div class="modal-content settings-modal">
+                <div class="modal-header">
+                    <h3>Settings</h3>
+                    <button class="modal-close-btn" id="closeSettingsBtn">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <label class="settings-label">OpenRouter API Key</label>
+                        <input type="password" id="apiKeyInput" class="settings-input" placeholder="sk-or-...">
+                        <p class="settings-hint">Get a free API key at <a href="https://openrouter.ai/keys"
+                                target="_blank">openrouter.ai/keys</a></p>
+                        <button id="saveApiKeyBtn" class="btn btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-container">
+            <!-- Sidebar - Problem List -->
+            <aside class="sidebar">
+                <div class="sidebar-search">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+                    <button id="randomBtn" class="random-btn" title="Random Problem">🎲</button>
+                </div>
+                <div class="sidebar-filters">
+                    <!-- Custom Difficulty Filter -->
+                    <div class="custom-select" id="difficultyFilter" data-filter="difficulty">
+                        <input type="text" class="select-input" placeholder="Difficulty" readonly>
+                        <button class="select-toggle">▼</button>
+                        <div class="select-dropdown">
+                            <div class="select-option" value="">All</div>
+                            <div class="select-option" value="Easy">Easy</div>
+                            <div class="select-option" value="Medium">Medium</div>
+                            <div class="select-option" value="Hard">Hard</div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Status Filter -->
+                    <div class="custom-select" id="statusFilter" data-filter="status">
+                        <input type="text" class="select-input" placeholder="Status" readonly>
+                        <button class="select-toggle">▼</button>
+                        <div class="select-dropdown">
+                            <div class="select-option" value="">All</div>
+                            <div class="select-option" value="solved">Solved</div>
+                            <div class="select-option" value="unsolved">Unsolved</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sidebar-header">
+                    <span id="problemCount">Loading...</span>
+                </div>
+                <div id="problemList" class="problem-list"></div>
+            </aside>
+
+            <!-- Main Area - Problem View / Editor -->
+            <main class="main-content">
+                <!-- Welcome Screen -->
+                <div id="welcomeScreen" class="welcome-screen">
+                    <div class="welcome-content">
+                        <h2>Select a problem to start</h2>
+                        <p>Choose from <span id="totalProblems">0</span> problems</p>
+                    </div>
+                </div>
+
+                <!-- Problem View -->
+                <div id="problemView" class="problem-view" style="display: none;">
+                    <div class="problem-content-split">
+                        <!-- Left Panel: Content -->
+                        <div class="description-panel">
+                            <div class="panel-header">
+                                <nav class="panel-tabs">
+                                    <button class="panel-tab active" data-content="description">Description</button>
+                                    <button class="panel-tab" data-content="ai-solution" id="aiTabBtn"
+                                        style="display:none">AI Solution ✨</button>
+                                </nav>
+                            </div>
+                            <div class="panel-content">
+                                <!-- Description Content -->
+                                <div id="content-description" class="tab-content active">
+                                    <div class="problem-header">
+                                        <div class="problem-title-section">
+                                            <span class="problem-id" id="problemId"></span>
+                                            <h2 class="problem-title" id="problemTitle"></h2>
+                                            <span class="badge difficulty-badge" id="problemDifficulty"></span>
+                                            <button class="solved-btn" id="solvedBtn" title="Mark as solved"></button>
+                                        </div>
+                                        <div class="problem-meta" id="problemMeta"></div>
+                                        <div class="problem-tags" id="problemTags"></div>
+                                    </div>
+
+                                    <div class="description-content" id="problemContent"></div>
+
+                                    <!-- Test Cases -->
+                                    <div class="test-cases-section">
+                                        <h3>Example Test Cases</h3>
+                                        <div id="testCasesList" class="test-cases-list"></div>
+                                    </div>
+                                </div>
+
+                                <!-- AI Solution Content -->
+                                <div id="content-ai-solution" class="tab-content">
+                                    <div class="ai-solution-container">
+                                        <div class="ai-panel-header">
+                                            <div class="ai-panel-header-left">
+                                                <span class="ai-panel-icon">✨</span>
+                                                <span class="ai-panel-title">AI Solution</span>
+                                            </div>
+                                            <div class="ai-panel-header-right">
+                                                <button class="btn btn-primary btn-sm" id="copyToEditorBtn">↳ Use This
+                                                    Solution</button>
+                                            </div>
+                                        </div>
+                                        <!-- Tabs: Code / Walkthrough / Data Structures / Syntax -->
+                                        <div class="ai-panel-tabs">
+                                            <button class="ai-tab active" data-tab="code">Code</button>
+                                            <button class="ai-tab" data-tab="walkthrough">Walkthrough</button>
+                                            <button class="ai-tab" data-tab="datastructures">Data Structures</button>
+                                            <button class="ai-tab" data-tab="syntax">Key Syntax</button>
+                                        </div>
+                                        <div class="ai-panel-body">
+                                            <div class="ai-tab-content active" id="aiTab-code">
+                                                <pre class="ai-code-block" id="aiSolutionCode"></pre>
+                                            </div>
+                                            <div class="ai-tab-content" id="aiTab-walkthrough">
+                                                <div class="ai-walkthrough-list" id="aiWalkthrough"></div>
+                                            </div>
+                                            <div class="ai-tab-content" id="aiTab-datastructures">
+                                                <div class="ai-datastructures-list" id="aiDataStructures"></div>
+                                            </div>
+                                            <div class="ai-tab-content" id="aiTab-syntax">
+                                                <div class="ai-syntax-list" id="aiKeySyntax"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Ask AI inline chat -->
+                                        <div class="ai-ask-bar">
+                                            <div class="ai-ask-input-row">
+                                                <input type="text" id="aiAskInput" class="ai-ask-input"
+                                                    placeholder="Ask about this solution..." />
+                                                <button class="btn btn-primary btn-sm" id="aiAskSendBtn">Ask</button>
+                                            </div>
+                                            <div class="ai-chat-area" id="aiChatArea"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Editor & Results -->
+                        <div class="editor-panel">
+                            <div class="editor-header">
+                                <div class="editor-header-left">
+                                    <div class="lang-selector">
+                                        <span>Python 3</span>
+                                    </div>
+                                    <span id="draftBadge" class="draft-badge" style="display:none">unsaved</span>
+                                </div>
+                                <div class="editor-header-right">
+                                    <button class="btn btn-ghost" id="aiBtn" title="Get AI Solution">✨ Get AI
+                                        Solution</button>
+                                    <button class="btn btn-ghost" id="resetBtn" title="Reset Code">↺</button>
+                                    <button class="btn btn-secondary" id="runBtn">▶ Run</button>
+                                    <button class="btn btn-primary" id="submitBtn">Submit</button>
+                                </div>
+                            </div>
+
+                            <!-- CodeMirror 6 mounts here -->
+                            <div id="editor-main-mount"></div>
+                            <textarea id="codeEditor" style="display:none"></textarea>
+
+                            <!-- Console / Test Results -->
+                            <div id="testResults" class="test-results">
+                                <div class="results-header" id="resultsHeader">
+                                    <span class="console-label">Console</span>
+                                    <div class="results-header-right">
+                                        <span id="resultsSummary"></span>
+                                        <button class="expand-btn" id="expandResults">▲</button>
+                                        <button class="close-btn" id="closeResults">×</button>
+                                    </div>
+                                </div>
+                                <div id="resultsList" class="results-list" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Roadmap Page -->
+            <div id="roadmapPage" class="roadmap-page" style="display: none;">
+                <div class="roadmap-header">
+                    <h1 class="roadmap-title">60-Day Mastery Roadmap</h1>
+                    <div class="roadmap-progress">
+                        <span class="roadmap-progress-text">Day <span id="currentDayDisplay">1</span> of 60</span>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="roadmapProgressBar"></div>
+                        </div>
+                        <span class="roadmap-progress-percent" id="roadmapProgressPercent">0%</span>
+                    </div>
+                </div>
+                <div class="roadmap-phases" id="roadmapPhases"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Detail Modal -->
+    <div id="dayDetailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-back-btn" id="modalBackBtn">
+                    <span>←</span> Back to Roadmap
+                </button>
+                <button class="modal-close-btn" id="modalCloseBtn">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Hint Modal -->
+    <div id="hintModal" class="modal hint-modal" style="display: none;">
+        <div class="modal-content hint-modal-content">
+            <div class="modal-header hint-modal-header">
+                <div class="hint-header-left">
+                    <span class="hint-icon-title">💡</span>
+                    <span class="hint-title-text">Coaching Hint</span>
+                </div>
+                <div class="hint-progress-dots" id="hintProgressDots">
+                    <span class="hint-dot" data-level="1" title="Nudge"></span>
+                    <span class="hint-dot" data-level="2" title="Approach"></span>
+                    <span class="hint-dot" data-level="3" title="Near-Solution"></span>
+                </div>
+                <button class="modal-close-btn" id="hintModalClose">×</button>
+            </div>
+            <div id="hintModalContent" class="hint-modal-inner"></div>
+            <div class="hint-modal-footer">
+                <div class="hint-nav-left">
+                    <button class="btn btn-ghost btn-sm" id="hintPrevBtn" disabled>← Prev</button>
+                    <button class="btn btn-ghost btn-sm" id="hintNextBtn">Next Hint →</button>
+                </div>
+                <div class="hint-nav-right">
+                    <button class="btn btn-ghost btn-sm" id="hintNewAngleBtn"
+                        title="Get a different approach for this hint level">🔄 New Angle</button>
+                    <button class="btn btn-secondary btn-sm" id="hintInsertBtn"
+                        title="Insert hint template into your editor">↳ Insert</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Ace Editor Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/theme-github.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-python.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
