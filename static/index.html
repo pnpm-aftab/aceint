@@ -21,9 +21,9 @@
         <header class="header">
             <div class="header-left">
                 <button id="collapseBtn" class="collapse-btn" title="Toggle Sidebar">
-                    <span id="collapseIcon">◀</span>
+                    <span id="collapseIcon" class="icon-arrow-left"></span>
                 </button>
-                <h1 class="logo">LeetCode Helper</h1>
+                <h1 class="logo">Aceint</h1>
             </div>
             <nav class="nav-tabs">
                 <button class="nav-tab active" data-page="problems">Problems</button>
@@ -31,8 +31,8 @@
             </nav>
             <div class="header-right">
                 <!-- Settings Button -->
-                <button id="settingsBtn" class="btn btn-ghost" title="Settings">
-                    ⚙️
+                <button id="settingsBtn" class="btn-icon-only" title="Settings">
+                    <span class="icon-settings"></span>
                 </button>
             </div>
         </header>
@@ -42,7 +42,7 @@
             <div class="modal-content settings-modal">
                 <div class="modal-header">
                     <h3>Settings</h3>
-                    <button class="modal-close-btn" id="closeSettingsBtn">×</button>
+                    <button class="modal-close-btn" id="closeSettingsBtn"><span class="icon-close"></span></button>
                 </div>
                 <div class="modal-body">
                     <div class="settings-section">
@@ -61,16 +61,16 @@
             <!-- Sidebar - Problem List -->
             <aside class="sidebar">
                 <div class="sidebar-search">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-                    <button id="randomBtn" class="random-btn" title="Random Problem">🎲</button>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search problems...">
+                    <button id="randomBtn" class="random-btn" title="Random Problem">Random</button>
                 </div>
                 <div class="sidebar-filters">
                     <!-- Custom Difficulty Filter -->
                     <div class="custom-select" id="difficultyFilter" data-filter="difficulty">
                         <input type="text" class="select-input" placeholder="Difficulty" readonly>
-                        <button class="select-toggle">▼</button>
+                        <button class="select-toggle"><span class="icon-chevron-down"></span></button>
                         <div class="select-dropdown">
-                            <div class="select-option" value="">All</div>
+                            <div class="select-option" value="">All Difficulty</div>
                             <div class="select-option" value="Easy">Easy</div>
                             <div class="select-option" value="Medium">Medium</div>
                             <div class="select-option" value="Hard">Hard</div>
@@ -80,16 +80,27 @@
                     <!-- Custom Status Filter -->
                     <div class="custom-select" id="statusFilter" data-filter="status">
                         <input type="text" class="select-input" placeholder="Status" readonly>
-                        <button class="select-toggle">▼</button>
+                        <button class="select-toggle"><span class="icon-chevron-down"></span></button>
                         <div class="select-dropdown">
-                            <div class="select-option" value="">All</div>
+                            <div class="select-option" value="">All Status</div>
                             <div class="select-option" value="solved">Solved</div>
                             <div class="select-option" value="unsolved">Unsolved</div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Tags Filter -->
+                    <div class="custom-select" id="tagFilter" data-filter="tag">
+                        <input type="text" class="select-input" placeholder="All Tags" readonly>
+                        <button class="select-toggle"><span class="icon-chevron-down"></span></button>
+                        <div class="select-dropdown" id="tagDropdown">
+                            <div class="select-option" value="">All Tags</div>
+                            <!-- Tags will be populated dynamically -->
                         </div>
                     </div>
                 </div>
                 <div class="sidebar-header">
                     <span id="problemCount">Loading...</span>
+                    <span>Problem List</span>
                 </div>
                 <div id="problemList" class="problem-list"></div>
             </aside>
@@ -113,8 +124,11 @@
                                 <nav class="panel-tabs">
                                     <button class="panel-tab active" data-content="description">Description</button>
                                     <button class="panel-tab" data-content="ai-solution" id="aiTabBtn"
-                                        style="display:none">AI Solution ✨</button>
+                                        style="display:none">Chat with AI</button>
                                 </nav>
+                                <button id="clearAiChatBtn" class="btn-icon-only" title="Clear Chat" style="display:none; margin-left: auto;">
+                                    <span class="icon-close" style="font-size: 14px;"></span>
+                                </button>
                             </div>
                             <div class="panel-content">
                                 <!-- Description Content -->
@@ -139,7 +153,7 @@
                                     </div>
                                 </div>
 
-                                <!-- AI Solution Content -->
+                                <!-- Chat with AI Content -->
                                 <div id="content-ai-solution" class="tab-content">
                                     <div class="ai-solution-container">
                                         <!-- Single Chat Interface -->
@@ -150,12 +164,12 @@
                                         </div>
                                         <!-- Ask AI inline chat -->
                                         <div class="ai-ask-bar">
+                                            <div id="aiSuggestions" class="ai-suggestions" style="display:none">
+                                                <!-- Suggested buttons go here -->
+                                            </div>
                                             <div class="ai-ask-input-row">
                                                 <input type="text" id="aiAskInput" class="ai-ask-input"
                                                     placeholder="Ask about this solution or problem..." />
-                                                <button class="btn btn-outline btn-sm" id="copyToEditorBtn"
-                                                    style="display:none;" title="Paste AI Solution into Editor">↳ Use
-                                                    Solution</button>
                                                 <button class="btn btn-primary btn-sm" id="aiAskSendBtn">Ask</button>
                                             </div>
                                         </div>
@@ -174,10 +188,9 @@
                                     <span id="draftBadge" class="draft-badge" style="display:none">unsaved</span>
                                 </div>
                                 <div class="editor-header-right">
-                                    <button class="btn btn-ghost" id="aiBtn" title="Get AI Solution">✨ Get AI
-                                        Solution</button>
-                                    <button class="btn btn-ghost" id="resetBtn" title="Reset Code">↺</button>
-                                    <button class="btn btn-secondary" id="runBtn">▶ Run</button>
+                                    <button class="btn btn-ghost" id="aiBtn" title="Chat with AI">Chat with AI</button>
+                                    <button class="btn btn-ghost" id="resetBtn" title="Reset Code">Reset</button>
+                                    <button class="btn btn-secondary" id="runBtn">Run</button>
                                     <button class="btn btn-primary" id="submitBtn">Submit</button>
                                 </div>
                             </div>
@@ -192,8 +205,8 @@
                                     <span class="console-label">Console</span>
                                     <div class="results-header-right">
                                         <span id="resultsSummary"></span>
-                                        <button class="expand-btn" id="expandResults">▲</button>
-                                        <button class="close-btn" id="closeResults">×</button>
+                                        <button class="expand-btn" id="expandResults"><span class="icon-chevron-up"></span></button>
+                                        <button class="close-btn" id="closeResults"><span class="icon-close"></span></button>
                                     </div>
                                 </div>
                                 <div id="resultsList" class="results-list" style="display: none;"></div>
@@ -218,6 +231,11 @@
                 <div class="roadmap-phases" id="roadmapPhases"></div>
             </div>
         </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; Aceint LeetCode Helper. All rights reserved.</p>
+        </footer>
     </div>
 
     <!-- Day Detail Modal -->
@@ -225,9 +243,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button class="modal-back-btn" id="modalBackBtn">
-                    <span>←</span> Back to Roadmap
+                    <span class="icon-arrow-left"></span> Back to Roadmap
                 </button>
-                <button class="modal-close-btn" id="modalCloseBtn">×</button>
+                <button class="modal-close-btn" id="modalCloseBtn"><span class="icon-close"></span></button>
             </div>
             <div class="modal-body" id="modalBody"></div>
         </div>
@@ -238,27 +256,26 @@
         <div class="modal-content hint-modal-content">
             <div class="modal-header hint-modal-header">
                 <div class="hint-header-left">
-                    <span class="hint-icon-title">💡</span>
-                    <span class="hint-title-text">Coaching Hint</span>
+                    <span class="hint-icon-title">Hint</span>
                 </div>
                 <div class="hint-progress-dots" id="hintProgressDots">
                     <span class="hint-dot" data-level="1" title="Nudge"></span>
                     <span class="hint-dot" data-level="2" title="Approach"></span>
                     <span class="hint-dot" data-level="3" title="Near-Solution"></span>
                 </div>
-                <button class="modal-close-btn" id="hintModalClose">×</button>
+                <button class="modal-close-btn" id="hintModalClose"><span class="icon-close"></span></button>
             </div>
             <div id="hintModalContent" class="hint-modal-inner"></div>
             <div class="hint-modal-footer">
                 <div class="hint-nav-left">
-                    <button class="btn btn-ghost btn-sm" id="hintPrevBtn" disabled>← Prev</button>
-                    <button class="btn btn-ghost btn-sm" id="hintNextBtn">Next Hint →</button>
+                    <button class="btn btn-ghost btn-sm" id="hintPrevBtn" disabled>Previous</button>
+                    <button class="btn btn-ghost btn-sm" id="hintNextBtn">Next</button>
                 </div>
                 <div class="hint-nav-right">
                     <button class="btn btn-ghost btn-sm" id="hintNewAngleBtn"
-                        title="Get a different approach for this hint level">🔄 New Angle</button>
+                        title="Get a different approach for this hint level">Regenerate</button>
                     <button class="btn btn-secondary btn-sm" id="hintInsertBtn"
-                        title="Insert hint template into your editor">↳ Insert</button>
+                        title="Insert hint template into your editor">Insert</button>
                 </div>
             </div>
         </div>

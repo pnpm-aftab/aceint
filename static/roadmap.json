@@ -6,7 +6,7 @@
       "subtitle": "Building Blocks",
       "startDay": 1,
       "endDay": 15,
-      "icon": "🧱",
+      "icon": "",
       "description": "Arrays & Hashing, Two Pointers, Sliding Window, Prefix Sum",
       "days": [
         {
@@ -242,7 +242,7 @@
       "subtitle": "The Toolbelt",
       "startDay": 16,
       "endDay": 30,
-      "icon": "🛠️",
+      "icon": "",
       "description": "Linked List, Trees, Binary Search, Bit Manipulation",
       "days": [
         {
@@ -478,7 +478,7 @@
       "subtitle": "Leveling Up",
       "startDay": 31,
       "endDay": 45,
-      "icon": "⬆️",
+      "icon": "",
       "description": "Heap, Backtracking, Graphs (DFS/BFS), Advanced Graphs",
       "days": [
         {
@@ -714,7 +714,7 @@
       "subtitle": "The Final Stretch",
       "startDay": 46,
       "endDay": 60,
-      "icon": "🏆",
+      "icon": "",
       "description": "1D/2D Dynamic Programming, Greedy, Intervals, Math & Geometry",
       "days": [
         {
@@ -934,7 +934,7 @@
           "tips": [
             "You've completed the 60-day roadmap!",
             "You now know all major patterns",
-            "Keep practicing and good luck! 🎉"
+            "Keep practicing and good luck! "
           ],
           "problems": [
             {"leetcodeId": "76", "title": "Minimum Window Substring", "difficulty": "Hard"},

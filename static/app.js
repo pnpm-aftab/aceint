@@ -670,7 +670,7 @@ class LeetCodeApp {
 
         // Ask AI button
         if (this.aiBtn) {
-            this.aiBtn.addEventListener('click', () => this.getAISolution());
+            this.aiBtn.addEventListener('click', () => this.startAISolution());
         }
 
         // Hint modal backdrop close
@@ -1152,7 +1152,7 @@ class LeetCodeApp {
         }
     }
 
-    async getAISolution() {
+    async startAISolution() {
         if (!this.currentProblem) return;
 
         const problemTitle = this.currentProblem.title || '';

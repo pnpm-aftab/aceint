@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import re
+from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 
@@ -227,6 +228,7 @@ def execute_code(
         "Tuple": typing.Tuple,
         "Any": typing.Any,
         "Union": typing.Union,
+        "defaultdict": defaultdict,
         "__builtins__": __builtins__,
     }
 
@@ -275,7 +277,9 @@ def execute_code(
         args = [test_input]
 
     # Find the function to call
-    if not function_name:
+    if function_name and hasattr(instance, function_name):
+        func = getattr(instance, function_name)
+    else:
         # Find first public method
         for name in dir(instance):
             if not name.startswith("_"):
@@ -286,8 +290,6 @@ def execute_code(
                     break
         else:
             raise ValueError(f"No public method found in {class_name}")
-    else:
-        func = getattr(instance, function_name)
 
     # Convert args based on type hints if possible
     import typing
@@ -376,6 +378,18 @@ def compare_results(actual: Any, expected: Any) -> bool:
             # Only if they are simple lists (not nested)
             if all(not isinstance(x, (list, dict)) for x in actual):
                 return sorted(actual) == sorted(expected)
+        except (TypeError, ValueError):
+            pass
+
+        # Handle list of lists (e.g., group anagrams) - compare as sets of sorted lists
+        try:
+            if all(isinstance(x, list) for x in actual) and all(isinstance(x, list) for x in expected):
+                actual_sorted = [sorted(a) for a in actual]
+                expected_sorted = [sorted(e) for e in expected]
+                actual_sorted.sort()
+                expected_sorted.sort()
+                if actual_sorted == expected_sorted:
+                    return True
         except (TypeError, ValueError):
             pass
 
