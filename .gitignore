@@ -26,7 +26,6 @@ htmlcov/
 *.sqlite3
 
 # Project-specific Data & AI Folders
-data/
 .claude/
 .gemini/
 

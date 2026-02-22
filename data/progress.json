@@ -1,0 +1,73 @@
+{
+  "solved": {
+    "1": {
+      "code": "# Time: O(n)\n# Space: O(n)\nclass Solution(object):\n    def twoSum(self, nums, target):\n        # Initialize an empty dictionary to store numbers we've seen and their indices.\n        seen = {}\n        # Loop through the list of numbers, 'nums'.\n        # 'enumerate' gives us both the index and the value for each element.\n        for index, num in enumerate(nums):\n            # Calculate the 'complement' number needed to reach the target.\n            # This is 'target' minus the current 'num'.\n            complement = target - num\n            # Check if this 'complement' number is already in our 'seen' dictionary.\n            if complement in seen:\n                # If it is, we've found the two numbers!\n                # Return a list containing the index of the 'complement' (from 'seen')\n                # and the 'index' of the current 'num'.\n                return [seen[complement], index]\n            # If the 'complement' is not in 'seen', add the current 'num' and its 'index'\n            # to the 'seen' dictionary. This way, it can be a complement for future numbers.\n            seen[num] = index\n        # This line will not be reached given the problem constraints (exactly one solution).\n        # It's here for completeness in case no solution is found.\n        return []",
+      "timestamp": "2026-02-21T16:33:06.477209",
+      "passed": true
+    }
+  },
+  "submissions": {},
+  "roadmap": {
+    "currentDay": 1,
+    "currentPhase": 1,
+    "completedDays": [],
+    "unlockedPhases": [
+      1
+    ]
+  },
+  "hints": {
+    "1": {
+      "hints": [
+        "**Idea:**\u202fKeep a dictionary of the numbers you\u2019ve already passed (mapping each number to its index). For each new number, ask \u201cwhat value would I need to add to this to reach `target`?\u201d and check if that needed value is already in the dictionary.\n\n```python\nseen = {}                     # number \u2192 index for numbers we have seen\nfor i, num in enumerate(nums):\n    need = target - num       # the partner value that would give the target\n    if need in seen:          # have we already seen that partner?\n        # ??? (return the two indices)\n    seen[num] = i             # remember this number and its index\n```\n\n*The dictionary lets you find the partner in O(1) time, so the whole loop runs in linear time.*",
+        "While iterating over the list, for each element\u202f`x` compute its complement\u202f`target\u202f\u2011\u202fx`. Immediately check if that complement already exists as a key in a dictionary that stores previously seen numbers and their indices; if it does, you\u2019ve found the answer, otherwise insert\u202f`x` with its index into the dictionary and continue.",
+        "class Solution(object):\n    def twoSum(self, nums, target):\n        # map to store seen numbers and their indices\n        seen = {}  # value -> index\n        # iterate through list with index\n        for i, num in enumerate(nums):  # i = index, num = value\n            # compute the complement needed to reach target\n            need = ??? # HINT: calculate target - num\n            # check if complement already seen\n            if need in seen:  # HINT: partner found\n                return ??? # HINT: return [seen[need], i]\n            # store current number for future look\u2011ups\n            seen[num] = i  # map value to its index\n        # fallback (should never happen per problem constraints)\n        return []  # placeholder return"
+      ],
+      "revealed": 0
+    },
+    "2": {
+      "hints": [
+        "Try walking through the two lists one node at a time, add the two digits together, write down the ones\u2011place digit and keep the tens\u2011place digit as a \u201ccarry\u201d for the next step (just like when you add 9\u202f+\u202f8, write down 7 and remember 1 for the next column)."
+      ],
+      "revealed": 0
+    },
+    "999": {
+      "hints": [
+        "**Idea:**  \nWhile scanning the list, keep a dictionary of the numbers you\u2019ve already seen (mapping the number to its index). For"
+      ],
+      "revealed": 0
+    },
+    "test123": {
+      "hints": [
+        "class Solution:  # define solution class\n    def twoSum(self, nums: List[int], target: int) -> List[int]:  # method signature\n        seen = {}  # map number to its index\n        for i, num in enumerate(nums):  # loop with index\n            complement = target - num  # HINT: compute needed partner\n            ???  # HINT: if complement in seen: return [seen[complement], i]\n            seen[num] = i  #"
+      ],
+      "revealed": 0
+    },
+    "final_test": {
+      "hints": [
+        "class Solution:  # define solution class\n    def twoSum(self, nums: List[int], target: int) -> List[int]:  # method signature\n        seen = {}  # map number to its index\n        for i, num in enumerate(nums):  # iterate with index\n        ???  # HINT: complement = target - num; if complement in seen: return [seen[complement], i]\n        return []  # fallback (should not reach)"
+      ],
+      "revealed": 0
+    },
+    "multi_test": {
+      "hints": [
+        "",
+        "class Solution:  # define solution class\n    def twoSum(self, nums, target):  # method signature\n        seen = {}  # map number to its index\n        for i, num in enumerate(nums):  # iterate with index\n            complement = target - num  # ??? # HINT: compute needed pair value\n            if complement in seen:  # ??? # HINT: check if complement seen\n                return [seen[complement], i]  # ??? # HINT: return the two indices\n            seen[num] = i  # store current number and index\n        # no pair found\n        return []  # placeholder for no result"
+      ],
+      "revealed": 0
+    },
+    "new_test_123": {
+      "hints": [
+        "class Solution:  # define solution class\n    def twoSum(self, nums, target):  # method signature\n        seen = {}  # map number to its index\n        for i, num in enumerate(nums):  # iterate with index\n            ???  # HINT: if target-num in seen, return [seen[target-num], i]\n            seen[num] = i  # store current number's index\n        ???  # HINT: return [] if no pair found"
+      ],
+      "revealed": 0
+    },
+    "new_test_456": {
+      "hints": [
+        "",
+        "",
+        "class Solution:  # define solution class\n    def twoSum(self, nums, target):  # method signature\n        seen = {}  # dict to map number to its index\n        for i, num in enumerate(nums):  # loop with index\n            complement = ???  # HINT: calculate target - num\n            if complement in seen:  # check if complement already seen\n                return ???  # HINT: return [seen[complement], i]\n            seen[num] = i  # store current number and index\n        return []  # fallback if no pair found"
+      ],
+      "revealed": 0
+    }
+  }
+}
