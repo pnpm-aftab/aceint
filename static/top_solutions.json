@@ -1,0 +1,79 @@
+{
+  "1": {
+    "title": "Two Sum",
+    "pattern": "Hash Map",
+    "complexity": "O(n) Time, O(n) Space",
+    "explanation": "Use a hash map to store the complement of each number. As you iterate, check if the current number is already a complement of a previously seen number.",
+    "code": "class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        prevMap = {}  # val : index\n\n        for i, n in enumerate(nums):\n            diff = target - n\n            if diff in prevMap:\n                return [prevMap[diff], i]\n            prevMap[n] = i"
+  },
+  "121": {
+    "title": "Best Time to Buy and Sell Stock",
+    "pattern": "Two Pointers / Sliding Window",
+    "complexity": "O(n) Time, O(1) Space",
+    "explanation": "Use two pointers: left for buying and right for selling. If the right price is lower than left, move buy pointer to right. Otherwise, calculate profit and update max.",
+    "code": "class Solution:\n    def maxProfit(self, prices: List[int]) -> int:\n        res = 0\n        lowest = prices[0]\n\n        for price in prices:\n            if price < lowest:\n                lowest = price\n            res = max(res, price - lowest)\n        return res"
+  },
+  "217": {
+    "title": "Contains Duplicate",
+    "pattern": "Hash Set",
+    "complexity": "O(n) Time, O(n) Space",
+    "explanation": "Use a set to keep track of elements seen so far. If an element is already in the set, a duplicate exists.",
+    "code": "class Solution:\n    def containsDuplicate(self, nums: List[int]) -> bool:\n        hashset = set()\n\n        for n in nums:\n            if n in hashset:\n                return True\n            hashset.add(n)\n        return False"
+  },
+  "238": {
+    "title": "Product of Array Except Self",
+    "pattern": "Prefix & Suffix Products",
+    "complexity": "O(n) Time, O(1) Space (ignoring output)",
+    "explanation": "Calculate prefix products first, then multiply by suffix products in a second pass.",
+    "code": "class Solution:\n    def productExceptSelf(self, nums: List[int]) -> List[int]:\n        res = [1] * (len(nums))\n\n        prefix = 1\n        for i in range(len(nums)):\n            res[i] = prefix\n            prefix *= nums[i]\n        postfix = 1\n        for i in range(len(nums) - 1, -1, -1):\n            res[i] *= postfix\n            postfix *= nums[i]\n        return res"
+  },
+  "53": {
+    "title": "Maximum Subarray",
+    "pattern": "Kadane's Algorithm",
+    "complexity": "O(n) Time, O(1) Space",
+    "explanation": "Iterate through the array and maintain a running sum. If the running sum becomes negative, reset it to zero.",
+    "code": "class Solution:\n    def maxSubArray(self, nums: List[int]) -> int:\n        res = nums[0]\n        total = 0\n\n        for n in nums:\n            total += n\n            res = max(res, total)\n            if total < 0:\n                total = 0\n        return res"
+  },
+  "11": {
+    "title": "Container With Most Water",
+    "pattern": "Two Pointers",
+    "complexity": "O(n) Time, O(1) Space",
+    "explanation": "Use two pointers at the ends. Calculate area, then move the pointer pointing to the shorter line inward.",
+    "code": "class Solution:\n    def maxArea(self, heights: List[int]) -> int:\n        l, r = 0, len(heights) - 1\n        res = 0\n\n        while l < r:\n            area = min(heights[l], heights[r]) * (r - l)\n            res = max(res, area)\n            if heights[l] <= heights[r]:\n                l += 1\n            else:\n                r -= 1\n        return res"
+  },
+  "3": {
+    "title": "Longest Substring Without Repeating Characters",
+    "pattern": "Sliding Window / Hash Set",
+    "complexity": "O(n) Time, O(n) Space",
+    "explanation": "Use a sliding window with a set. If current char is in set, shrink window from left until char is removed.",
+    "code": "class Solution:\n    def lengthOfLongestSubstring(self, s: str) -> int:\n        charSet = set()\n        l = 0\n        res = 0\n\n        for r in range(len(s)):\n            while s[r] in charSet:\n                charSet.remove(s[l])\n                l += 1\n            charSet.add(s[r])\n            res = max(res, r - l + 1)\n        return res"
+  },
+  "15": {
+    "title": "3Sum",
+    "pattern": "Two Pointers",
+    "complexity": "O(n^2) Time, O(1) or O(n) Space",
+    "explanation": "Sort the array. Iterate through, and for each element, use Two Pointers to find two other elements that sum to the negative of the current element. Skip duplicates.",
+    "code": "class Solution:\n    def threeSum(self, nums: List[int]) -> List[List[int]]:\n        res = []\n        nums.sort()\n\n        for i, a in enumerate(nums):\n            if i > 0 and a == nums[i - 1]:\n                continue\n\n            l, r = i + 1, len(nums) - 1\n            while l < r:\n                threeSum = a + nums[l] + nums[r]\n                if threeSum > 0:\n                    r -= 1\n                elif threeSum < 0:\n                    l += 1\n                else:\n                    res.append([a, nums[l], nums[r]])\n                    l += 1\n                    while nums[l] == nums[l - 1] and l < r:\n                        l += 1\n        return res"
+  },
+  "206": {
+    "title": "Reverse Linked List",
+    "pattern": "Pointers",
+    "complexity": "O(n) Time, O(1) Space",
+    "explanation": "Use three pointers: `prev`, `curr`, and `next`. Iterate through the list, flipping each node's `next` pointer to point to `prev`.",
+    "code": "class Solution:\n    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:\n        prev, curr = None, head\n\n        while curr:\n            nxt = curr.next\n            curr.next = prev\n            prev = curr\n            curr = nxt\n        return prev"
+  },
+  "226": {
+    "title": "Invert Binary Tree",
+    "pattern": "DFS (Recursion)",
+    "complexity": "O(n) Time, O(h) Space",
+    "explanation": "Recursively swap the left and right children of every node in the tree.",
+    "code": "class Solution:\n    def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:\n        if not root:\n            return None\n\n        root.left, root.right = root.right, root.left\n\n        self.invertTree(root.left)\n        self.invertTree(root.right)\n        return root"
+  },
+  "70": {
+    "title": "Climbing Stairs",
+    "pattern": "Dynamic Programming",
+    "complexity": "O(n) Time, O(1) Space",
+    "explanation": "This is essentially the Fibonacci sequence. The number of ways to reach step `n` is the sum of ways to reach `n-1` and `n-2`.",
+    "code": "class Solution:\n    def climbStairs(self, n: int) -> int:\n        one, two = 1, 1\n\n        for i in range(n - 1):\n            temp = one\n            one = one + two\n            two = temp\n\n        return one"
+  }
+}

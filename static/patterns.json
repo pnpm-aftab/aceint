@@ -1,0 +1,192 @@
+{
+  "hash-table": {
+    "title": "Instant Lookup (Hash Table)",
+    "analogy": "The Digital Index",
+    "description": "Imagine a giant index in the back of a book. Instead of reading every page to find a word (O(n)), you go to the index and see exactly where it is (O(1)).",
+    "understanding": {
+      "intuition": "Use this when you need to 'remember' things you've seen before. If you need to know if a number was in the list earlier, don't look through the list again—store it in a set.",
+      "how_to_identify": "Keywords: 'frequency', 'unique', 'pairs that sum to...', 'seen before'.",
+      "core_logic": "Store values or counts in a dictionary or set as you traverse once. Check the dictionary for the target value."
+    },
+    "template": "seen = set()\nfor x in nums:\n    if target - x in seen: return True\n    seen.add(x)",
+    "tags": ["Hash Table", "Counting"]
+  },
+  "two-pointers": {
+    "title": "The Squeeze (Two Pointers)",
+    "analogy": "Meeting in the Middle",
+    "description": "Imagine two people at opposite ends of a street walking towards each other until they find a specific house.",
+    "understanding": {
+      "intuition": "When an array is sorted, you can eliminate many possibilities at once. If the sum of the ends is too high, only moving the right pointer left can help.",
+      "how_to_identify": "Keywords: 'sorted array', 'pairs', 'palindrome', 'reverse'.",
+      "core_logic": "Start at both ends. Move left in or right in based on the current result. Never backtrack."
+    },
+    "template": "l, r = 0, len(nums) - 1\nwhile l < r:\n    curr = nums[l] + nums[r]\n    if curr == target: return [l, r]\n    if curr < target: l += 1\n    else: r -= 1"
+  },
+  "sliding-window": {
+    "title": "The Moving View (Sliding Window)",
+    "analogy": "A Sliding Camera Lens",
+    "description": "Instead of taking a separate photo of every possible group of 3 people, you just slide your camera along the line, adding one person on the right and losing one on the left.",
+    "understanding": {
+      "intuition": "Saves time by reusing the calculation from the previous group. Useful for 'contiguous' segments.",
+      "how_to_identify": "Keywords: 'subarray', 'substring', 'contiguous', 'longest/shortest'.",
+      "core_logic": "Expand 'right' until you hit a limit or find a solution. Then shrink 'left' to find the minimum or to make the window valid again."
+    },
+    "template": "l = 0\nfor r in range(len(nums)):\n    window_sum += nums[r]\n    while window_sum > target:\n        window_sum -= nums[l]\n        l += 1"
+  },
+  "binary-search": {
+    "title": "The Guessing Game (Binary Search)",
+    "analogy": "Higher or Lower",
+    "description": "Imagine guessing a number between 1 and 100. If I say 'too high' for 50, you instantly know the answer isn't 51-100. You just cut your work in half.",
+    "understanding": {
+      "intuition": "Fastest way to search sorted data. Also used to find the 'threshold' where a condition changes from False to True.",
+      "how_to_identify": "Keywords: 'sorted', 'O(log n)', 'minimum maximum', 'maximum minimum'.",
+      "core_logic": "Calculate mid. If too low, move left boundary to mid+1. If too high, move right boundary to mid-1."
+    },
+    "template": "while l <= r:\n    mid = (l + r) // 2\n    if check(mid): ans = mid; r = mid - 1\n    else: l = mid + 1",
+    "tags": ["Binary Search"]
+  },
+  "dfs": {
+    "title": "The Maze Runner (DFS)",
+    "analogy": "Exploring a Cave",
+    "description": "You walk as deep as you can into a tunnel. If you hit a dead end, you go back to the last fork and try the other way.",
+    "understanding": {
+      "intuition": "Good for exploring all possibilities or finding if ANY path exists. Simple to write using recursion.",
+      "how_to_identify": "Keywords: 'all paths', 'combinations', 'connected components', 'tree traversal'.",
+      "core_logic": "Function calls itself for neighbors. Uses a 'visited' set to not go in circles."
+    },
+    "template": "def dfs(node):\n    visited.add(node)\n    for neighbor in node.neighbors:\n        if neighbor not in visited: dfs(neighbor)",
+    "tags": ["Depth-First Search", "Tree", "Binary Tree"]
+  },
+  "bfs": {
+    "title": "The Ripple Effect (BFS)",
+    "analogy": "Dropping a Stone in Water",
+    "description": "The ripple hits everyone at distance 1, then everyone at distance 2. This is the fastest way to find the 'closest' thing.",
+    "understanding": {
+      "intuition": "Guarantees the shortest path in unweighted graphs. Processes level-by-level.",
+      "how_to_identify": "Keywords: 'shortest path', 'minimum steps', 'level order'.",
+      "core_logic": "Use a queue (FIFO). Pop node, add all unvisited neighbors to queue. Keep track of distance/level."
+    },
+    "template": "q = deque([start])\nwhile q:\n    for _ in range(len(q)):\n        node = q.popleft()\n        # add neighbors to q",
+    "tags": ["Breadth-First Search"]
+  },
+  "greedy": {
+    "title": "The Impulse Buy (Greedy)",
+    "analogy": "Taking the Best Thing Right Now",
+    "description": "Imagine a buffet where you just grab the most expensive item left. It works for some problems (like change-making with certain coins) but not all.",
+    "understanding": {
+      "intuition": "Make the locally optimal choice. Usually involves sorting the input first.",
+      "how_to_identify": "Keywords: 'maximum number of tasks', 'interval scheduling', 'minimum number of...'.",
+      "core_logic": "Sort by some criteria (e.g., end time). Iterate and pick if valid."
+    },
+    "template": "nums.sort()\nfor n in nums:\n    if can_pick(n): pick(n)",
+    "tags": ["Greedy", "Sorting"]
+  },
+  "dynamic-programming": {
+    "title": "The Memo Pad (DP)",
+    "analogy": "Don't Repeat Yourself",
+    "description": "If I ask you 1+1+1+1+1, you count 5. If I add another +1, you don't count from 1 again—you just say 5+1=6. You remembered the previous result.",
+    "understanding": {
+      "intuition": "Solve small sub-problems and save their answers. Use those answers to solve bigger problems.",
+      "how_to_identify": "Keywords: 'max profit', 'number of ways', 'min cost', 'overlapping work'.",
+      "core_logic": "Define a base case. Define how a big problem is made of smaller ones (Transition)."
+    },
+    "template": "@cache\ndef dp(i):\n    if i == 0: return base\n    return cost[i] + min(dp(i-1), dp(i-2))",
+    "tags": ["Dynamic Programming"]
+  },
+  "backtracking": {
+    "title": "The Decision Tree (Backtracking)",
+    "analogy": "Undoing a Mistake",
+    "description": "Imagine trying to fit items in a suitcase. You put one in, see it doesn't fit, take it out, and try a smaller one.",
+    "understanding": {
+      "intuition": "Choice -> Explore -> Un-choice. Like DFS but you specifically 'undo' what you did so you can try other options from the same spot.",
+      "how_to_identify": "Keywords: 'all permutations', 'subsets', 'combinations', 'solve puzzle'.",
+      "core_logic": "Add to path, recurse, pop from path."
+    },
+    "template": "path.append(choice)\nbacktrack(next)\npath.pop()",
+    "tags": ["Backtracking"]
+  },
+  "monotonic-stack": {
+    "title": "The Waitlist (Monotonic Stack)",
+    "analogy": "The Tallest Person Behind You",
+    "description": "Imagine a line of people. As a new taller person enters, they 'kick out' everyone shorter than them from the front of the line because they 'block' them.",
+    "understanding": {
+      "intuition": "Keeps a list of elements waiting for something bigger (or smaller) to come along.",
+      "how_to_identify": "Keywords: 'next greater element', 'largest rectangle', 'histogram'.",
+      "core_logic": "While new element > top of stack: pop top and process (it found its match)."
+    },
+    "template": "while stack and nums[i] > nums[stack[-1]]:\n    prev_idx = stack.pop()\n    res[prev_idx] = nums[i]",
+    "tags": ["Monotonic Stack", "Stack"]
+  },
+  "prefix-sum": {
+    "title": "The Running Total (Prefix Sum)",
+    "analogy": "Bank Account Balance",
+    "description": "If you know your balance at the end of Monday and the end of Friday, you can figure out exactly how much you spent/earned during the week by subtracting them.",
+    "understanding": {
+      "intuition": "Calculate all sums from the start once. Then any range sum is just one subtraction.",
+      "how_to_identify": "Keywords: 'sum of subarray', 'range sum', 'constant time lookup'.",
+      "core_logic": "P[i] = nums[0] + ... + nums[i-1]. Sum(i, j) = P[j+1] - P[i]."
+    },
+    "template": "prefix = [0] * (n + 1)\nfor i in range(n): prefix[i+1] = prefix[i] + nums[i]",
+    "tags": ["Prefix Sum"]
+  },
+  "heap": {
+    "title": "The Priority Line (Heap)",
+    "analogy": "The Emergency Room",
+    "description": "It doesn't matter who arrived first. The person with the worst injury (highest priority) gets seen next. A heap keeps the 'most important' item at the top.",
+    "understanding": {
+      "intuition": "Maintains the min or max element automatically even as you add new things.",
+      "how_to_identify": "Keywords: 'Kth largest', 'top frequent', 'merge sorted lists'.",
+      "core_logic": "Push elements into heap. If heap size > K, pop. The top will be the Kth element."
+    },
+    "template": "heapq.heappush(h, val)\nif len(h) > k: heapq.heappop(h)",
+    "tags": ["Heap (Priority Queue)", "Heap"]
+  },
+  "union-find": {
+    "title": "The Group Joiner (Union Find)",
+    "analogy": "Marriage and Families",
+    "description": "If person A marries B, their families are now connected. Union Find tells you if two people are now part of the same big family tree.",
+    "understanding": {
+      "intuition": "Fast way to group items and check if they are in the same group.",
+      "how_to_identify": "Keywords: 'connectivity', 'connected components', 'islands', 'friend circles'.",
+      "core_logic": "Find root of each element. If roots are different, make one root point to the other."
+    },
+    "template": "def find(i): ... ; def union(i, j): ...",
+    "tags": ["Union Find", "Union-Find", "Disjoint Set"]
+  },
+  "trie": {
+    "title": "The Word Tree (Trie)",
+    "analogy": "Predictive Text",
+    "description": "As you type 'H-E-L', the tree branches from H to E to L, instantly showing you 'HELLO' and 'HELP'.",
+    "understanding": {
+      "intuition": "Saves space by sharing common prefixes. Very fast for word lookups.",
+      "how_to_identify": "Keywords: 'prefix', 'dictionary', 'autocomplete', 'word search'.",
+      "core_logic": "Each node is a character pointing to its possible next characters."
+    },
+    "template": "curr = root\nfor c in word: curr = curr.children[c]",
+    "tags": ["Trie"]
+  },
+  "topological-sort": {
+    "title": "The To-Do List (Topological Sort)",
+    "analogy": "College Prerequisites",
+    "description": "You can't take 'Advanced Java' until you finish 'Intro to CS'. This pattern finds the order you MUST follow to finish all tasks.",
+    "understanding": {
+      "intuition": "Orders items based on dependencies. Only works if there are no circles (you can't have A depend on B and B depend on A).",
+      "how_to_identify": "Keywords: 'prerequisites', 'dependencies', 'order of tasks', 'DAG'.",
+      "core_logic": "Start with tasks that have 0 requirements. As you finish a task, remove its requirement from others."
+    },
+    "template": "while q: u = q.popleft(); for v in adj[u]: in_degree[v] -= 1",
+    "tags": ["Topological Sort"]
+  },
+  "bit-manipulation": {
+    "title": "The Secret Switches (Bitwise)",
+    "analogy": "Light Switches",
+    "description": "Each bit is a switch (On/Off). You can flip them, check them, or clear them all at once very fast.",
+    "understanding": {
+      "intuition": "Uses computer's native language (0s and 1s) for extreme speed and low memory.",
+      "how_to_identify": "Keywords: 'single number', 'power of two', 'binary representation'.",
+      "core_logic": "AND (&) checks bits. OR (|) sets bits. XOR (^) flips bits. XORing a number with itself twice clears it."
+    },
+    "template": "res = 0; for n in nums: res ^= n",
+    "tags": ["Bit Manipulation"]
+  }
+}

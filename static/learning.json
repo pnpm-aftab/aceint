@@ -1,0 +1,657 @@
+{
+  "topics": [
+    {
+      "id": "intro-python",
+      "title": "Introduction to Python",
+      "level": "Beginner",
+      "description": "Essential Python syntax and idioms for efficient problem solving.",
+      "content": {
+        "explanation": "Python's power in LeetCode comes from its concise syntax and powerful built-in functions. Key areas to master: list comprehensions, slicing, unpacking, and the `collections` module (like `Counter` and `defaultdict`).",
+        "examples": [
+          {
+            "title": "Slicing and Unpacking",
+            "code": "nums = [1, 2, 3, 4, 5]\nreverse = nums[::-1]\nfirst, *middle, last = nums\n# first=1, middle=[2,3,4], last=5"
+          },
+          {
+            "title": "Defaultdict",
+            "code": "from collections import defaultdict\ndd = defaultdict(list)\ndd['a'].append(1) # No KeyError!"
+          }
+        ],
+        "dry_run": "Using Counter:\nInput: 'apple'\nProcess: Counter('apple')\n'a': 1\n'p': 2\n'l': 1\n'e': 1",
+        "starters": [
+          {
+            "id": "custom-1",
+            "title": "Sum of Two Numbers",
+            "difficulty": "Easy",
+            "description": "Write a function `solve(a, b)` that returns the sum of two numbers.",
+            "starterCode": "class Solution:\n    def solve(self, a, b):\n        # Your code here\n        return a + b",
+            "testCases": [[1, 2], [10, 20]],
+            "expectedOutputs": ["3", "30"]
+          },
+          {
+            "id": "custom-2",
+            "title": "List Sum",
+            "difficulty": "Easy",
+            "description": "Write a function `solve(nums)` that returns the sum of all numbers in a list.",
+            "starterCode": "class Solution:\n    def solve(self, nums):\n        # Your code here\n        return sum(nums)",
+            "testCases": [[[1, 2, 3]], [[10, -5, 5]]],
+            "expectedOutputs": ["6", "10"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Two Sum", "difficulty": "Easy", "leetcodeId": "1" },
+          { "id": 2, "title": "Valid Palindrome", "difficulty": "Easy", "leetcodeId": "125" }
+        ]
+      }
+    },
+    {
+      "id": "big-o",
+      "title": "Big O & Complexity",
+      "level": "Beginner",
+      "description": "Understand how to measure algorithm efficiency in time and space.",
+      "content": {
+        "explanation": "Big O notation describes the upper bound of an algorithm's growth rate. For LeetCode, $O(n)$ is usually great, $O(n^2)$ is for small inputs, and $O(2^n)$ is for backtracking.",
+        "examples": [
+          {
+            "title": "Common Complexities",
+            "code": "O(1) - Constant: Accessing list element\nO(log n) - Logarithmic: Binary Search\nO(n) - Linear: Single loop through list\nO(n log n) - Linearithmic: Efficient sorting (Merge Sort)\nO(n^2) - Quadratic: Nested loops"
+          }
+        ],
+        "dry_run": "Nested Loop Complexity:\nfor i in range(n):\n  for j in range(n):\n    # This runs n * n times = O(n^2)",
+        "starters": [],
+        "leetcode": [
+          { "id": 1, "title": "Search Insert Position", "difficulty": "Easy", "leetcodeId": "35" },
+          { "id": 2, "title": "Majority Element", "difficulty": "Easy", "leetcodeId": "169" }
+        ]
+      }
+    },
+    {
+      "id": "hash-tables",
+      "title": "Hash Tables (Dicts & Sets)",
+      "level": "Beginner",
+      "description": "Fast data retrieval using key-value pairs and unique collections.",
+      "content": {
+        "explanation": "Dictionaries (`dict`) and Sets (`set`) in Python use hash tables internally to provide average $O(1)$ time complexity for lookups, insertions, and deletions. They are the most common tool for optimizing LeetCode problems.",
+        "examples": [
+          {
+            "title": "Dictionary for Frequency",
+            "code": "counts = {}\nfor x in nums:\n    counts[x] = counts.get(x, 0) + 1"
+          },
+          {
+            "title": "Set for Uniqueness",
+            "code": "unique = set(nums)\nif val in unique: # O(1) average\n    return True"
+          }
+        ],
+        "dry_run": "Set Lookup:\nInput: nums=[1, 2, 2, 3], target=2\n1. seen = set()\n2. 1 not in seen -> seen.add(1) -> {1}\n3. 2 not in seen -> seen.add(2) -> {1, 2}\n4. 2 in seen -> True!",
+        "starters": [
+          {
+            "id": "custom-h1",
+            "title": "Contains Duplicate (Simplified)",
+            "difficulty": "Easy",
+            "description": "Given an array of integers, return `True` if any value appears at least twice, and `False` if every element is distinct.",
+            "starterCode": "class Solution:\n    def solve(self, nums):\n        # Your code here\n        seen = set()\n        for n in nums:\n            if n in seen: return True\n            seen.add(n)\n        return False",
+            "testCases": [[[1, 2, 3, 1]], [[1, 2, 3, 4]]],
+            "expectedOutputs": ["True", "False"]
+          },
+          {
+            "id": "custom-h2",
+            "title": "Char Frequency",
+            "difficulty": "Easy",
+            "description": "Return a dictionary containing the frequency of each character in a string.",
+            "starterCode": "class Solution:\n    def solve(self, s):\n        # Your code here\n        res = {}\n        for char in s:\n            res[char] = res.get(char, 0) + 1\n        return res",
+            "testCases": [["apple"], ["banana"]],
+            "expectedOutputs": ["{'a': 1, 'p': 2, 'l': 1, 'e': 1}", "{'b': 1, 'a': 3, 'n': 2}"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Contains Duplicate", "difficulty": "Easy", "leetcodeId": "217" },
+          { "id": 2, "title": "Group Anagrams", "difficulty": "Medium", "leetcodeId": "49" }
+        ]
+      }
+    },
+    {
+      "id": "stacks-queues",
+      "title": "Stacks & Queues",
+      "level": "Beginner",
+      "description": "Linear data structures with LIFO and FIFO order.",
+      "content": {
+        "explanation": "A Stack is Last-In-First-Out (LIFO), easily implemented with a Python `list` using `append()` and `pop()`. A Queue is First-In-First-Out (FIFO), best implemented with `collections.deque` using `append()` and `popleft()`.",
+        "examples": [
+          {
+            "title": "Stack (List)",
+            "code": "stack = []\nstack.append(1) # Push\nval = stack.pop() # Pop"
+          },
+          {
+            "title": "Queue (Deque)",
+            "code": "from collections import deque\nqueue = deque([1, 2, 3])\nqueue.append(4) # Enqueue\nval = queue.popleft() # Dequeue"
+          }
+        ],
+        "dry_run": "Reverse with Stack:\nInput: [1, 2, 3]\n1. Push 1, 2, 3 -> Stack: [1, 2, 3]\n2. Pop 3, Pop 2, Pop 1 -> Result: [3, 2, 1]",
+        "starters": [
+          {
+            "id": "custom-sq1",
+            "title": "Valid Parentheses (Simple)",
+            "difficulty": "Easy",
+            "description": "Given a string containing only '(' and ')', return `True` if the string is valid. A string is valid if open brackets are closed in the correct order.",
+            "starterCode": "class Solution:\n    def solve(self, s):\n        # Your code here\n        stack = []\n        for char in s:\n            if char == '(':\n                stack.append(char)\n            else:\n                if not stack: return False\n                stack.pop()\n        return not stack",
+            "testCases": [["(())"], ["()()"], ["(()"]],
+            "expectedOutputs": ["True", "True", "False"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Valid Parentheses", "difficulty": "Easy", "leetcodeId": "20" },
+          { "id": 2, "title": "Implement Queue using Stacks", "difficulty": "Easy", "leetcodeId": "232" }
+        ]
+      }
+    },
+    {
+      "id": "prefix-sum",
+      "title": "Prefix Sum",
+      "level": "Beginner",
+      "description": "Precompute cumulative sums to answer range queries in O(1).",
+      "content": {
+        "explanation": "Prefix sum is a technique where you create an array `P` where `P[i]` is the sum of elements from index `0` to `i`. This allows calculating the sum of any subarray `[i, j]` in constant time as `P[j] - P[i-1]`.",
+        "examples": [
+          {
+            "title": "Prefix Sum Array",
+            "code": "nums = [1, 2, 3, 4]\nprefix = [0] * (len(nums) + 1)\nfor i in range(len(nums)):\n    prefix[i+1] = prefix[i] + nums[i]\n# prefix = [0, 1, 3, 6, 10]"
+          }
+        ],
+        "dry_run": "Subarray Sum [1, 2]:\nInput: nums=[1, 2, 3, 4], range=(1, 2)\n1. prefix = [0, 1, 3, 6, 10]\n2. sum = prefix[3] - prefix[1] = 6 - 1 = 5\n3. check: nums[1]+nums[2] = 2+3 = 5.",
+        "starters": [
+          {
+            "id": "custom-ps1",
+            "title": "Running Sum of 1D Array",
+            "difficulty": "Easy",
+            "description": "Return the running sum of an array `nums`. For example, `[1, 2, 3]` becomes `[1, 3, 6]`.",
+            "starterCode": "class Solution:\n    def solve(self, nums):\n        # Your code here\n        for i in range(1, len(nums)):\n            nums[i] += nums[i-1]\n        return nums",
+            "testCases": [[[1, 2, 3, 4]], [[1, 1, 1, 1, 1]]],
+            "expectedOutputs": ["[1, 3, 6, 10]", "[1, 2, 3, 4, 5]"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Range Sum Query - Immutable", "difficulty": "Easy", "leetcodeId": "303" },
+          { "id": 2, "title": "Subarray Sum Equals K", "difficulty": "Medium", "leetcodeId": "560" }
+        ]
+      }
+    },
+    {
+      "id": "arrays-pointers",
+      "title": "Arrays & Two Pointers",
+      "level": "Beginner",
+      "description": "Fundamental array techniques for linear time solutions.",
+      "content": {
+        "explanation": "Two Pointers is a technique where two indices (usually `left` and `right`) move through an array to find a target. Common in sorted arrays or palindrome checks.",
+        "examples": [
+          {
+            "title": "Two Sum (Sorted)",
+            "code": "def twoSum(nums, target):\n    l, r = 0, len(nums) - 1\n    while l < r:\n        s = nums[l] + nums[r]\n        if s == target: return [l, r]\n        if s < target: l += 1\n        else: r -= 1"
+          }
+        ],
+        "dry_run": "Input: [1, 2, 4, 6], target=6\nL=0 (1), R=3 (6): 1+6=7 > 6 -> R=2\nL=0 (1), R=2 (4): 1+4=5 < 6 -> L=1\nL=1 (2), R=2 (4): 2+4=6 == 6 -> Return [1, 2]",
+        "starters": [
+          {
+            "id": "custom-3",
+            "title": "Reverse a List",
+            "difficulty": "Easy",
+            "description": "Write a function `solve(nums)` that reverses a list in-place and returns it.",
+            "starterCode": "class Solution:\n    def solve(self, nums):\n        # Your code here\n        nums.reverse()\n        return nums",
+            "testCases": [[[1, 2, 3]], [["a", "b", "c"]]],
+            "expectedOutputs": ["[3, 2, 1]", "['c', 'b', 'a']"]
+          },
+          {
+            "id": "custom-4",
+            "title": "Find Maximum",
+            "difficulty": "Easy",
+            "description": "Write a function `solve(nums)` that returns the largest number in a list.",
+            "starterCode": "class Solution:\n    def solve(self, nums):\n        # Your code here\n        return max(nums)",
+            "testCases": [[[1, 5, 3, 9, 2]], [[-10, -5, -20]]],
+            "expectedOutputs": ["9", "-5"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Container With Most Water", "difficulty": "Medium", "leetcodeId": "11" },
+          { "id": 2, "title": "3Sum", "difficulty": "Medium", "leetcodeId": "15" }
+        ]
+      }
+    },
+    {
+      "id": "binary-search",
+      "title": "Binary Search",
+      "level": "Intermediate",
+      "description": "Divide and conquer to search sorted data in logarithmic time.",
+      "content": {
+        "explanation": "Binary Search finds a target value within a sorted array by repeatedly dividing the search interval in half. Time complexity is $O(log n)$.",
+        "examples": [
+          {
+            "title": "Iterative Template",
+            "code": "l, r = 0, len(nums) - 1\nwhile l <= r:\n    mid = (l + r) // 2\n    if nums[mid] == target: return mid\n    if nums[mid] < target: l = mid + 1\n    else: r = mid - 1"
+          }
+        ],
+        "dry_run": "Input: [1, 3, 5, 7], target=5\n1. l=0, r=3, mid=1 (3) < 5 -> l=2\n2. l=2, r=3, mid=2 (5) == 5 -> Found!",
+        "starters": [
+          {
+            "id": "custom-bs1",
+            "title": "Standard Binary Search",
+            "difficulty": "Easy",
+            "description": "Find the index of `target` in sorted list `nums`. Return -1 if not found.",
+            "starterCode": "class Solution:\n    def solve(self, nums, target):\n        # Your code here\n        l, r = 0, len(nums) - 1\n        while l <= r:\n            mid = (l + r) // 2\n            if nums[mid] == target: return mid\n            if nums[mid] < target: l = mid + 1\n            else: r = mid - 1\n        return -1",
+            "testCases": [[[1, 2, 3, 4, 5], 3], [[1, 2, 3, 4, 5], 6]],
+            "expectedOutputs": ["2", "-1"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Binary Search", "difficulty": "Easy", "leetcodeId": "704" },
+          { "id": 2, "title": "Search in Rotated Sorted Array", "difficulty": "Medium", "leetcodeId": "33" }
+        ]
+      }
+    },
+    {
+      "id": "sorting",
+      "title": "Sorting Algorithms",
+      "level": "Intermediate",
+      "description": "Arranging data in a specific order (ascending/descending).",
+      "content": {
+        "explanation": "Sorting is a fundamental operation. While Python's `list.sort()` is $O(n log n)$, understanding Merge Sort, Quick Sort, and simpler ones like Bubble Sort is crucial for interviews.",
+        "examples": [
+          {
+            "title": "Python's Built-in Timsort",
+            "code": "nums.sort() # In-place O(n log n)\nsorted_nums = sorted(nums) # New list"
+          }
+        ],
+        "dry_run": "Bubble Sort Pass:\nInput: [3, 1, 2]\n1. Compare 3, 1 -> Swap -> [1, 3, 2]\n2. Compare 3, 2 -> Swap -> [1, 2, 3]",
+        "starters": [
+          {
+            "id": "custom-s1",
+            "title": "Bubble Sort (Simple)",
+            "difficulty": "Easy",
+            "description": "Implement a simple bubble sort to sort a list in ascending order.",
+            "starterCode": "class Solution:\n    def solve(self, nums):\n        # Your code here\n        n = len(nums)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if nums[j] > nums[j + 1]:\n                    nums[j], nums[j + 1] = nums[j + 1], nums[j]\n        return nums",
+            "testCases": [[[3, 2, 1]], [[5, 1, 4, 2]]],
+            "expectedOutputs": ["[1, 2, 3]", "[1, 2, 4, 5]"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Sort an Array", "difficulty": "Medium", "leetcodeId": "912" },
+          { "id": 2, "title": "Merge Sorted Array", "difficulty": "Easy", "leetcodeId": "88" }
+        ]
+      }
+    },
+    {
+      "id": "sliding-window",
+      "title": "Sliding Window",
+      "level": "Intermediate",
+      "description": "Efficiently process subarrays or substrings in linear time.",
+      "content": {
+        "explanation": "Sliding window maintains a 'window' over the data that expands or shrinks. It's used to avoid nested loops ($O(n^2)$) by reusing results from the previous window position ($O(n)$).",
+        "examples": [
+          {
+            "title": "Fixed Window Sum",
+            "code": "def max_sum(nums, k):\n    window_sum = sum(nums[:k])\n    max_s = window_sum\n    for i in range(len(nums) - k):\n        window_sum = window_sum - nums[i] + nums[i+k]\n        max_s = max(max_s, window_sum)\n    return max_s"
+          }
+        ],
+        "dry_run": "Input: [2, 1, 5, 1, 3], k=3\nWindow [2, 1, 5] sum = 8\nNext: 8 - 2 + 1 = 7 [1, 5, 1]\nNext: 7 - 1 + 3 = 9 [5, 1, 3]\nMax = 9",
+        "starters": [
+          {
+            "id": "custom-5",
+            "title": "Average of Subarrays",
+            "difficulty": "Easy",
+            "description": "Given an array and a number K, find the average of all contiguous subarrays of size K. Return them as a list.",
+            "starterCode": "class Solution:\n    def solve(self, nums, k):\n        # Your code here\n        result = []\n        window_sum = 0.0\n        window_start = 0\n        for window_end in range(len(nums)):\n            window_sum += nums[window_end]\n            if window_end >= k - 1:\n                result.append(window_sum / k)\n                window_sum -= nums[window_start]\n                window_start += 1\n        return result",
+            "testCases": [[[1, 3, 2, 6, -1], 5], [[1, 2, 3, 4, 5], 2]],
+            "expectedOutputs": ["[2.2]", "[1.5, 2.5, 3.5, 4.5]"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Best Time to Buy and Sell Stock", "difficulty": "Easy", "leetcodeId": "121" },
+          { "id": 2, "title": "Longest Repeating Character Replacement", "difficulty": "Medium", "leetcodeId": "424" }
+        ]
+      }
+    },
+    {
+      "id": "linked-lists",
+      "title": "Linked Lists",
+      "level": "Intermediate",
+      "description": "Dynamic data structures where elements point to the next.",
+      "content": {
+        "explanation": "Linked lists are nodes with `val` and `next`. They excel at insertions/deletions at the head. 'Dummy nodes' are a common trick to handle edge cases easily.",
+        "examples": [
+          {
+            "title": "Reverse Linked List",
+            "code": "def reverseList(head):\n    prev = None\n    curr = head\n    while curr:\n        next_temp = curr.next\n        curr.next = prev\n        prev = curr\n        curr = next_temp\n    return prev"
+          }
+        ],
+        "dry_run": "1 -> 2 -> 3 -> None\nprev=None, curr=1: next=2, 1.next=None, prev=1, curr=2\nprev=1, curr=2: next=3, 2.next=1, prev=2, curr=3\nprev=2, curr=3: next=None, 3.next=2, prev=3, curr=None\nReturn prev (3)",
+        "starters": [
+          {
+            "id": "custom-6",
+            "title": "Middle of Linked List",
+            "difficulty": "Easy",
+            "description": "Write a function `solve(head)` that returns the middle node of a linked list. If there are two middle nodes, return the second middle node. The input `head` is a `ListNode` object.",
+            "starterCode": "# Definition for singly-linked list.\n# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\nclass Solution:\n    def solve(self, head):\n        # Your code here\n        slow = fast = head\n        while fast and fast.next:\n            slow = slow.next\n            fast = fast.next.next\n        return slow",
+            "testCases": [[[1, 2, 3, 4, 5]], [[1, 2, 3, 4, 5, 6]]],
+            "expectedOutputs": ["[3, 4, 5]", "[4, 5, 6]"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Merge Two Sorted Lists", "difficulty": "Easy", "leetcodeId": "21" },
+          { "id": 2, "title": "Linked List Cycle", "difficulty": "Easy", "leetcodeId": "141" }
+        ]
+      }
+    },
+    {
+      "id": "trees-basics",
+      "title": "Trees & Traversals",
+      "level": "Intermediate",
+      "description": "Hierarchical data structures and how to visit every node.",
+      "content": {
+        "explanation": "Binary trees have a root and at most two children. Recursive DFS (Depth First Search) and iterative BFS (Breadth First Search) are mandatory skills.",
+        "examples": [
+          {
+            "title": "Inorder Traversal (Recursive)",
+            "code": "def inorder(root):\n    return inorder(root.left) + [root.val] + inorder(root.right) if root else []"
+          },
+          {
+            "title": "BFS (Level Order)",
+            "code": "from collections import deque\ndef bfs(root):\n    queue = deque([root])\n    while queue:\n        node = queue.popleft()\n        # process node, add children to queue"
+          }
+        ],
+        "dry_run": "Tree: [1, 2, 3]\nDFS Inorder: left(2) -> root(1) -> right(3) => [2, 1, 3]\nBFS: [1] -> pop 1, add 2,3 -> [2,3] -> pop 2 -> pop 3 => [1, 2, 3]",
+        "starters": [
+          {
+            "id": "custom-7",
+            "title": "Count Tree Nodes",
+            "difficulty": "Easy",
+            "description": "Write a function `solve(root)` that returns the total number of nodes in a binary tree. The input `root` is a `TreeNode` object.",
+            "starterCode": "# Definition for a binary tree node.\n# class TreeNode:\n#     def __init__(self, val=0, left=None, right=None):\n#         self.val = val\n#         self.left = left\n#         self.right = right\nclass Solution:\n    def solve(self, root):\n        # Your code here\n        if not root: return 0\n        return 1 + self.solve(root.left) + self.solve(root.right)",
+            "testCases": [[[1, 2, 3, 4, 5]], [[1, null, 2, 3]]],
+            "expectedOutputs": ["5", "3"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Invert Binary Tree", "difficulty": "Easy", "leetcodeId": "226" },
+          { "id": 2, "title": "Maximum Depth of Binary Tree", "difficulty": "Easy", "leetcodeId": "104" }
+        ]
+      }
+    },
+    {
+      "id": "heaps",
+      "title": "Heaps (Priority Queues)",
+      "level": "Intermediate",
+      "description": "Efficiently find the smallest or largest element in a dynamic set.",
+      "content": {
+        "explanation": "Heaps are binary trees where parents are always smaller (min-heap) or larger (max-heap) than children. In Python, `heapq` provides a min-heap. For max-heap, multiply values by -1.",
+        "examples": [
+          {
+            "title": "Top K Elements",
+            "code": "import heapq\ndef topK(nums, k):\n    heap = []\n    for n in nums:\n        heapq.heappush(heap, n)\n        if len(heap) > k: heapq.heappop(heap)\n    return heap"
+          }
+        ],
+        "dry_run": "Input: [3, 2, 1, 5, 6, 4], k=2\n- Push 3: [3]\n- Push 2: [2, 3]\n- Push 1: [1, 3] (pop 2)\n- Push 5: [3, 5] (pop 1)\n- Push 6: [5, 6] (pop 3)\n- Push 4: [5, 6] (pop 4)\nResult: [5, 6]",
+        "starters": [
+          {
+            "id": "custom-h1",
+            "title": "Min of List (using Heap)",
+            "difficulty": "Easy",
+            "description": "Use `heapq` to find the minimum element in a list.",
+            "starterCode": "import heapq\nclass Solution:\n    def solve(self, nums):\n        # Your code here\n        heapq.heapify(nums)\n        return nums[0]",
+            "testCases": [[[10, 5, 20, 1]], [[-1, -5, -2]]],
+            "expectedOutputs": ["1", "-5"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Kth Largest Element in an Array", "difficulty": "Medium", "leetcodeId": "215" },
+          { "id": 2, "title": "Find Median from Data Stream", "difficulty": "Hard", "leetcodeId": "295" }
+        ]
+      }
+    },
+    {
+      "id": "greedy",
+      "title": "Greedy Algorithms",
+      "level": "Intermediate",
+      "description": "Making locally optimal choices at each step.",
+      "content": {
+        "explanation": "Greedy algorithms build up a solution piece by step, always choosing the next piece that offers the most immediate benefit. They don't always work for all problems, but are very efficient when they do.",
+        "examples": [
+          {
+            "title": "Assign Cookies",
+            "code": "g.sort(); s.sort()\ni = j = 0\nwhile i < len(g) and j < len(s):\n    if s[j] >= g[i]: i += 1\n    j += 1\nreturn i"
+          }
+        ],
+        "dry_run": "Assign Cookies:\nChildren greed: [1, 2], Cookies: [1, 2, 3]\n1. Child 1 (1) gets Cookie 1 (1) -> Happy\n2. Child 2 (2) gets Cookie 2 (2) -> Happy\nTotal: 2",
+        "starters": [
+          {
+            "id": "custom-gr1",
+            "title": "Assign Cookies (Simple)",
+            "difficulty": "Easy",
+            "description": "Maximize the number of happy children by assigning cookies that meet or exceed their greed factor.",
+            "starterCode": "class Solution:\n    def solve(self, g, s):\n        g.sort()\n        s.sort()\n        i = j = 0\n        while i < len(g) and j < len(s):\n            if s[j] >= g[i]: i += 1\n            j += 1\n        return i",
+            "testCases": [[[1, 2, 3], [1, 1]], [[1, 2], [1, 2, 3]]],
+            "expectedOutputs": ["1", "2"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Jump Game", "difficulty": "Medium", "leetcodeId": "55" },
+          { "id": 2, "title": "Gas Station", "difficulty": "Medium", "leetcodeId": "134" }
+        ]
+      }
+    },
+    {
+      "id": "intervals",
+      "title": "Intervals",
+      "level": "Intermediate",
+      "description": "Manage overlapping ranges and scheduling problems.",
+      "content": {
+        "explanation": "Interval problems involve ranges `[start, end]`. The key is almost always to **sort by start time** (or sometimes end time) and then iterate through, comparing the current interval's start with the previous one's end.",
+        "examples": [
+          {
+            "title": "Merge Overlapping Intervals",
+            "code": "intervals.sort()\nmerged = [intervals[0]]\nfor start, end in intervals[1:]:\n    if start <= merged[-1][1]:\n        merged[-1][1] = max(merged[-1][1], end)\n    else:\n        merged.append([start, end])"
+          }
+        ],
+        "dry_run": "Merge [[1,3], [2,6], [8,10]]:\n1. merged = [[1,3]]\n2. [2,6]: 2 <= 3 -> overlap. merged[-1] = [1, max(3,6)] = [1,6]\n3. [8,10]: 8 > 6 -> no overlap. append. merged = [[1,6], [8,10]]",
+        "starters": [
+          {
+            "id": "custom-int1",
+            "title": "Do Intervals Overlap?",
+            "difficulty": "Easy",
+            "description": "Given two intervals `a` and `b`, return `True` if they overlap, `False` otherwise.",
+            "starterCode": "class Solution:\n    def solve(self, a, b):\n        # Your code here\n        return max(a[0], b[0]) <= min(a[1], b[1])",
+            "testCases": [[[1, 5], [4, 8]], [[1, 2], [3, 4]]],
+            "expectedOutputs": ["True", "False"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Merge Intervals", "difficulty": "Medium", "leetcodeId": "56" },
+          { "id": 2, "title": "Insert Interval", "difficulty": "Medium", "leetcodeId": "57" }
+        ]
+      }
+    },
+    {
+      "id": "dynamic-programming",
+      "title": "Dynamic Programming",
+      "level": "Advanced",
+      "description": "Solve complex problems by breaking them into overlapping subproblems.",
+      "content": {
+        "explanation": "DP is about remembering previous results (memoization) to avoid recalculating. If you see 'find max/min ways' and subproblems overlap, it's likely DP.",
+        "examples": [
+          {
+            "title": "Fibonacci (Bottom-Up)",
+            "code": "def fib(n):\n    if n <= 1: return n\n    dp = [0] * (n + 1)\n    dp[1] = 1\n    for i in range(2, n + 1):\n        dp[i] = dp[i-1] + dp[i-2]\n    return dp[n]"
+          }
+        ],
+        "dry_run": "Fib(4):\ndp[0]=0, dp[1]=1\ni=2: dp[2] = 1+0 = 1\ni=3: dp[3] = 1+1 = 2\ni=4: dp[4] = 2+1 = 3\nResult: 3",
+        "starters": [
+          {
+            "id": "custom-8",
+            "title": "Min Cost Climbing Stairs (Simple)",
+            "difficulty": "Easy",
+            "description": "You are given an integer array `cost` where `cost[i]` is the cost of `i-th` step on a staircase. Once you pay the cost, you can either climb one or two steps. You can start from step 0 or step 1. Return the minimum cost to reach the top of the floor.",
+            "starterCode": "class Solution:\n    def solve(self, cost):\n        # Your code here\n        n = len(cost)\n        dp = [0] * (n + 1)\n        for i in range(2, n + 1):\n            dp[i] = min(dp[i-1] + cost[i-1], dp[i-2] + cost[i-2])\n        return dp[n]",
+            "testCases": [[[10, 15, 20]], [[1, 100, 1, 1, 1, 100, 1, 1, 100, 1]]],
+            "expectedOutputs": ["15", "6"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Climbing Stairs", "difficulty": "Easy", "leetcodeId": "70" },
+          { "id": 2, "title": "Coin Change", "difficulty": "Medium", "leetcodeId": "322" }
+        ]
+      }
+    },
+    {
+      "id": "backtracking",
+      "title": "Backtracking",
+      "level": "Advanced",
+      "description": "Explore all possible paths and backtrack when you hit a dead end.",
+      "content": {
+        "explanation": "Backtracking is DFS for state space search. You 'make a choice', 'recurse', and then 'undo the choice'. It's commonly used for permutations, combinations, and grid puzzles like Sudoku.",
+        "examples": [
+          {
+            "title": "Subsets Template",
+            "code": "def subsets(nums):\n    res = []\n    def backtrack(start, path):\n        res.append(path[:])\n        for i in range(start, len(nums)):\n            path.append(nums[i])\n            backtrack(i + 1, path)\n            path.pop()\n    backtrack(0, [])\n    return res"
+          }
+        ],
+        "dry_run": "Input: [1, 2]\n- start=0, path=[]: res=[[]]\n- i=0: path=[1], backtrack(1, [1]): res=[[], [1]]\n  - i=1: path=[1, 2], backtrack(2, [1, 2]): res=[[], [1], [1, 2]]\n  - pop 2: path=[1]\n- pop 1: path=[]\n- i=1: path=[2], backtrack(2, [2]): res=[[], [1], [1, 2], [2]]\n- pop 2: path=[]",
+        "starters": [
+          {
+            "id": "custom-bt1",
+            "title": "All Binary Strings",
+            "difficulty": "Easy",
+            "description": "Generate all possible binary strings of length `n` using backtracking.",
+            "starterCode": "class Solution:\n    def solve(self, n):\n        res = []\n        def backtrack(path):\n            if len(path) == n:\n                res.append(\"\".join(path))\n                return\n            for bit in [\"0\", \"1\"]:\n                path.append(bit)\n                backtrack(path)\n                path.pop()\n        backtrack([])\n        return res",
+            "testCases": [[2], [3]],
+            "expectedOutputs": ["['00', '01', '10', '11']", "['000', '001', '010', '011', '100', '101', '110', '111']"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Subsets", "difficulty": "Medium", "leetcodeId": "78" },
+          { "id": 2, "title": "Permutations", "difficulty": "Medium", "leetcodeId": "46" }
+        ]
+      }
+    },
+    {
+      "id": "graphs",
+      "title": "Graphs & BFS/DFS",
+      "level": "Advanced",
+      "description": "Navigate complex networks of nodes and edges.",
+      "content": {
+        "explanation": "Graphs represent connections (edges) between entities (nodes). You must know how to represent them (Adjacency List is best for Python) and how to traverse them (BFS for shortest paths, DFS for reachability).",
+        "examples": [
+          {
+            "title": "DFS Adjacency List",
+            "code": "def dfs(node, adj, visited):\n    if node in visited: return\n    visited.add(node)\n    for neighbor in adj[node]:\n        dfs(neighbor, adj, visited)"
+          }
+        ],
+        "dry_run": "Graph: 0-1, 0-2\nDFS(0): visit 0, neighbors [1, 2]\n- visit 1, no neighbors\n- visit 2, no neighbors\nVisited: {0, 1, 2}",
+        "starters": [
+          {
+            "id": "custom-g1",
+            "title": "Find Neighbors",
+            "difficulty": "Easy",
+            "description": "Given an adjacency list representing a graph and a node, return all its neighbors.",
+            "starterCode": "class Solution:\n    def solve(self, adj, node):\n        # Your code here\n        return adj.get(node, [])",
+            "testCases": [[{"0": [1, 2], "1": [0], "2": [0]}, "0"], [{"0": [1, 2], "1": [0], "2": [0]}, "1"]],
+            "expectedOutputs": ["[1, 2]", "[0]"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Number of Islands", "difficulty": "Medium", "leetcodeId": "200" },
+          { "id": 2, "title": "Clone Graph", "difficulty": "Medium", "leetcodeId": "133" }
+        ]
+      }
+    },
+    {
+      "id": "tries",
+      "title": "Tries (Prefix Trees)",
+      "level": "Advanced",
+      "description": "Specialized trees for efficient string searches and prefix matching.",
+      "content": {
+        "explanation": "A Trie is a tree where each node represents a character. It's used for autocomplete and spell checkers. Each node has a `children` dictionary and an `is_end` flag.",
+        "examples": [
+          {
+            "title": "Trie Node Structure",
+            "code": "class TrieNode:\n    def __init__(self):\n        self.children = {}\n        self.is_end = False"
+          }
+        ],
+        "dry_run": "Insert 'apple':\nroot -> 'a' -> 'p' -> 'p' -> 'l' -> 'e' (is_end=True)\nSearch 'app':\nroot -> 'a' -> 'p' -> 'p' (found, is_end=False)",
+        "starters": [
+          {
+            "id": "custom-tr1",
+            "title": "Insert into Trie",
+            "difficulty": "Medium",
+            "description": "Implement the `insert` method for a simple Trie.",
+            "starterCode": "class TrieNode:\n    def __init__(self):\n        self.children = {}\n        self.is_end = False\n\nclass Solution:\n    def solve(self, words):\n        root = TrieNode()\n        for word in words:\n            curr = root\n            for char in word:\n                if char not in curr.children:\n                    curr.children[char] = TrieNode()\n                curr = curr.children[char]\n            curr.is_end = True\n        return True # Return true if completed",
+            "testCases": [[["apple", "app"]]],
+            "expectedOutputs": ["True"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Implement Trie (Prefix Tree)", "difficulty": "Medium", "leetcodeId": "208" },
+          { "id": 2, "title": "Word Search II", "difficulty": "Hard", "leetcodeId": "212" }
+        ]
+      }
+    },
+    {
+      "id": "bit-manipulation",
+      "title": "Bit Manipulation",
+      "level": "Advanced",
+      "description": "Optimize algorithms using low-level bitwise operations.",
+      "content": {
+        "explanation": "Bit manipulation involves operations on individual bits (AND, OR, XOR, NOT, Shifts). It's incredibly fast and space-efficient for specific problems like finding a single unique number.",
+        "examples": [
+          {
+            "title": "XOR for Unique Number",
+            "code": "def findSingle(nums):\n    res = 0\n    for n in nums: res ^= n\n    return res"
+          }
+        ],
+        "dry_run": "Input: [2, 2, 1]\n- res = 0 ^ 2 = 2 (Binary 00 ^ 10 = 10)\n- res = 2 ^ 2 = 0 (Binary 10 ^ 10 = 00)\n- res = 0 ^ 1 = 1 (Binary 00 ^ 01 = 01)\nResult: 1",
+        "starters": [
+          {
+            "id": "custom-bm1",
+            "title": "Is Even? (Bitwise)",
+            "difficulty": "Easy",
+            "description": "Check if a number is even using only bitwise operations.",
+            "starterCode": "class Solution:\n    def solve(self, n):\n        # Your code here\n        return (n & 1) == 0",
+            "testCases": [[2], [3], [100]],
+            "expectedOutputs": ["True", "False", "True"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Single Number", "difficulty": "Easy", "leetcodeId": "136" },
+          { "id": 2, "title": "Number of 1 Bits", "difficulty": "Easy", "leetcodeId": "191" }
+        ]
+      }
+    },
+    {
+      "id": "math-geometry",
+      "title": "Math & Geometry",
+      "level": "Advanced",
+      "description": "Mathematical concepts and geometric algorithms for problem solving.",
+      "content": {
+        "explanation": "Math problems often involve number theory (GCD, Primes), combinatorics, or geometry (points, lines, area). Key skills include modular arithmetic and understanding the properties of shapes.",
+        "examples": [
+          {
+            "title": "GCD (Greatest Common Divisor)",
+            "code": "def gcd(a, b):\n    while b:\n        a, b = b, a % b\n    return a"
+          }
+        ],
+        "dry_run": "GCD(12, 18):\n1. 12, 18 % 12 = 6\n2. 6, 12 % 6 = 0\nResult: 6",
+        "starters": [
+          {
+            "id": "custom-math1",
+            "title": "Is Prime?",
+            "difficulty": "Easy",
+            "description": "Check if a number `n` is prime.",
+            "starterCode": "class Solution:\n    def solve(self, n):\n        if n < 2: return False\n        for i in range(2, int(n**0.5) + 1):\n            if n % i == 0: return False\n        return True",
+            "testCases": [[7], [10], [13]],
+            "expectedOutputs": ["True", "False", "True"]
+          }
+        ],
+        "leetcode": [
+          { "id": 1, "title": "Palindrome Number", "difficulty": "Easy", "leetcodeId": "9" },
+          { "id": 2, "title": "Pow(x, n)", "difficulty": "Medium", "leetcodeId": "50" }
+        ]
+      }
+    }
+  ]
+}

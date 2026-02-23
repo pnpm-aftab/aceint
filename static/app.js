@@ -51,11 +51,11 @@ class RoadmapManager {
         });
 
         // Modal close buttons
-        document.getElementById('modalBackBtn').addEventListener('click', () => this.closeModal());
-        document.getElementById('modalCloseBtn').addEventListener('click', () => this.closeModal());
+        document.getElementById('modalBackBtn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('modalCloseBtn')?.addEventListener('click', () => this.closeModal());
 
         // Close modal on backdrop click
-        document.getElementById('dayDetailModal').addEventListener('click', (e) => {
+        document.getElementById('dayDetailModal')?.addEventListener('click', (e) => {
             if (e.target.id === 'dayDetailModal') {
                 this.closeModal();
             }
@@ -74,17 +74,42 @@ class RoadmapManager {
         const mainContent = document.querySelector('.main-content');
         const sidebar = document.querySelector('.sidebar');
         const roadmapPage = document.getElementById('roadmapPage');
+        const learningPage = document.getElementById('learningPage');
+        const guidePage = document.getElementById('guidePage');
 
         if (page === 'roadmap') {
             mainContent.style.display = 'none';
             sidebar.style.display = 'none';
             roadmapPage.style.display = 'flex';
             roadmapPage.style.flexDirection = 'column';
+            learningPage.style.display = 'none';
             this.renderRoadmap();
+        } else if (page === 'learning') {
+            mainContent.style.display = 'none';
+            sidebar.style.display = 'none';
+            roadmapPage.style.display = 'none';
+            learningPage.style.display = 'flex';
+            guidePage.style.display = 'none';
+            learningPage.style.flexDirection = 'column';
+            if (this.app.learning) {
+                this.app.learning.renderLearning();
+            }
+        } else if (page === 'guide') {
+            mainContent.style.display = 'none';
+            sidebar.style.display = 'none';
+            roadmapPage.style.display = 'none';
+            learningPage.style.display = 'none';
+            guidePage.style.display = 'flex';
+            guidePage.style.flexDirection = 'column';
+            if (this.app.guide) {
+                this.app.guide.renderGuide();
+            }
         } else {
             mainContent.style.display = 'flex';
             sidebar.style.display = 'flex';
             roadmapPage.style.display = 'none';
+            learningPage.style.display = 'none';
+            guidePage.style.display = 'none';
         }
     }
 
@@ -366,6 +391,356 @@ class RoadmapManager {
 
 // Custom Select Dropdown Component
 
+// Learning Manager
+class LearningManager {
+    constructor(app) {
+        this.app = app;
+        this.learningData = null;
+    }
+
+    async init() {
+        await this.loadLearningData();
+        this.bindEvents();
+    }
+
+    async loadLearningData() {
+        try {
+            const response = await fetch('/static/learning.json');
+            this.learningData = await response.json();
+        } catch (error) {
+            console.error('Failed to load learning data:', error);
+        }
+    }
+
+    bindEvents() {
+        // Nav tabs are handled by switchPage
+        document.getElementById('topicModalBackBtn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('topicModalCloseBtn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('topicDetailModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'topicDetailModal') {
+                this.closeModal();
+            }
+        });
+    }
+
+    renderLearning() {
+        if (!this.learningData) return;
+        const container = document.getElementById('learningTopics');
+        if (!container) return;
+        container.innerHTML = '';
+
+        this.learningData.topics.forEach(topic => {
+            const starterCount = (topic.content.starters || []).length;
+            const leetcodeCount = (topic.content.leetcode || []).length;
+            const totalQuestions = starterCount + leetcodeCount;
+
+            const card = document.createElement('div');
+            card.className = 'topic-card';
+            card.innerHTML = `
+                <div class="topic-level ${topic.level.toLowerCase()}">${topic.level}</div>
+                <h3 class="topic-title">${topic.title}</h3>
+                <p class="topic-desc">${topic.description}</p>
+                <div class="topic-footer">
+                    <span>${totalQuestions} Questions</span>
+                    <button class="btn btn-sm btn-ghost">Study →</button>
+                </div>
+            `;
+            card.addEventListener('click', () => this.openTopic(topic));
+            container.appendChild(card);
+        });
+    }
+
+    openTopic(topic) {
+        const modal = document.getElementById('topicDetailModal');
+        const modalBody = document.getElementById('topicModalBody');
+        if (!modal || !modalBody) return;
+
+        modalBody.innerHTML = `
+            <div class="topic-detail">
+                <div class="topic-detail-header">
+                    <span class="badge ${topic.level.toLowerCase()}">${topic.level}</span>
+                    <h2>${topic.title}</h2>
+                </div>
+                
+                <div class="topic-detail-content">
+                    <section class="topic-section">
+                        <h3>Explanation</h3>
+                        <div class="topic-explanation">${topic.content.explanation}</div>
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>Example</h3>
+                        ${topic.content.examples.map(ex => `
+                            <div class="example-box">
+                                <h4>${ex.title}</h4>
+                                <pre class="code-block"><code>${this.app.escapeHtml(ex.code)}</code></pre>
+                            </div>
+                        `).join('')}
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>Dry Run</h3>
+                        <div class="dry-run-box">${topic.content.dry_run.replace(/\n/g, '<br>')}</div>
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>Starter Problems</h3>
+                        <div class="topic-questions starters">
+                            ${(topic.content.starters || []).map(q => `
+                                <div class="day-problem-item custom-problem" data-custom-id="${q.id}">
+                                    <div class="day-problem-info">
+                                        <div class="day-problem-id">Custom</div>
+                                        <div class="day-problem-title">${this.app.escapeHtml(q.title)}</div>
+                                    </div>
+                                    <span class="day-problem-difficulty ${q.difficulty}">${q.difficulty}</span>
+                                </div>
+                            `).join('')}
+                            ${!(topic.content.starters && topic.content.starters.length) ? '<p class="topic-empty">No starters for this topic yet.</p>' : ''}
+                        </div>
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>LeetCode Challenges</h3>
+                        <div class="topic-questions leetcode-challenges">
+                            ${(topic.content.leetcode || topic.content.questions || []).map(q => `
+                                <div class="day-problem-item leetcode-problem" data-problem-id="${q.leetcodeId}">
+                                    <div class="day-problem-info">
+                                        <div class="day-problem-id">#${q.leetcodeId}</div>
+                                        <div class="day-problem-title">${this.app.escapeHtml(q.title)}</div>
+                                    </div>
+                                    <span class="day-problem-difficulty ${q.difficulty}">${q.difficulty}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                </div>
+            </div>
+        `;
+
+        // Add click handlers for custom starters
+        modalBody.querySelectorAll('.custom-problem').forEach(item => {
+            item.addEventListener('click', () => {
+                const customId = item.dataset.customId;
+                const problem = topic.content.starters.find(p => p.id === customId);
+                this.closeModal();
+                this.app.roadmap.switchPage('problems');
+                this.app.loadCustomProblem(problem);
+            });
+        });
+
+        // Add click handlers for leetcode problems
+        modalBody.querySelectorAll('.leetcode-problem').forEach(item => {
+            item.addEventListener('click', () => {
+                const problemId = item.dataset.problemId;
+                this.closeModal();
+                this.app.roadmap.switchPage('problems');
+                this.app.loadProblem(problemId);
+            });
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    closeModal() {
+        document.getElementById('topicDetailModal').style.display = 'none';
+    }
+}
+
+// Guide Manager
+class GuideManager {
+    constructor(app) {
+        this.app = app;
+        this.patternsData = null;
+    }
+
+    async init() {
+        await this.loadPatternsData();
+        this.bindEvents();
+    }
+
+    async loadPatternsData() {
+        try {
+            const response = await fetch('/static/patterns.json');
+            this.patternsData = await response.json();
+        } catch (error) {
+            console.error('Failed to load patterns data:', error);
+        }
+    }
+
+    bindEvents() {
+        document.getElementById('patternModalBackBtn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('patternModalCloseBtn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('patternDetailModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'patternDetailModal') {
+                this.closeModal();
+            }
+        });
+    }
+
+    renderGuide() {
+        if (!this.patternsData) return;
+        const container = document.getElementById('guideSections');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const levels = [
+            {
+                title: "Level 1: The Building Blocks",
+                subtitle: "How computers store and quickly find data.",
+                ids: ["hash-table", "prefix-sum"]
+            },
+            {
+                title: "Level 2: The Squeeze & Search",
+                subtitle: "Efficiently finding items in sorted lists.",
+                ids: ["binary-search", "two-pointers"]
+            },
+            {
+                title: "Level 3: The Sliding View",
+                subtitle: "Processing chunks of data in one pass.",
+                ids: ["sliding-window", "monotonic-stack"]
+            },
+            {
+                title: "Level 4: The Explorers",
+                subtitle: "Finding paths and trying every combination.",
+                ids: ["dfs", "bfs", "backtracking"]
+            },
+            {
+                title: "Level 5: Master Strategist",
+                subtitle: "Advanced techniques for maximum performance.",
+                ids: ["dynamic-programming", "greedy", "heap", "union-find", "trie", "topological-sort", "bit-manipulation"]
+            }
+        ];
+
+        levels.forEach(level => {
+            const section = this.createSection(level.title, level.subtitle);
+            const grid = section.querySelector('.section-grid');
+            
+            level.ids.forEach(id => {
+                const pattern = this.patternsData[id];
+                if (!pattern) return;
+
+                const card = document.createElement('div');
+                card.className = 'guide-card pattern-card';
+                card.innerHTML = `
+                    <div class="pattern-analogy-tag">${this.app.escapeHtml(pattern.analogy)}</div>
+                    <h3 class="guide-card-title">${this.app.escapeHtml(pattern.title)}</h3>
+                    <p class="guide-card-desc">${this.app.escapeHtml(pattern.description)}</p>
+                    <div class="guide-card-footer">
+                        <button class="btn btn-sm btn-ghost">Learn This Concept →</button>
+                    </div>
+                `;
+                card.addEventListener('click', () => this.openPattern(id, pattern));
+                grid.appendChild(card);
+            });
+            container.appendChild(section);
+        });
+    }
+
+    createSection(title, subtitle) {
+        const section = document.createElement('div');
+        section.className = 'guide-section';
+        section.innerHTML = `
+            <div class="section-header">
+                <h2 class="section-title">${title}</h2>
+                <p class="section-subtitle">${subtitle}</p>
+            </div>
+            <div class="section-grid"></div>
+        `;
+        return section;
+    }
+
+    openPattern(id, pattern) {
+        const modal = document.getElementById('patternDetailModal');
+        const modalBody = document.getElementById('patternModalBody');
+        if (!modal || !modalBody) return;
+
+        modalBody.innerHTML = `
+            <div class="pattern-detail">
+                <div class="pattern-detail-header">
+                    <h2>${this.app.escapeHtml(pattern.title)}</h2>
+                    <p class="pattern-detail-desc">${this.app.escapeHtml(pattern.description)}</p>
+                </div>
+                
+                <div class="pattern-detail-content">
+                    <section class="topic-section">
+                        <h3>1. Intuition</h3>
+                        <div class="topic-explanation">${this.app.escapeHtml(pattern.understanding.intuition)}</div>
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>2. How to Identify</h3>
+                        <div class="topic-explanation">${this.app.escapeHtml(pattern.understanding.how_to_identify)}</div>
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>3. Core Logic</h3>
+                        <div class="topic-explanation">${this.app.escapeHtml(pattern.understanding.core_logic)}</div>
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>4. Code Template</h3>
+                        <pre class="code-block"><code>${this.app.escapeHtml(pattern.template)}</code></pre>
+                    </section>
+
+                    <section class="topic-section">
+                        <h3>5. Associated Problems</h3>
+                        <p class="section-subtitle">Click to jump to any problem in the database covered by this pattern.</p>
+                        <div class="topic-questions" id="patternProblemList">
+                            <div class="loading">Mapping all problems...</div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        `;
+
+        this.renderPatternProblems(id);
+        modal.style.display = 'flex';
+    }
+
+    renderPatternProblems(patternId) {
+        const container = document.getElementById('patternProblemList');
+        if (!container) return;
+
+        // Find all problems that match this pattern
+        const matchedProblems = this.app.problems.filter(p => {
+            const tags = p.topic_tags || [];
+            return this.app.getPatternFromTags(tags) === patternId;
+        });
+
+        if (matchedProblems.length === 0) {
+            container.innerHTML = '<p class="topic-empty">No problems found for this pattern in the database.</p>';
+            return;
+        }
+
+        container.innerHTML = matchedProblems.map(p => `
+            <div class="day-problem-item" data-problem-id="${p.id}">
+                <div class="day-problem-info">
+                    <div class="day-problem-id">#${p.frontend_id || p.id}</div>
+                    <div class="day-problem-title">${this.app.escapeHtml(p.title)}</div>
+                </div>
+                <span class="day-problem-difficulty ${p.difficulty}">${p.difficulty}</span>
+            </div>
+        `).join('');
+
+        container.querySelectorAll('.day-problem-item').forEach(item => {
+            item.addEventListener('click', () => {
+                this.closeModal();
+                this.app.roadmap.switchPage('problems');
+                this.app.loadProblem(item.dataset.problemId);
+            });
+        });
+    }
+
+    closeModal() {
+        document.getElementById('patternDetailModal').style.display = 'none';
+    }
+
+    renderMarkdown(text) {
+        if (window.marked) return marked.parse(text);
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    }
+}
+
 // Custom Select Dropdown Component
 class CustomSelect {
     constructor(element, onChange) {
@@ -556,6 +931,9 @@ class LeetCodeApp {
         this.editor = null;
         this.customSelects = {};
         this.roadmap = null;
+        this.learning = null;
+        this.guide = null;
+        this.topSolutions = null;
         this.currentSolutionPath = null;
 
         this.hintsSection = null;
@@ -577,9 +955,25 @@ class LeetCodeApp {
         // Load API key from localStorage
         this.apiKey = localStorage.getItem('openrouter_api_key') || '';
 
-        // Initialize roadmap
+        // Load Top Solutions
+        try {
+            const resp = await fetch('/static/top_solutions.json');
+            this.topSolutions = await resp.json();
+        } catch (e) {
+            console.error('Failed to load top solutions:', e);
+        }
+
+        // Instantiate managers first
         this.roadmap = new RoadmapManager(this);
-        await this.roadmap.init();
+        this.learning = new LearningManager(this);
+        this.guide = new GuideManager(this);
+
+        // Then initialize them (can run in parallel)
+        await Promise.all([
+            this.roadmap.init(),
+            this.learning.init(),
+            this.guide.init()
+        ]);
     }
 
     cacheElements() {
@@ -970,6 +1364,46 @@ class LeetCodeApp {
         }
     }
 
+    async loadCustomProblem(problemData) {
+        // Prepare the data to match expected structure
+        const problem = {
+            id: problemData.id,
+            frontend_id: 'Custom',
+            title: problemData.title,
+            difficulty: problemData.difficulty,
+            content: problemData.description,
+            example_test_cases: (problemData.testCases || []).join('\n'),
+            test_cases: problemData.testCases || [],
+            expected_outputs: problemData.expectedOutputs || [],
+            code_snippets: [
+                { lang: 'python3', code: problemData.starterCode }
+            ],
+            type: 'custom',
+            topic_tags: ['Starter'],
+            solved: false
+        };
+
+        // Check if solved from local problems list or progress
+        const pid = String(problem.id);
+        const isSolved = this.problems.some(p => String(p.id) === pid && p.solved);
+        problem.solved = isSolved;
+
+        this.currentProblem = problem;
+        this.renderProblem(problem);
+
+        // Ensure we are on the description tab
+        this.switchDescriptionTab('description');
+
+        // Clear hints and draft badge when loading new problem
+        this.clearHints();
+        if (this.draftBadge) this.draftBadge.style.display = 'none';
+
+        // Show problem view
+        this.welcomeScreen.style.display = 'none';
+        this.problemView.style.display = 'flex';
+        this.testResults.style.display = 'none';
+    }
+
     renderProblem(problem) {
         // Basic info
         this.problemId.textContent = `#${problem.frontend_id || problem.id}`;
@@ -980,10 +1414,14 @@ class LeetCodeApp {
         // Solved button state
         this.updateSolvedButton(problem.solved);
 
+        // Pattern identification
+        const patternId = this.getPatternFromTags(problem.topic_tags || []);
+        const patternName = patternId ? (this.guide.patternsData[patternId]?.title || 'Miscellaneous') : 'Miscellaneous';
+        
         // Meta info
         const acceptance = problem.acceptance_rate ? `${(problem.acceptance_rate * 100).toFixed(1)}% Acceptance` : '';
-        const likes = problem.likes ? `${(problem.likes / 1000).toFixed(1)}K likes` : '';
-        this.problemMeta.textContent = [acceptance, likes].filter(Boolean).join(' • ');
+        const patternLabel = `<span class="pattern-link" data-pattern-id="${patternId}">${patternName}</span>`;
+        this.problemMeta.innerHTML = `${patternLabel} • ${acceptance}`;
 
         // Tags
         this.problemTags.innerHTML = '';
@@ -998,6 +1436,15 @@ class LeetCodeApp {
             this.problemTags.appendChild(tagEl);
         });
 
+        // Add pattern link listener
+        const pl = document.querySelector('.pattern-link');
+        if (pl && patternId && this.guide.patternsData[patternId]) {
+            pl.addEventListener('click', () => {
+                this.roadmap.switchPage('guide');
+                this.guide.openPattern(patternId, this.guide.patternsData[patternId]);
+            });
+        }
+
         // Description
         this.problemContent.innerHTML = problem.content || 'No description available.';
 
@@ -1006,6 +1453,59 @@ class LeetCodeApp {
 
         // Code editor
         this.loadProblemCode(problem);
+
+        // Best Solution check
+        this.renderBestSolution(problem.id);
+    }
+
+    getPatternFromTags(tags) {
+        const patternMapping = {
+            "hash-table": ["Hash Table", "Counting"],
+            "two-pointers": ["Two Pointers", "Two-Pointers", "Two Pointers"],
+            "sliding-window": ["Sliding Window"],
+            "binary-search": ["Binary Search"],
+            "dfs": ["Depth-First Search", "Tree", "Binary Tree", "Binary Search Tree"],
+            "bfs": ["Breadth-First Search"],
+            "backtracking": ["Backtracking"],
+            "dynamic-programming": ["Dynamic Programming"],
+            "greedy": ["Greedy", "Sorting"],
+            "heap": ["Heap (Priority Queue)", "Heap"],
+            "monotonic-stack": ["Monotonic Stack", "Stack"],
+            "prefix-sum": ["Prefix Sum"],
+            "union-find": ["Union Find", "Union-Find", "Disjoint Set"],
+            "topological-sort": ["Topological Sort"],
+            "trie": ["Trie"],
+            "bit-manipulation": ["Bit Manipulation"]
+        };
+
+        for (const [patternId, searchTags] of Object.entries(patternMapping)) {
+            if (tags.some(tag => searchTags.includes(tag))) {
+                return patternId;
+            }
+        }
+        return null;
+    }
+
+    renderBestSolution(problemId) {
+        const btn = document.getElementById('bestSolutionTabBtn');
+        if (!btn) return;
+
+        const solution = this.topSolutions ? this.topSolutions[String(problemId)] : null;
+        if (solution) {
+            btn.style.display = 'flex';
+            
+            document.getElementById('bestSolutionMeta').textContent = `${solution.pattern} • ${solution.complexity}`;
+            document.getElementById('bestSolutionExplanation').innerHTML = this.renderAiExplanation(solution.explanation);
+            document.getElementById('bestSolutionCode').innerHTML = `<pre class="code-block"><code>${this.escapeHtml(solution.code)}</code></pre>`;
+            
+            document.getElementById('applyBestSolutionBtn').onclick = () => {
+                this.setEditorValue(solution.code);
+                this.showToast('Expert solution applied to editor', 'success');
+                this.focusEditor();
+            };
+        } else {
+            btn.style.display = 'none';
+        }
     }
 
     async loadProblemCode(problem) {
@@ -1074,27 +1574,34 @@ class LeetCodeApp {
     renderTestCases(testCasesStr) {
         this.testCasesList.innerHTML = '';
 
-        if (!testCasesStr) {
+        if (!testCasesStr && (!this.currentProblem || !this.currentProblem.test_cases)) {
             this.testCasesList.innerHTML = '<p style="color: var(--text-3);">No example test cases available.</p>';
             return;
         }
 
-        // Parse test cases (newline separated)
-        const testCases = testCasesStr.split('\n').filter(t => t.trim());
+        let testCases = [];
+        if (this.currentProblem && this.currentProblem.type === 'custom' && this.currentProblem.test_cases) {
+            testCases = this.currentProblem.test_cases;
+        } else {
+            // Parse test cases (newline separated)
+            testCases = (testCasesStr || '').split('\n').filter(t => t.trim());
+        }
 
         testCases.forEach((testCase, index) => {
             const item = document.createElement('div');
             item.className = 'test-case-item';
 
             // Try to parse input/output
-            let input = testCase.trim();
+            let input = Array.isArray(testCase) ? testCase.join(', ') : testCase.trim();
             let output = '';
 
             // Look for output patterns
-            if (input.includes('Output:')) {
+            if (typeof input === 'string' && input.includes('Output:')) {
                 const parts = input.split('Output:');
                 input = parts[0].replace(/Input:/, '').trim();
                 output = parts[1].trim();
+            } else if (this.currentProblem && this.currentProblem.type === 'custom' && this.currentProblem.expected_outputs) {
+                output = this.currentProblem.expected_outputs[index] || '';
             }
 
             item.innerHTML = `
@@ -1110,12 +1617,19 @@ class LeetCodeApp {
         if (!this.currentProblem) return;
 
         const code = this.getEditorValue();
-        const testCasesStr = this.currentProblem.example_test_cases;
-        const problemContent = this.currentProblem.content || '';
+        let testCases, expectedOutputs;
 
-        // Parse test cases and extract expected outputs
-        const testCases = this.parseTestCases(testCasesStr);
-        const expectedOutputs = this.extractExpectedOutputs(problemContent);
+        if (this.currentProblem.type === 'custom') {
+            testCases = this.currentProblem.test_cases;
+            expectedOutputs = this.currentProblem.expected_outputs;
+        } else {
+            const testCasesStr = this.currentProblem.example_test_cases;
+            const problemContent = this.currentProblem.content || '';
+
+            // Parse test cases and extract expected outputs
+            testCases = this.parseTestCases(testCasesStr);
+            expectedOutputs = this.extractExpectedOutputs(problemContent);
+        }
 
         // Show loading state
         this.runBtn.disabled = true;
@@ -1470,14 +1984,14 @@ class LeetCodeApp {
             // Hide draft badge when marking solved
             if (this.draftBadge && isSolved) this.draftBadge.style.display = 'none';
 
-            // Update problem in list
-            const problem = this.problems.find(p => p.id === this.currentProblem.id);
+            // Update problem in list if it exists
+            const problem = this.problems.find(p => String(p.id) === String(problemId));
             if (problem) {
                 problem.solved = isSolved;
+                this.filterProblems(); // Refresh list to show checkmark
             }
 
             this.updateSolvedButton(isSolved);
-            this.filterProblems(); // Refresh list to show checkmark
 
             // Notify roadmap of progress change
             if (this.roadmap) {

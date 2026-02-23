@@ -2662,3 +2662,393 @@ body {
     font-weight: 500;
     flex-shrink: 0;
 }
+
+/* Learning Page Styles */
+.learning-page {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-4);
+    background: var(--bg-2);
+}
+
+.learning-header {
+    max-width: 1000px;
+    margin: 0 auto var(--space-5);
+    text-align: left;
+}
+
+.learning-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: var(--space-1);
+    letter-spacing: -0.03em;
+}
+
+.learning-subtitle {
+    font-size: 15px;
+    color: var(--text-3);
+    font-weight: 500;
+}
+
+.learning-topics {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-4);
+}
+
+.topic-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    position: relative;
+    overflow: hidden;
+}
+
+.topic-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+}
+
+.topic-level {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.topic-level.beginner {
+    background: rgba(46, 125, 50, 0.1);
+    color: var(--easy);
+}
+
+.topic-level.intermediate {
+    background: rgba(239, 108, 0, 0.1);
+    color: var(--medium);
+}
+
+.topic-level.advanced {
+    background: rgba(198, 40, 40, 0.1);
+    color: var(--hard);
+}
+
+.topic-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.topic-desc {
+    font-size: 13px;
+    color: var(--text-3);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.topic-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-2);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-3);
+}
+
+/* Topic Detail Styles */
+.topic-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.topic-detail-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.topic-detail-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+    margin-top: var(--space-2);
+}
+
+.topic-section {
+    margin-bottom: var(--space-5);
+}
+
+.topic-section h3 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-2);
+    margin-bottom: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.topic-section h3::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.topic-explanation {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-2);
+}
+
+.example-box {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.example-box h4 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+    color: var(--text);
+}
+
+.code-block {
+    margin: 0;
+    padding: var(--space-3);
+    background: #1e293b;
+    color: #f8fafc;
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    overflow-x: auto;
+}
+
+.dry-run-box {
+    background: #fefce8;
+    border: 1px solid #fef08a;
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #854d0e;
+    line-height: 1.6;
+}
+
+.topic-questions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+}
+
+/* Enhanced Learning Hub Styles */
+.topic-questions.starters {
+    margin-bottom: var(--space-4);
+    border-left: 4px solid var(--easy);
+}
+
+.topic-questions.leetcode-challenges {
+    border-left: 4px solid var(--accent);
+}
+
+.topic-empty {
+    padding: var(--space-3);
+    color: var(--text-3);
+    font-style: italic;
+    font-size: 13px;
+    background: var(--bg);
+}
+
+.day-problem-item.custom-problem .day-problem-id {
+    color: var(--easy);
+    font-weight: 700;
+}
+
+/* Guide Page Styles */
+.guide-page {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-4);
+    background: var(--bg-2);
+}
+
+.guide-header {
+    max-width: 1000px;
+    margin: 0 auto var(--space-5);
+    text-align: left;
+}
+
+.guide-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: var(--space-1);
+    letter-spacing: -0.03em;
+}
+
+.guide-subtitle {
+    font-size: 15px;
+    color: var(--text-3);
+    font-weight: 500;
+}
+
+.guide-sections {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.guide-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.section-header {
+    border-bottom: 2px solid var(--border);
+    padding-bottom: var(--space-2);
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.section-subtitle {
+    font-size: 13px;
+    color: var(--text-3);
+}
+
+.section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-4);
+}
+
+.guide-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    transition: all 0.2s ease;
+}
+
+.pattern-card {
+    cursor: pointer;
+}
+
+.pattern-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+}
+
+.guide-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.guide-card-desc {
+    font-size: 13px;
+    color: var(--text-3);
+    line-height: 1.5;
+}
+
+.guide-card-content {
+    font-size: 14px;
+    color: var(--text-2);
+    line-height: 1.6;
+}
+
+.guide-card-content strong {
+    color: var(--text);
+}
+
+.guide-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-3);
+}
+
+/* Pattern Detail Styles */
+.pattern-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.pattern-detail-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: var(--space-3);
+}
+
+.pattern-detail-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.pattern-detail-desc {
+    font-size: 15px;
+    color: var(--text-3);
+    margin-top: var(--space-1);
+}
+
+.pattern-link {
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.pattern-link:hover {
+    color: var(--accent-hover);
+}
+
+.pattern-analogy-tag {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    width: fit-content;
+    color: var(--text-3);
+    margin-bottom: var(--space-1);
+}
+
+.guide-card.pattern-card:hover .pattern-analogy-tag {
+    background: var(--accent);
+    color: white;
+}

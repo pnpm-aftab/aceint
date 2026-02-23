@@ -1,0 +1,157 @@
+{
+  "general_tips": [
+    {
+      "title": "The LeetCode Thinking Process",
+      "content": "1. **Understand Constraints:** Input size determines the required time complexity (e.g., 10^5 usually means O(n) or O(n log n)).\n2. **Start Simple:** Brute force first mentally, then optimize.\n3. **Identify Patterns:** Does it involve subarrays? (Sliding Window/Prefix Sum). Sorted array? (Two Pointers/Binary Search). Min/Max/Top K? (Heap/Sorting).\n4. **Dry Run:** Trace your logic with a small example before coding.\n5. **Edge Cases:** Think about empty inputs, single elements, duplicates, and negative numbers."
+    },
+    {
+      "title": "Complexity Cheat Sheet",
+      "content": "- **n <= 10:** O(n!), O(2^n)\n- **n <= 20:** O(2^n)\n- **n <= 100:** O(n^3)\n- **n <= 1,000:** O(n^2)\n- **n <= 100,000:** O(n log n) or O(n)\n- **n <= 1,000,000:** O(n) or O(log n)"
+    }
+  ],
+  "python_tricks": [
+    {
+      "name": "Counter for Frequency",
+      "description": "Quickly count occurrences of elements.",
+      "code": "from collections import Counter\ncounts = Counter(nums)\n# counts[x] returns 0 if x is not present"
+    },
+    {
+      "name": "Defaultdict for Grouping",
+      "description": "Avoid KeyError when grouping items.",
+      "code": "from collections import defaultdict\ngroups = defaultdict(list)\nfor x in nums:\n    groups[x % 2].append(x)"
+    },
+    {
+      "name": "Deque for Efficient Queues",
+      "description": "O(1) pop from the left side.",
+      "code": "from collections import deque\nqueue = deque([root])\nnode = queue.popleft()"
+    },
+    {
+      "name": "Heapq for Priority Queues",
+      "description": "Efficiently get min/max element.",
+      "code": "import heapq\nheap = []\nheapq.heappush(heap, val)\nmin_val = heapq.heappop(heap)\n# For max-heap, push -val"
+    },
+    {
+      "name": "Sorting with Custom Key",
+      "description": "Sort by specific criteria.",
+      "code": "intervals.sort(key=lambda x: x[0])\n# Sort by multiple criteria\nnums.sort(key=lambda x: (x.primary, -x.secondary))"
+    },
+    {
+      "name": "Memoization Decorator",
+      "description": "Automatically cache recursive results.",
+      "code": "from functools import cache\n@cache\ndef dfs(i, j):\n    # logic\n    return res"
+    },
+    {
+      "name": "Bitwise Manipulation",
+      "description": "Fast operations for binary problems.",
+      "code": "# XOR for finding unique element\nx ^ y\n# Check if odd\nx & 1\n# Multiply/Divide by 2\nx << 1, x >> 1"
+    }
+  ],
+  "interview_tips": [
+    {
+      "title": "Communicate Your Thoughts",
+      "content": "Talk through your approach before you start coding. Interviews are as much about your process as they are about the result."
+    },
+    {
+      "title": "Ask About Constraints",
+      "content": "Can there be duplicates? Is the array sorted? What are the memory limits? These questions show you think about edge cases."
+    },
+    {
+      "title": "Write Clean Code",
+      "content": "Use meaningful variable names. `l, r` for pointers is fine, but `buy_price` is better than `bp`."
+    },
+    {
+      "title": "Optimization Patterns",
+      "content": "If you see a nested loop, ask: 'Can I use a Hash Map to make this O(n)?' or 'Can I sort this to use Two Pointers?'"
+    }
+  ],
+  "patterns": [
+    {
+      "id": "two-pointers",
+      "title": "Two Pointers",
+      "description": "Using two indices to traverse an array or string, often from opposite ends or at different speeds.",
+      "when_to_use": "Sorted arrays, finding pairs, reversing strings, detecting cycles.",
+      "template": "def two_pointers(nums):\n    left, right = 0, len(nums) - 1\n    while left < right:\n        # check condition\n        if condition:\n            left += 1\n        else:\n            right -= 1",
+      "example_problems": ["1", "11", "15", "167", "125"]
+    },
+    {
+      "id": "sliding-window",
+      "title": "Sliding Window",
+      "description": "Maintaining a range (window) that expands and shrinks as it moves through the data.",
+      "when_to_use": "Subarrays, substrings, finding contiguous segments satisfying a condition.",
+      "template": "def sliding_window(s):\n    left = 0\n    res = 0\n    curr = 0\n    for right in range(len(s)):\n        # add s[right] to window\n        curr += s[right]\n        while condition_not_met:\n            # remove s[left] from window\n            curr -= s[left]\n            left += 1\n        res = max(res, right - left + 1)\n    return res",
+      "example_problems": ["3", "76", "209", "424"]
+    },
+    {
+      "id": "binary-search",
+      "title": "Binary Search",
+      "description": "Efficiently searching in a sorted space by halving the search area.",
+      "when_to_use": "Sorted arrays, finding boundaries, searching for an answer in a monotonic range.",
+      "template": "def binary_search(nums, target):\n    left, right = 0, len(nums) - 1\n    while left <= right:\n        mid = left + (right - left) // 2\n        if nums[mid] == target:\n            return mid\n        if nums[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1",
+      "example_problems": ["704", "33", "34", "153", "162"]
+    },
+    {
+      "id": "fast-slow-pointers",
+      "title": "Fast & Slow Pointers",
+      "description": "Using two pointers that move at different speeds (usually 1 step and 2 steps).",
+      "when_to_use": "Detecting cycles in linked lists or arrays, finding the middle of a linked list.",
+      "template": "def hasCycle(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n        if slow == fast:\n            return True\n    return False",
+      "example_problems": ["141", "142", "202", "876"]
+    },
+    {
+      "id": "merge-intervals",
+      "title": "Merge Intervals",
+      "description": "Sorting and then merging overlapping ranges.",
+      "when_to_use": "Given a set of intervals, merge them or find if any overlap.",
+      "template": "def merge(intervals):\n    intervals.sort(key=lambda x: x[0])\n    merged = []\n    for start, end in intervals:\n        if not merged or start > merged[-1][1]:\n            merged.append([start, end])\n        else:\n            merged[-1][1] = max(merged[-1][1], end)\n    return merged",
+      "example_problems": ["56", "57", "252", "253"]
+    },
+    {
+      "id": "bfs",
+      "title": "Breadth-First Search (BFS)",
+      "description": "Traversing level-by-level using a queue.",
+      "when_to_use": "Shortest path in unweighted graphs, level-order traversal of trees.",
+      "template": "from collections import deque\ndef bfs(start):\n    queue = deque([start])\n    visited = {start}\n    while queue:\n        for _ in range(len(queue)):\n            node = queue.popleft()\n            # process node\n            for neighbor in adj[node]:\n                if neighbor not in visited:\n                    visited.add(neighbor)\n                    queue.append(neighbor)",
+      "example_problems": ["102", "199", "200", "994"]
+    },
+    {
+      "id": "dfs",
+      "title": "Depth-First Search (DFS)",
+      "description": "Exploring as deep as possible before backtracking.",
+      "when_to_use": "Reachability, finding all paths, exhausting a search space, tree traversals.",
+      "template": "def dfs(node, visited):\n    if node in visited: return\n    visited.add(node)\n    # process node\n    for neighbor in adj[node]:\n        dfs(neighbor, visited)",
+      "example_problems": ["200", "133", "112", "113"]
+    },
+    {
+      "id": "backtracking",
+      "title": "Backtracking",
+      "description": "Finding all (or some) solutions by trying different options and undoing choices.",
+      "when_to_use": "Permutations, combinations, subsets, N-Queens.",
+      "template": "def backtrack(start, path):\n    if condition_met:\n        res.append(path[:])\n        return\n    for i in range(start, len(nums)):\n        path.append(nums[i])\n        backtrack(i + 1, path)\n        path.pop()",
+      "example_problems": ["46", "78", "77", "39", "51"]
+    },
+    {
+      "id": "top-k",
+      "title": "Top K Elements",
+      "description": "Using a heap to keep track of the k smallest or largest elements.",
+      "when_to_use": "Finding the k largest/most frequent elements.",
+      "template": "import heapq\ndef top_k(nums, k):\n    heap = []\n    for n in nums:\n        heapq.heappush(heap, n)\n        if len(heap) > k: \n            heapq.heappop(heap)\n    return heap",
+      "example_problems": ["215", "347", "692", "973"]
+    },
+    {
+      "id": "prefix-sum",
+      "title": "Prefix Sum",
+      "description": "Precomputing cumulative sums to answer range sum queries in O(1).",
+      "when_to_use": "Range sum queries, subarray sums matching a target.",
+      "template": "def prefix_sum(nums):\n    prefix = [0] * (len(nums) + 1)\n    for i in range(len(nums)):\n        prefix[i+1] = prefix[i] + nums[i]\n    return prefix",
+      "example_problems": ["303", "560", "523", "238"]
+    },
+    {
+      "id": "trie",
+      "title": "Trie (Prefix Tree)",
+      "description": "A tree-like data structure used for efficient string matching and prefix searches.",
+      "when_to_use": "Autocomplete, spell checker, prefix matching.",
+      "template": "class TrieNode:\n    def __init__(self):\n        self.children = {}\n        self.is_end = False\n\nclass Trie:\n    def __init__(self):\n        self.root = TrieNode()\n    def insert(self, word):\n        node = self.root\n        for char in word:\n            if char not in node.children:\n                node.children[char] = TrieNode()\n            node = node.children[char]\n        node.is_end = True",
+      "example_problems": ["208", "211", "212"]
+    }
+  ]
+}

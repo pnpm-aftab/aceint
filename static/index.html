@@ -28,6 +28,8 @@
             <nav class="nav-tabs">
                 <button class="nav-tab active" data-page="problems">Problems</button>
                 <button class="nav-tab" data-page="roadmap">Roadmap</button>
+                <button class="nav-tab" data-page="learning">Learning</button>
+                <button class="nav-tab" data-page="guide">Guide</button>
             </nav>
             <div class="header-right">
                 <!-- Settings Button -->
@@ -123,6 +125,8 @@
                             <div class="panel-header">
                                 <nav class="panel-tabs">
                                     <button class="panel-tab active" data-content="description">Description</button>
+                                    <button class="panel-tab" data-content="best-solution" id="bestSolutionTabBtn"
+                                        style="display:none">Best Solution</button>
                                     <button class="panel-tab" data-content="ai-solution" id="aiTabBtn"
                                         style="display:none">Chat with AI</button>
                                 </nav>
@@ -150,6 +154,27 @@
                                     <div class="test-cases-section">
                                         <h3>Example Test Cases</h3>
                                         <div id="testCasesList" class="test-cases-list"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Best Solution Content -->
+                                <div id="content-best-solution" class="tab-content">
+                                    <div class="best-solution-container">
+                                        <div class="problem-header">
+                                            <h2 class="problem-title">Expert Solution</h2>
+                                            <div class="problem-meta" id="bestSolutionMeta"></div>
+                                        </div>
+                                        <div class="description-content">
+                                            <section class="topic-section">
+                                                <h3>Approach</h3>
+                                                <div id="bestSolutionExplanation"></div>
+                                            </section>
+                                            <section class="topic-section">
+                                                <h3>Implementation</h3>
+                                                <div id="bestSolutionCode"></div>
+                                                <button class="btn btn-secondary btn-sm" id="applyBestSolutionBtn" style="margin-top: 12px;">Apply to Editor</button>
+                                            </section>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -230,6 +255,24 @@
                 </div>
                 <div class="roadmap-phases" id="roadmapPhases"></div>
             </div>
+
+            <!-- Learning Page -->
+            <div id="learningPage" class="learning-page" style="display: none;">
+                <div class="learning-header">
+                    <h1 class="learning-title">Python Learning Hub</h1>
+                    <p class="learning-subtitle">Master Python concepts from basic to advanced for LeetCode success.</p>
+                </div>
+                <div class="learning-topics" id="learningTopics"></div>
+            </div>
+
+            <!-- Guide Page -->
+            <div id="guidePage" class="guide-page" style="display: none;">
+                <div class="guide-header">
+                    <h1 class="guide-title">LeetCode Mastery Guide</h1>
+                    <p class="guide-subtitle">Advanced tips, Python tricks, and common algorithmic patterns.</p>
+                </div>
+                <div class="guide-sections" id="guideSections"></div>
+            </div>
         </div>
 
         <!-- Footer -->
@@ -248,6 +291,32 @@
                 <button class="modal-close-btn" id="modalCloseBtn"><span class="icon-close"></span></button>
             </div>
             <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Topic Detail Modal -->
+    <div id="topicDetailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-back-btn" id="topicModalBackBtn">
+                    <span class="icon-arrow-left"></span> Back to Learning
+                </button>
+                <button class="modal-close-btn" id="topicModalCloseBtn"><span class="icon-close"></span></button>
+            </div>
+            <div class="modal-body" id="topicModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Pattern Detail Modal -->
+    <div id="patternDetailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-back-btn" id="patternModalBackBtn">
+                    <span class="icon-arrow-left"></span> Back to Guide
+                </button>
+                <button class="modal-close-btn" id="patternModalCloseBtn"><span class="icon-close"></span></button>
+            </div>
+            <div class="modal-body" id="patternModalBody"></div>
         </div>
     </div>
 
