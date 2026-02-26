@@ -74,10 +74,27 @@ def save_progress(progress):
         json.dump(progress, f, indent=2)
 
 
+def load_quizzes():
+    """Load quizzes from file."""
+    quizzes_file = DATA_DIR / "quizzes.json"
+    if quizzes_file.exists():
+        with open(quizzes_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def save_quizzes(quizzes):
+    """Save quizzes to file."""
+    quizzes_file = DATA_DIR / "quizzes.json"
+    with open(quizzes_file, "w", encoding="utf-8") as f:
+        json.dump(quizzes, f, indent=2)
+
+
 # Shared data
 problems_index = load_problems_index()
 problems_cache = {}
 progress = load_progress()
+quizzes = load_quizzes()
 
 
 class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
@@ -131,6 +148,8 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(progress)
         elif parsed.path == "/api/roadmap/progress":
             self.get_roadmap_progress()
+        elif parsed.path == "/api/quiz":
+            self.handle_quiz()
         elif parsed.path == "/" or parsed.path == "/index.html":
             self.send_file(STATIC_DIR / "index.html")
         elif parsed.path.startswith("/static/"):
@@ -148,7 +167,9 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
         """Handle POST requests."""
         parsed = urllib.parse.urlparse(self.path)
 
-        if parsed.path == "/api/ai/solution":
+        if parsed.path == "/api/quiz":
+            self.generate_quiz()
+        elif parsed.path == "/api/ai/solution":
             self.get_ai_solution()
         elif parsed.path == "/api/ai/explain":
             self.get_ai_explanation()
@@ -1088,6 +1109,236 @@ Output only the Python code (no ```python``` wrapper)."""
 
         else:
             self.send_json({"error": "Unknown action"}, 400)
+
+    def handle_quiz(self):
+        """Handle quiz requests (GET for existing, POST to generate)."""
+        global progress, quizzes
+
+        # Parse query params for problem_id
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        problem_id = params.get("problem_id", [None])[0]
+
+        if not problem_id:
+            self.send_json({"error": "Problem ID required"}, 400)
+            return
+
+        # Check if quiz exists
+        if problem_id in quizzes:
+            quiz_data = quizzes[problem_id]
+            self.send_json({
+                "quiz": quiz_data,
+                "exists": True
+            })
+        else:
+            self.send_json({
+                "quiz": None,
+                "exists": False
+            })
+
+    def generate_quiz(self):
+        """Generate quiz for a problem using AI with structured output."""
+        global quizzes
+
+        content_length = int(self.headers.get("Content-Length", 0))
+        if content_length == 0:
+            self.send_json({"error": "No content"}, 400)
+            return
+
+        post_data = self.rfile.read(content_length)
+        try:
+            data = json.loads(post_data.decode("utf-8"))
+        except json.JSONDecodeError:
+            self.send_json({"error": "Invalid JSON"}, 400)
+            return
+
+        problem_id = data.get("problem_id")
+        problem_title = data.get("problem_title", "")
+        problem_description = data.get("problem_description", "")
+        starter_code = data.get("starter_code", "")
+        force_regenerate = data.get("force_regenerate", False)
+
+        if not problem_id or not problem_title:
+            self.send_json({"error": "Problem ID and title required"}, 400)
+            return
+
+        # Check if quiz already exists and not forcing regeneration
+        if not force_regenerate and problem_id in quizzes:
+            self.send_json({
+                "quiz": quizzes[problem_id],
+                "exists": True,
+                "success": True  # Include success field for consistency
+            })
+            return
+
+        # Build prompt for quiz generation
+        context_blocks = []
+        if problem_title:
+            context_blocks.append(f"Problem: {problem_title}")
+        if problem_description:
+            # Decode HTML entities and truncate for prompt
+            decoded_desc = html.unescape(problem_description[:3000])
+            context_blocks.append(f"Description: {decoded_desc}")
+        if starter_code:
+            context_blocks.append(f"Starter Code:\n```python\n{starter_code}\n```")
+
+        context_str = "\n\n".join(context_blocks)
+
+        prompt = f"""You are a helpful Python tutor creating a scaffolded quiz to guide users step-by-step to solving a coding problem.
+
+{context_str}
+
+Task:
+Create 5 multiple-choice questions that will help the user better understand this problem and guide them toward coding a solution.
+
+Question Types:
+1. Input/Output Analysis: Ask what the function should return for given inputs
+2. Edge Cases: Ask about empty inputs, single elements, duplicates, boundary values
+3. Code Snippet Completion: Show incomplete code snippet and ask what should fill the blank
+4. Algorithm Approach: Ask about the best data structure or strategy
+5. Time/Space Complexity: Ask about O(n) or O(n^2) complexity
+
+Rules:
+1. Provide exactly 5 questions (no more, no less)
+2. Each question must have exactly 4 options (A, B, C, D)
+3. Indicate correct answer with index (0 for A, 1 for B, 2 for C, 3 for D)
+4. Include a brief explanation for each question
+5. Questions should be specific and practical - help user code the solution
+6. Focus on Python implementation details when relevant
+
+IMPORTANT: Return your response as valid JSON matching this exact schema:
+{{
+  "questions": [
+    {{
+      "question": "question text here",
+      "options": ["option A", "option B", "option C", "option D"],
+      "correct_index": 0,
+      "explanation": "brief explanation here"
+    }}
+  ]
+}}
+
+Do not include markdown code fences, comments, or extra text. Return ONLY the JSON."""
+
+        print(f"[QUIZ] Generating quiz for problem={problem_title}")
+
+        try:
+            if not OPENROUTER_API_KEY:
+                self.send_json({"error": "OpenRouter API key not configured"}, 500)
+                return
+
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "http://localhost:8888",
+                    "X-Title": "LeetCode Helper"
+                },
+                json={
+                    "model": AURORA_MODEL,
+                    "messages": [
+                        {"role": "system", "content": "You are a helpful Python tutor creating quizzes for coding problems."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": "quiz_response",
+                            "strict": True,
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "questions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "question": {"type": "string"},
+                                                "options": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                    "minItems": 4,
+                                                    "maxItems": 4
+                                                },
+                                                "correct_index": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "maximum": 3
+                                                },
+                                                "explanation": {"type": "string"}
+                                            },
+                                            "required": ["question", "options", "correct_index", "explanation"],
+                                            "additionalProperties": False
+                                        }
+                                    }
+                                },
+                                "required": ["questions"],
+                                "additionalProperties": False
+                            }
+                        }
+                    },
+                    "max_tokens": 3000,
+                },
+                timeout=60
+            )
+
+            if response.status_code != 200:
+                self.send_json({
+                    "error": f"AI request failed: {response.status_code}",
+                    "details": response.text[:500]
+                }, 500)
+                return
+
+            result = response.json()
+            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+            if not content:
+                self.send_json({"error": "Empty response from AI"}, 500)
+                return
+
+            # Parse JSON from response
+            try:
+                quiz_json = json.loads(content)
+            except json.JSONDecodeError as e:
+                print(f"[QUIZ] Failed to parse JSON: {e}")
+                self.send_json({"error": "AI returned invalid JSON"}, 500)
+                return
+
+            # Validate structure
+            if "questions" not in quiz_json or not quiz_json["questions"]:
+                print(f"[QUIZ] Invalid quiz structure: {quiz_json}")
+                self.send_json({"error": "AI returned invalid quiz structure - no questions"}, 500)
+                return
+
+            # Save quiz (even if not exactly 5 questions, accept what we get)
+            quiz_data = {
+                "questions": quiz_json["questions"],
+                "generated_at": __import__("datetime").datetime.now().isoformat()
+            }
+
+            quizzes[problem_id] = quiz_data
+
+            # Save to file with error handling
+            try:
+                save_quizzes(quizzes)
+                print(f"[QUIZ] Quiz generated and saved for problem={problem_title}")
+            except Exception as save_error:
+                print(f"[QUIZ] Failed to save quiz: {save_error}")
+                # Continue anyway - quiz is in memory
+
+            self.send_json({
+                "quiz": quiz_data,
+                "exists": True,  # Quiz exists now (was generated or regenerated)
+                "success": True
+            })
+
+        except requests.exceptions.Timeout:
+            self.send_json({"error": "Request timed out. Please try again."}, 504)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.send_json({"error": f"Server error: {str(e)}"}, 500)
 
     def log_message(self, format, *args):
         """Suppress default logging."""

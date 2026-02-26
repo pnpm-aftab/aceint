@@ -128,6 +128,7 @@
                                         style="display:none">Best Solution</button>
                                     <button class="panel-tab" data-content="ai-solution" id="aiTabBtn"
                                         style="display:none">Chat with AI</button>
+                                    <button class="panel-tab" data-content="quiz" id="quizTabBtn">Quiz</button>
                                 </nav>
                                 <button id="clearAiChatBtn" class="btn-icon-only" title="Clear Chat" style="display:none; margin-left: auto;">
                                     <span class="icon-close" style="font-size: 14px;"></span>
@@ -141,7 +142,7 @@
                                             <span class="problem-id" id="problemId"></span>
                                             <h2 class="problem-title" id="problemTitle"></h2>
                                             <span class="badge difficulty-badge" id="problemDifficulty"></span>
-                                            <button class="solved-btn" id="solvedBtn" title="Mark as solved"></button>
+                                            <button class="solved-btn" id="solvedBtn" title="Not solved"></button>
                                         </div>
                                         <div class="problem-meta" id="problemMeta"></div>
                                         <div class="problem-tags" id="problemTags"></div>
@@ -199,6 +200,35 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Quiz Content -->
+                                <div id="content-quiz" class="tab-content">
+                                    <div class="quiz-container">
+                                        <div class="quiz-header">
+                                            <h2 class="quiz-title">Problem Quiz</h2>
+                                            <div class="quiz-progress">
+                                                <span id="quizProgressText">Question 1 of 5</span>
+                                            </div>
+                                            <div class="quiz-header-buttons">
+                                                <button id="generateQuizBtn" class="btn btn-secondary btn-sm">Generate Quiz</button>
+                                                <button id="regenerateQuizBtn" class="btn btn-secondary btn-sm" style="display:none;">⟳ Regenerate</button>
+                                            </div>
+                                        </div>
+                                        <div id="quizQuestionsArea" class="quiz-questions-area">
+                                            <!-- Quiz questions will be rendered here -->
+                                        </div>
+                                        <div id="quizActionsArea" class="quiz-actions" style="display:none;">
+                                            <button id="prevQuestionBtn" class="btn btn-secondary">← Previous</button>
+                                            <button id="nextQuestionBtn" class="btn btn-secondary">Next →</button>
+                                            <button id="submitQuizBtn" class="btn btn-primary">Submit Quiz</button>
+                                        </div>
+                                        <div id="quizResultsArea" class="quiz-results" style="display:none;">
+                                            <h3>Quiz Results</h3>
+                                            <div id="quizScore"></div>
+                                            <button id="retakeQuizBtn" class="btn btn-secondary btn-sm" style="margin-top:12px;">Retake Quiz</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -212,6 +242,7 @@
                                     <span id="draftBadge" class="draft-badge" style="display:none">unsaved</span>
                                 </div>
                                 <div class="editor-header-right">
+                                    <button class="btn btn-ghost" id="quizBtn" title="Take Quiz">Quiz</button>
                                     <button class="btn btn-ghost" id="aiBtn" title="Chat with AI">Chat with AI</button>
                                     <button class="btn btn-ghost" id="resetBtn" title="Reset Code">Reset</button>
                                     <button class="btn btn-secondary" id="runBtn">Run</button>

@@ -1,0 +1,62 @@
+{
+  "3": {
+    "questions": [
+      {
+        "question": "What should the `lengthOfLongestSubstring` method return for the input `s = \"abacadaef\"`?",
+        "options": [
+          "5 (for \"acada\" or \"adaef\")",
+          "4 (for \"baca\" or \"cada\")",
+          "3 (for \"aba\" or \"ada\")",
+          "6 (for \"bacada\")"
+        ],
+        "correct_index": 3,
+        "explanation": "The longest substring without repeating characters in \"abacadaef\" is \"bacada\" or \"cadaef\", both having a length of 6."
+      },
+      {
+        "question": "What is the expected output for an empty input string `s = \"\"`?",
+        "options": [
+          "None",
+          "1",
+          "0",
+          "An error"
+        ],
+        "correct_index": 2,
+        "explanation": "If the input string is empty, there are no characters, so the length of the longest substring without repeating characters is 0."
+      },
+      {
+        "question": "Which data structure is most suitable for efficiently checking if a character is already present in the current substring and for removing characters when the window slides?",
+        "options": [
+          "List",
+          "Dictionary",
+          "Set",
+          "Tuple"
+        ],
+        "correct_index": 2,
+        "explanation": "A Set provides O(1) average time complexity for adding, removing, and checking the presence of elements, which is crucial for an efficient sliding window approach."
+      },
+      {
+        "question": "Consider a sliding window approach with two pointers, `left` and `right`. If `s[right]` is already in our current set of characters, what action should we take to maintain the 'no repeating characters' condition?",
+        "options": [
+          "Increment `right` and add `s[right]` to the set.",
+          "Remove `s[left]` from the set and then increment `left`.",
+          "Clear the set and reset `left` and `right` to `0`.",
+          "Decrement `right` and check `s[right]` again."
+        ],
+        "correct_index": 1,
+        "explanation": "If `s[right]` is a duplicate, we need to shrink the window from the left by removing `s[left]` from our set and incrementing `left` until the duplicate is resolved or the set no longer contains `s[right]`."
+      },
+      {
+        "question": "What is the optimal time complexity we can achieve for solving this problem with a sliding window approach?",
+        "options": [
+          "O(n^2)",
+          "O(n log n)",
+          "O(n)",
+          "O(n^3)"
+        ],
+        "correct_index": 2,
+        "explanation": "Using a sliding window with a set allows each character to be visited by the `left` and `right` pointers at most twice (once to enter the window, once to leave), resulting in an O(n) time complexity."
+      }
+    ],
+    "generated_at": "2026-02-26T15:07:22.292913"
+  }
+}

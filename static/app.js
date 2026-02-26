@@ -767,6 +767,510 @@ class CustomSelect {
     }
 }
 
+// Quiz Manager
+class QuizManager {
+    constructor(app) {
+        this.app = app;
+        this.currentQuiz = null;
+        this.currentQuizProblemId = null;
+        this.currentQuestionIndex = 0;
+        this.userAnswers = {};
+        this.quizGenerated = false;
+        this.quizExistsForProblem = false;
+    }
+
+    async init() {
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // Quiz tab button
+        const quizTabBtn = document.getElementById('quizTabBtn');
+        if (quizTabBtn) {
+            quizTabBtn.addEventListener('click', () => {
+                this.app.switchDescriptionTab('quiz');
+                this.loadQuiz();
+            });
+        }
+
+        // Generate quiz button
+        const generateQuizBtn = document.getElementById('generateQuizBtn');
+        if (generateQuizBtn) {
+            generateQuizBtn.addEventListener('click', () => this.generateQuiz());
+        }
+
+        // Next question button
+        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+        if (nextQuestionBtn) {
+            nextQuestionBtn.addEventListener('click', () => this.showNextQuestion());
+        }
+
+        // Submit quiz button
+        const submitQuizBtn = document.getElementById('submitQuizBtn');
+        if (submitQuizBtn) {
+            submitQuizBtn.addEventListener('click', () => this.submitQuiz());
+        }
+
+        // Retake quiz button
+        const retakeQuizBtn = document.getElementById('retakeQuizBtn');
+        if (retakeQuizBtn) {
+            retakeQuizBtn.addEventListener('click', () => this.retakeQuiz());
+        }
+
+        // Previous question button
+        const prevQuestionBtn = document.getElementById('prevQuestionBtn');
+        if (prevQuestionBtn) {
+            prevQuestionBtn.addEventListener('click', () => this.showPreviousQuestion());
+        }
+
+        // Regenerate quiz button
+        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
+        if (regenerateQuizBtn) {
+            regenerateQuizBtn.addEventListener('click', () => this.regenerateQuiz());
+        }
+    }
+
+    async loadQuiz() {
+        if (!this.app.currentProblem) return;
+
+        const problemId = this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+
+        // Show generate button if quiz doesn't exist
+        const generateQuizBtn = document.getElementById('generateQuizBtn');
+        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
+        const quizResultsArea = document.getElementById('quizResultsArea');
+        const quizActionsArea = document.getElementById('quizActionsArea');
+
+        // Check if current quiz belongs to this problem
+        const currentQuizProblemId = this.currentQuizProblemId || '';
+
+        if (currentQuizProblemId !== String(problemId)) {
+            // Different problem - reset quiz state
+            this.currentQuiz = null;
+            this.currentQuizProblemId = String(problemId);
+        }
+
+        if (!this.currentQuiz) {
+            // Check if quiz exists on server
+            try {
+                const response = await fetch(`/api/quiz?problem_id=${problemId}`);
+                const data = await response.json();
+
+                if (data.exists && data.quiz) {
+                    this.currentQuiz = data.quiz;
+                    this.quizGenerated = true;
+                    this.renderQuiz();
+                } else {
+                    // Show generate button, hide regenerate button
+                    if (generateQuizBtn) generateQuizBtn.style.display = 'inline-flex';
+                    const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
+                    if (regenerateQuizBtn) regenerateQuizBtn.style.display = 'none';
+                    if (quizQuestionsArea) quizQuestionsArea.innerHTML = '<p class="quiz-empty">No quiz available yet. Click "Generate Quiz" to create one.</p>';
+                    if (quizResultsArea) quizResultsArea.style.display = 'none';
+                    if (quizActionsArea) quizActionsArea.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to load quiz:', error);
+                this.showToast('Failed to load quiz', 'error');
+            }
+        } else {
+            this.renderQuiz();
+        }
+    }
+
+    async generateQuiz() {
+        if (!this.app.currentProblem) return;
+
+        const problemId = this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+        const problemTitle = this.app.currentProblem.title;
+        const problemDescription = this.app.currentProblem.content || this.app.currentProblem.description || '';
+        const snippets = this.app.currentProblem.code_snippets || [];
+        const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
+        const starterCode = pythonSnippet ? pythonSnippet.code : '';
+
+        const generateQuizBtn = document.getElementById('generateQuizBtn');
+        if (generateQuizBtn) {
+            generateQuizBtn.disabled = true;
+            generateQuizBtn.innerHTML = '<span class="btn-icon">⟳</span> Generating...';
+        }
+
+        try {
+            const response = await fetch('/api/quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    problem_id: problemId,
+                    problem_title: problemTitle,
+                    problem_description: problemDescription,
+                    starter_code: starterCode
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.quiz) {
+                this.currentQuiz = result.quiz;
+                this.currentQuizProblemId = String(problemId);
+                this.quizGenerated = false;
+                this.quizExistsForProblem = true;
+
+                this.renderQuiz();
+                this.showToast('Quiz generated successfully!', 'success');
+            } else if (result.error) {
+                this.showToast(`Failed to generate: ${result.error}`, 'error');
+            } else {
+                this.showToast('Failed to generate quiz', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to generate quiz:', error);
+            this.showToast('Failed to connect to server', 'error');
+        } finally {
+            if (generateQuizBtn) {
+                generateQuizBtn.disabled = false;
+                generateQuizBtn.innerHTML = '<span class="btn-icon">✨</span> Generate Quiz';
+            }
+        }
+    }
+
+    async regenerateQuiz() {
+        if (!this.app.currentProblem) return;
+
+        const problemId = this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+        const problemTitle = this.app.currentProblem.title;
+        const problemDescription = this.app.currentProblem.content || this.app.currentProblem.description || '';
+        const snippets = this.app.currentProblem.code_snippets || [];
+        const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
+        const starterCode = pythonSnippet ? pythonSnippet.code : '';
+
+        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
+        if (regenerateQuizBtn) {
+            regenerateQuizBtn.disabled = true;
+            regenerateQuizBtn.innerHTML = '<span class="btn-icon">⟳</span> Regenerating...';
+        }
+
+        try {
+            const response = await fetch('/api/quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    problem_id: problemId,
+                    problem_title: problemTitle,
+                    problem_description: problemDescription,
+                    starter_code: starterCode,
+                    force_regenerate: true  // Force regeneration instead of using cached quiz
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.quiz) {
+                this.currentQuiz = result.quiz;
+                this.currentQuizProblemId = String(problemId);
+                this.quizGenerated = false;
+                this.quizExistsForProblem = true;
+
+                // Reset to first question
+                this.currentQuestionIndex = 0;
+                this.userAnswers = {};
+
+                this.renderQuiz();
+                this.showToast('Quiz regenerated successfully!', 'success');
+            } else if (result.error) {
+                this.showToast(`Failed to regenerate: ${result.error}`, 'error');
+            } else {
+                this.showToast('Failed to regenerate quiz', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to regenerate quiz:', error);
+            this.showToast('Failed to connect to server', 'error');
+        } finally {
+            if (regenerateQuizBtn) {
+                regenerateQuizBtn.disabled = false;
+                regenerateQuizBtn.innerHTML = '<span class="btn-icon">⟳</span> Regenerate';
+            }
+        }
+    }
+
+    async checkQuizAvailability(problemId) {
+        // Quiz buttons are now always visible, so we only need to check if a quiz exists
+        // The loadQuiz() method will handle showing the quiz or the generate button
+        try {
+            const response = await fetch(`/api/quiz?problem_id=${problemId}`);
+            const data = await response.json();
+
+            // Store quiz existence in cache for later
+            this.quizExistsForProblem = data.exists && data.quiz;
+        } catch (error) {
+            console.error('Failed to check quiz availability:', error);
+            this.quizExistsForProblem = false;
+        }
+    }
+
+    renderQuiz() {
+        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
+        const quizResultsArea = document.getElementById('quizResultsArea');
+        const generateQuizBtn = document.getElementById('generateQuizBtn');
+        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
+        const quizProgressText = document.getElementById('quizProgressText');
+        const quizActionsArea = document.getElementById('quizActionsArea');
+
+        if (!this.currentQuiz || !quizQuestionsArea) return;
+
+        // Hide generate button and results, show regenerate button
+        if (generateQuizBtn) generateQuizBtn.style.display = 'none';
+        if (regenerateQuizBtn) regenerateQuizBtn.style.display = 'inline-flex';
+        if (quizResultsArea) quizResultsArea.style.display = 'none';
+
+        // Render questions
+        quizQuestionsArea.innerHTML = '';
+
+        if (!this.currentQuiz.questions || this.currentQuiz.questions.length === 0) {
+            quizQuestionsArea.innerHTML = '<p class="quiz-empty">No questions available.</p>';
+            return;
+        }
+
+        this.currentQuiz.questions.forEach((question, index) => {
+            const questionCard = this.createQuestionCard(question, index);
+            quizQuestionsArea.appendChild(questionCard);
+        });
+
+        // Update progress
+        if (quizProgressText && this.currentQuiz.questions) {
+            quizProgressText.textContent = `Question 1 of ${this.currentQuiz.questions.length}`;
+        }
+
+        // Show quiz actions
+        if (quizActionsArea) quizActionsArea.style.display = 'flex';
+
+        // Reset state
+        this.currentQuestionIndex = 0;
+        this.userAnswers = {};
+
+        // Update UI to show first question
+        this.updateQuizUI();
+    }
+
+    formatQuizQuestion(text) {
+        // Format quiz question text - handle code and special characters
+        let formatted = this.app.escapeHtml(text);
+
+        // Replace function names (camelCase) with code tags
+        formatted = formatted.replace(/\b([a-z]+[A-Z][a-zA-Z]+)\b/g, '<code>$1</code>');
+
+        // Replace single-quoted strings with code tags
+        formatted = formatted.replace(/'([^']+)'/g, "'<code>$1</code>'");
+
+        // Replace double-quoted strings with code tags
+        formatted = formatted.replace(/"([^"]+)"/g, '"<code>$1</code>"');
+
+        return formatted;
+    }
+
+    createQuestionCard(question, index) {
+        const card = document.createElement('div');
+        card.className = `quiz-question-card ${index === this.currentQuestionIndex ? 'active' : ''}`;
+        card.dataset.index = index;
+        card.style.display = index === this.currentQuestionIndex ? 'block' : 'none';
+
+        const optionsHtml = question.options.map((option, optIndex) => `
+            <label class="quiz-option ${this.userAnswers[index] === optIndex ? 'selected' : ''}">
+                <input type="radio" name="quiz-q${index}" value="${optIndex}" ${this.userAnswers[index] === optIndex ? 'checked' : ''}>
+                <span class="quiz-option-letter">${String.fromCharCode(65 + optIndex)}.</span>
+                <span class="quiz-option-text">${this.formatQuizQuestion(option)}</span>
+            </label>
+        `).join('');
+
+        card.innerHTML = `
+            <div class="quiz-question-header">
+                <span class="quiz-question-number">Question ${index + 1}</span>
+            </div>
+            <div class="quiz-question-text">${this.formatQuizQuestion(question.question)}</div>
+            <div class="quiz-options">
+                ${optionsHtml}
+            </div>
+        `;
+
+        // Add event listeners to options
+        card.querySelectorAll('input[type="radio"]').forEach(input => {
+            input.addEventListener('change', (e) => {
+                this.selectAnswer(index, parseInt(e.target.value));
+            });
+        });
+
+        return card;
+    }
+
+    selectAnswer(questionIndex, optionIndex) {
+        this.userAnswers[questionIndex] = optionIndex;
+
+        // Update UI
+        const questionCard = document.querySelector(`.quiz-question-card[data-index="${questionIndex}"]`);
+        if (questionCard) {
+            questionCard.querySelectorAll('.quiz-option').forEach((opt, idx) => {
+                opt.classList.toggle('selected', idx === optionIndex);
+                opt.querySelector('input').checked = idx === optionIndex;
+            });
+        }
+    }
+
+    async submitQuiz() {
+        if (!this.currentQuiz) return;
+
+        const questions = this.currentQuiz.questions;
+        let correctCount = 0;
+
+        // Calculate score
+        questions.forEach((question, index) => {
+            const userAnswer = this.userAnswers[index];
+            const isCorrect = userAnswer === question.correct_index;
+            if (isCorrect) correctCount++;
+
+            // Update UI to show correct/incorrect
+            const questionCard = document.querySelector(`.quiz-question-card[data-index="${index}"]`);
+            if (questionCard) {
+                questionCard.classList.add('answered');
+
+                // Only highlight selected option if user answered this question
+                if (userAnswer !== undefined) {
+                    const selectedOption = questionCard.querySelectorAll('.quiz-option')[userAnswer];
+                    if (selectedOption) {
+                        selectedOption.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+                        // Show explanation
+                        const explanationDiv = document.createElement('div');
+                        explanationDiv.className = `quiz-explanation ${isCorrect ? 'correct' : 'incorrect'}`;
+                        explanationDiv.innerHTML = `
+                            <strong>${isCorrect ? '✓ Correct!' : '✗ Incorrect'}</strong>
+                            <p>${this.app.escapeHtml(question.explanation)}</p>
+                        `;
+                        questionCard.appendChild(explanationDiv);
+                    }
+                }
+
+                // Disable options
+                questionCard.querySelectorAll('input[type="radio"]').forEach(input => {
+                    input.disabled = true;
+                });
+            }
+        });
+
+        // Show results
+        this.showResults(correctCount, questions.length);
+    }
+
+    showResults(correctCount, totalQuestions) {
+        const quizResultsArea = document.getElementById('quizResultsArea');
+        const quizScore = document.getElementById('quizScore');
+        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
+        const quizActionsArea = document.getElementById('quizActionsArea');
+        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
+
+        if (!quizResultsArea || !quizScore) return;
+
+        // Hide questions and actions, show results
+        if (quizQuestionsArea) quizQuestionsArea.style.display = 'none';
+        if (quizActionsArea) quizActionsArea.style.display = 'none';
+        if (regenerateQuizBtn) regenerateQuizBtn.style.display = 'none';
+
+        // Calculate percentage safely (avoid division by zero)
+        const percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+        quizScore.innerHTML = `
+            <div class="quiz-score-summary">
+                <div class="quiz-score-large">${correctCount}/${totalQuestions}</div>
+                <div class="quiz-score-percent">${percentage}%</div>
+                <p class="quiz-score-message">${percentage >= 80 ? 'Excellent! You have a good understanding.' : percentage >= 60 ? 'Good! Keep learning.' : 'Review the problem and try again.'}</p>
+            </div>
+        `;
+
+        quizResultsArea.style.display = 'block';
+    }
+
+    showNextQuestion() {
+        if (!this.currentQuiz || this.currentQuestionIndex >= this.currentQuiz.questions.length - 1) return;
+
+        this.currentQuestionIndex++;
+        this.updateQuizUI();
+    }
+
+    showPreviousQuestion() {
+        if (!this.currentQuiz || this.currentQuestionIndex <= 0) return;
+
+        this.currentQuestionIndex--;
+        this.updateQuizUI();
+    }
+
+    updateQuizUI() {
+        const quizProgressText = document.getElementById('quizProgressText');
+        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+        const prevQuestionBtn = document.getElementById('prevQuestionBtn');
+        const submitQuizBtn = document.getElementById('submitQuizBtn');
+
+        if (quizProgressText && this.currentQuiz && this.currentQuiz.questions) {
+            quizProgressText.textContent = `Question ${this.currentQuestionIndex + 1} of ${this.currentQuiz.questions.length}`;
+        }
+
+        // Update question visibility
+        document.querySelectorAll('.quiz-question-card').forEach((card, index) => {
+            card.style.display = index === this.currentQuestionIndex ? 'block' : 'none';
+            card.classList.toggle('active', index === this.currentQuestionIndex);
+        });
+
+        // Update button visibility
+        const isFirstQuestion = this.currentQuestionIndex <= 0;
+        const isLastQuestion = this.currentQuiz && this.currentQuiz.questions.length &&
+            this.currentQuestionIndex >= this.currentQuiz.questions.length - 1;
+
+        if (prevQuestionBtn) {
+            prevQuestionBtn.style.display = isFirstQuestion ? 'none' : 'inline-block';
+        }
+        if (nextQuestionBtn) {
+            nextQuestionBtn.style.display = isLastQuestion ? 'none' : 'inline-block';
+        }
+        if (submitQuizBtn) {
+            submitQuizBtn.style.display = isLastQuestion ? 'inline-block' : 'none';
+        }
+    }
+
+    retakeQuiz() {
+        // Reset quiz state
+        this.currentQuestionIndex = 0;
+        this.userAnswers = {};
+
+        // Get quiz container to scope selections
+        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
+        if (!quizQuestionsArea) return;
+
+        // Remove answered classes and explanations
+        quizQuestionsArea.querySelectorAll('.quiz-question-card').forEach(card => {
+            card.classList.remove('answered');
+            const explanationDiv = card.querySelector('.quiz-explanation');
+            if (explanationDiv) explanationDiv.remove();
+
+            // Reset option states
+            card.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'incorrect', 'selected');
+                const input = opt.querySelector('input');
+                if (input) input.checked = false;
+            });
+
+            // Re-enable options
+            card.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.disabled = false;
+            });
+        });
+
+        // Re-render quiz
+        this.renderQuiz();
+    }
+
+    showToast(message, type = 'info') {
+        // Reuse app's toast method
+        if (this.app.showToast) {
+            this.app.showToast(message, type);
+        }
+    }
+}
+
 class LeetCodeApp {
     constructor() {
         this.problems = [];
@@ -811,11 +1315,13 @@ class LeetCodeApp {
         // Instantiate managers first
         this.roadmap = new RoadmapManager(this);
         this.learning = new LearningManager(this);
+        this.quiz = new QuizManager(this);
 
         // Then initialize them (can run in parallel)
         await Promise.all([
             this.roadmap.init(),
-            this.learning.init()
+            this.learning.init(),
+            this.quiz.init()
         ]);
     }
 
@@ -871,6 +1377,7 @@ class LeetCodeApp {
         this.resetBtn = document.getElementById('resetBtn');
         this.draftBadge = document.getElementById('draftBadge');
         this.hintBadge = document.getElementById('hintBadge');
+        this.quizBtn = document.getElementById('quizBtn');
     }
 
     bindEvents() {
@@ -935,6 +1442,15 @@ class LeetCodeApp {
             this.resetBtn.addEventListener('click', () => this.resetCode());
         }
 
+        // Quiz button
+        if (this.quizBtn) {
+            this.quizBtn.addEventListener('click', () => {
+                // Show quiz tab and load quiz
+                this.switchDescriptionTab('quiz');
+                if (this.quiz) this.quiz.loadQuiz();
+            });
+        }
+
         // Close results
         this.closeResults.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -949,11 +1465,8 @@ class LeetCodeApp {
             this.expandResults.textContent = isVisible ? '▲' : '▼';
         });
 
-        // Submit button
-        this.submitBtn.addEventListener('click', () => this.toggleSolved());
-
-        // Solved button
-        this.solvedBtn.addEventListener('click', () => this.toggleSolved());
+        // Submit button - runs tests and marks as solved if all pass
+        this.submitBtn.addEventListener('click', () => this.runTests(true));
     }
 
     switchDescriptionTab(tabId) {
@@ -1194,6 +1707,9 @@ class LeetCodeApp {
             // Clear hints and draft badge when loading new problem
             this.clearHints();
             if (this.draftBadge) this.draftBadge.style.display = 'none';
+
+            // Check if quiz exists for this problem and show quiz tab button
+            if (this.quiz) this.quiz.checkQuizAvailability(problemId);
 
             // Show problem view
             this.welcomeScreen.style.display = 'none';
@@ -1459,7 +1975,7 @@ class LeetCodeApp {
         });
     }
 
-    async runTests() {
+    async runTests(markAsSolvedIfPassed = false) {
         if (!this.currentProblem) return;
 
         const code = this.getEditorValue();
@@ -1497,11 +2013,11 @@ class LeetCodeApp {
             });
 
             const result = await response.json();
-            this.displayResults(result);
+            await this.displayResults(result, markAsSolvedIfPassed);
 
         } catch (error) {
             console.error('Failed to run tests:', error);
-            this.displayResults({
+            await this.displayResults({
                 results: [{ passed: false, error: 'Failed to connect to server' }],
                 passed: 0,
                 total: 1
@@ -1598,11 +2114,6 @@ class LeetCodeApp {
         const chatArea = document.getElementById('aiChatArea');
         if (chatArea) {
             chatArea.innerHTML = '';
-
-            const userBubble = document.createElement('div');
-            userBubble.className = 'chat-bubble user';
-            userBubble.textContent = "Can you show me a solution for this problem?";
-            chatArea.appendChild(userBubble);
 
             const aiBubble = document.createElement('div');
             aiBubble.className = 'chat-bubble ai loading';
@@ -1761,7 +2272,7 @@ class LeetCodeApp {
         return outputs;
     }
 
-    displayResults(result) {
+    async displayResults(result, markAsSolvedIfPassed = false) {
         this.testResults.style.display = 'flex';
         this.resultsList.style.display = 'block';
         this.expandResults.textContent = '▼';
@@ -1803,13 +2314,16 @@ class LeetCodeApp {
 
             this.resultsList.appendChild(item);
         });
+
+        // Auto-mark as solved if all tests passed and this is a submission
+        if (allPassed && markAsSolvedIfPassed && !this.currentProblem.solved) {
+            await this.markAsSolved();
+        }
     }
 
-    async toggleSolved() {
+    async markAsSolved() {
         if (!this.currentProblem) return;
 
-        const isSolved = !this.currentProblem.solved;
-        const action = isSolved ? 'mark_solved' : 'mark_unsolved';
         const problemId = this.currentProblem.id || this.currentProblem.frontend_id;
         const code = this.getEditorValue();
 
@@ -1818,34 +2332,36 @@ class LeetCodeApp {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: action,
+                    action: 'mark_solved',
                     problem_id: problemId,
                     code: code
                 })
             });
 
             // Update local state
-            this.currentProblem.solved = isSolved;
+            this.currentProblem.solved = true;
 
             // Hide draft badge when marking solved
-            if (this.draftBadge && isSolved) this.draftBadge.style.display = 'none';
+            if (this.draftBadge) this.draftBadge.style.display = 'none';
 
             // Update problem in list if it exists
             const problem = this.problems.find(p => String(p.id) === String(problemId));
             if (problem) {
-                problem.solved = isSolved;
+                problem.solved = true;
                 this.filterProblems(); // Refresh list to show checkmark
             }
 
-            this.updateSolvedButton(isSolved);
+            this.updateSolvedButton(true);
 
             // Notify roadmap of progress change
             if (this.roadmap) {
                 this.roadmap.updateProgress();
             }
 
+            this.showToast('Problem marked as solved!', 'success');
+
         } catch (error) {
-            console.error('Failed to update progress:', error);
+            console.error('Failed to mark as solved:', error);
         }
     }
 
@@ -1853,11 +2369,11 @@ class LeetCodeApp {
         if (isSolved) {
             this.solvedBtn.classList.add('solved');
             this.solvedBtn.textContent = '✓';
-            this.solvedBtn.title = 'Mark as unsolved';
+            this.solvedBtn.title = 'Problem solved';
         } else {
             this.solvedBtn.classList.remove('solved');
             this.solvedBtn.textContent = '';
-            this.solvedBtn.title = 'Mark as solved';
+            this.solvedBtn.title = 'Not solved';
         }
     }
 

@@ -2,7 +2,7 @@
   "solved": {
     "1": {
       "code": "# Time: O(n)\n# Space: O(n)\nclass Solution(object):\n    def twoSum(self, nums, target):\n        # Initialize an empty dictionary to store numbers we've seen and their indices.\n        seen = {}\n        # Loop through the list of numbers, 'nums'.\n        # 'enumerate' gives us both the index and the value for each element.\n        for index, num in enumerate(nums):\n            # Calculate the 'complement' number needed to reach the target.\n            # This is 'target' minus the current 'num'.\n            complement = target - num\n            # Check if this 'complement' number is already in our 'seen' dictionary.\n            if complement in seen:\n                # If it is, we've found the two numbers!\n                # Return a list containing the index of the 'complement' (from 'seen')\n                # and the 'index' of the current 'num'.\n                return [seen[complement], index]\n            # If the 'complement' is not in 'seen', add the current 'num' and its 'index'\n            # to the 'seen' dictionary. This way, it can be a complement for future numbers.\n            seen[num] = index\n        # This line will not be reached given the problem constraints (exactly one solution).\n        # It's here for completeness in case no solution is found.\n        return []",
-      "timestamp": "2026-02-22T12:23:47.167854",
+      "timestamp": "2026-02-26T08:26:20.613435",
       "passed": true
     },
     "217": {
