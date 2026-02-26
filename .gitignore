@@ -28,6 +28,7 @@ htmlcov/
 # Project-specific Data & AI Folders
 .claude/
 .gemini/
+data/quizzes.json
 
 # Node
 node_modules/
