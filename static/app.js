@@ -75,7 +75,6 @@ class RoadmapManager {
         const sidebar = document.querySelector('.sidebar');
         const roadmapPage = document.getElementById('roadmapPage');
         const learningPage = document.getElementById('learningPage');
-        const guidePage = document.getElementById('guidePage');
 
         if (page === 'roadmap') {
             mainContent.style.display = 'none';
@@ -89,27 +88,15 @@ class RoadmapManager {
             sidebar.style.display = 'none';
             roadmapPage.style.display = 'none';
             learningPage.style.display = 'flex';
-            guidePage.style.display = 'none';
             learningPage.style.flexDirection = 'column';
             if (this.app.learning) {
                 this.app.learning.renderLearning();
-            }
-        } else if (page === 'guide') {
-            mainContent.style.display = 'none';
-            sidebar.style.display = 'none';
-            roadmapPage.style.display = 'none';
-            learningPage.style.display = 'none';
-            guidePage.style.display = 'flex';
-            guidePage.style.flexDirection = 'column';
-            if (this.app.guide) {
-                this.app.guide.renderGuide();
             }
         } else {
             mainContent.style.display = 'flex';
             sidebar.style.display = 'flex';
             roadmapPage.style.display = 'none';
             learningPage.style.display = 'none';
-            guidePage.style.display = 'none';
         }
     }
 
@@ -396,10 +383,11 @@ class LearningManager {
     constructor(app) {
         this.app = app;
         this.learningData = null;
+        this.patternsData = null;
     }
 
     async init() {
-        await this.loadLearningData();
+        await Promise.all([this.loadLearningData(), this.loadPatternsData()]);
         this.bindEvents();
     }
 
@@ -412,152 +400,6 @@ class LearningManager {
         }
     }
 
-    bindEvents() {
-        // Nav tabs are handled by switchPage
-        document.getElementById('topicModalBackBtn')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('topicModalCloseBtn')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('topicDetailModal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'topicDetailModal') {
-                this.closeModal();
-            }
-        });
-    }
-
-    renderLearning() {
-        if (!this.learningData) return;
-        const container = document.getElementById('learningTopics');
-        if (!container) return;
-        container.innerHTML = '';
-
-        this.learningData.topics.forEach(topic => {
-            const starterCount = (topic.content.starters || []).length;
-            const leetcodeCount = (topic.content.leetcode || []).length;
-            const totalQuestions = starterCount + leetcodeCount;
-
-            const card = document.createElement('div');
-            card.className = 'topic-card';
-            card.innerHTML = `
-                <div class="topic-level ${topic.level.toLowerCase()}">${topic.level}</div>
-                <h3 class="topic-title">${topic.title}</h3>
-                <p class="topic-desc">${topic.description}</p>
-                <div class="topic-footer">
-                    <span>${totalQuestions} Questions</span>
-                    <button class="btn btn-sm btn-ghost">Study →</button>
-                </div>
-            `;
-            card.addEventListener('click', () => this.openTopic(topic));
-            container.appendChild(card);
-        });
-    }
-
-    openTopic(topic) {
-        const modal = document.getElementById('topicDetailModal');
-        const modalBody = document.getElementById('topicModalBody');
-        if (!modal || !modalBody) return;
-
-        modalBody.innerHTML = `
-            <div class="topic-detail">
-                <div class="topic-detail-header">
-                    <span class="badge ${topic.level.toLowerCase()}">${topic.level}</span>
-                    <h2>${topic.title}</h2>
-                </div>
-                
-                <div class="topic-detail-content">
-                    <section class="topic-section">
-                        <h3>Explanation</h3>
-                        <div class="topic-explanation">${topic.content.explanation}</div>
-                    </section>
-
-                    <section class="topic-section">
-                        <h3>Example</h3>
-                        ${topic.content.examples.map(ex => `
-                            <div class="example-box">
-                                <h4>${ex.title}</h4>
-                                <pre class="code-block"><code>${this.app.escapeHtml(ex.code)}</code></pre>
-                            </div>
-                        `).join('')}
-                    </section>
-
-                    <section class="topic-section">
-                        <h3>Dry Run</h3>
-                        <div class="dry-run-box">${topic.content.dry_run.replace(/\n/g, '<br>')}</div>
-                    </section>
-
-                    <section class="topic-section">
-                        <h3>Starter Problems</h3>
-                        <div class="topic-questions starters">
-                            ${(topic.content.starters || []).map(q => `
-                                <div class="day-problem-item custom-problem" data-custom-id="${q.id}">
-                                    <div class="day-problem-info">
-                                        <div class="day-problem-id">Custom</div>
-                                        <div class="day-problem-title">${this.app.escapeHtml(q.title)}</div>
-                                    </div>
-                                    <span class="day-problem-difficulty ${q.difficulty}">${q.difficulty}</span>
-                                </div>
-                            `).join('')}
-                            ${!(topic.content.starters && topic.content.starters.length) ? '<p class="topic-empty">No starters for this topic yet.</p>' : ''}
-                        </div>
-                    </section>
-
-                    <section class="topic-section">
-                        <h3>LeetCode Challenges</h3>
-                        <div class="topic-questions leetcode-challenges">
-                            ${(topic.content.leetcode || topic.content.questions || []).map(q => `
-                                <div class="day-problem-item leetcode-problem" data-problem-id="${q.leetcodeId}">
-                                    <div class="day-problem-info">
-                                        <div class="day-problem-id">#${q.leetcodeId}</div>
-                                        <div class="day-problem-title">${this.app.escapeHtml(q.title)}</div>
-                                    </div>
-                                    <span class="day-problem-difficulty ${q.difficulty}">${q.difficulty}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </section>
-                </div>
-            </div>
-        `;
-
-        // Add click handlers for custom starters
-        modalBody.querySelectorAll('.custom-problem').forEach(item => {
-            item.addEventListener('click', () => {
-                const customId = item.dataset.customId;
-                const problem = topic.content.starters.find(p => p.id === customId);
-                this.closeModal();
-                this.app.roadmap.switchPage('problems');
-                this.app.loadCustomProblem(problem);
-            });
-        });
-
-        // Add click handlers for leetcode problems
-        modalBody.querySelectorAll('.leetcode-problem').forEach(item => {
-            item.addEventListener('click', () => {
-                const problemId = item.dataset.problemId;
-                this.closeModal();
-                this.app.roadmap.switchPage('problems');
-                this.app.loadProblem(problemId);
-            });
-        });
-
-        modal.style.display = 'flex';
-    }
-
-    closeModal() {
-        document.getElementById('topicDetailModal').style.display = 'none';
-    }
-}
-
-// Guide Manager
-class GuideManager {
-    constructor(app) {
-        this.app = app;
-        this.patternsData = null;
-    }
-
-    async init() {
-        await this.loadPatternsData();
-        this.bindEvents();
-    }
-
     async loadPatternsData() {
         try {
             const response = await fetch('/static/patterns.json');
@@ -568,47 +410,27 @@ class GuideManager {
     }
 
     bindEvents() {
-        document.getElementById('patternModalBackBtn')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('patternModalCloseBtn')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('patternDetailModal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'patternDetailModal') {
+        document.getElementById('topicModalBackBtn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('topicModalCloseBtn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('topicDetailModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'topicDetailModal') {
                 this.closeModal();
             }
         });
     }
 
-    renderGuide() {
+    renderLearning() {
         if (!this.patternsData) return;
-        const container = document.getElementById('guideSections');
+        const container = document.getElementById('learningTopics');
         if (!container) return;
         container.innerHTML = '';
 
         const levels = [
-            {
-                title: "Level 1: The Building Blocks",
-                subtitle: "How computers store and quickly find data.",
-                ids: ["hash-table", "prefix-sum"]
-            },
-            {
-                title: "Level 2: The Squeeze & Search",
-                subtitle: "Efficiently finding items in sorted lists.",
-                ids: ["binary-search", "two-pointers"]
-            },
-            {
-                title: "Level 3: The Sliding View",
-                subtitle: "Processing chunks of data in one pass.",
-                ids: ["sliding-window", "monotonic-stack"]
-            },
-            {
-                title: "Level 4: The Explorers",
-                subtitle: "Finding paths and trying every combination.",
-                ids: ["dfs", "bfs", "backtracking"]
-            },
-            {
-                title: "Level 5: Master Strategist",
-                subtitle: "Advanced techniques for maximum performance.",
-                ids: ["dynamic-programming", "greedy", "heap", "union-find", "trie", "topological-sort", "bit-manipulation"]
-            }
+            { title: "Level 1: The Building Blocks", subtitle: "How computers store and quickly find data.", ids: ["hash-table", "prefix-sum"] },
+            { title: "Level 2: The Squeeze & Search", subtitle: "Efficiently finding items in sorted lists.", ids: ["binary-search", "two-pointers"] },
+            { title: "Level 3: The Sliding View", subtitle: "Processing chunks of data in one pass.", ids: ["sliding-window", "monotonic-stack"] },
+            { title: "Level 4: The Explorers", subtitle: "Finding paths and trying every combination.", ids: ["dfs", "bfs", "backtracking"] },
+            { title: "Level 5: Master Strategist", subtitle: "Advanced techniques for maximum performance.", ids: ["dynamic-programming", "greedy", "heap", "union-find", "trie", "topological-sort", "bit-manipulation", "math-geometry"] }
         ];
 
         levels.forEach(level => {
@@ -619,17 +441,23 @@ class GuideManager {
                 const pattern = this.patternsData[id];
                 if (!pattern) return;
 
+                // Find curated topic if exists
+                const curated = this.learningData?.topics.find(t => t.id === id);
+                const starterCount = (curated?.content.starters || []).length;
+                const leetcodeCount = this.app.problems.filter(p => this.app.getPatternFromTags(p.topic_tags || []) === id).length;
+
                 const card = document.createElement('div');
-                card.className = 'guide-card pattern-card';
+                card.className = 'topic-card';
                 card.innerHTML = `
                     <div class="pattern-analogy-tag">${this.app.escapeHtml(pattern.analogy)}</div>
-                    <h3 class="guide-card-title">${this.app.escapeHtml(pattern.title)}</h3>
-                    <p class="guide-card-desc">${this.app.escapeHtml(pattern.description)}</p>
-                    <div class="guide-card-footer">
-                        <button class="btn btn-sm btn-ghost">Learn This Concept →</button>
+                    <h3 class="topic-title">${this.app.escapeHtml(pattern.title)}</h3>
+                    <p class="topic-desc">${this.app.escapeHtml(pattern.description)}</p>
+                    <div class="topic-footer">
+                        <span>${starterCount} Starters • ${leetcodeCount} Total</span>
+                        <button class="btn btn-sm btn-ghost">Learn & Practice →</button>
                     </div>
                 `;
-                card.addEventListener('click', () => this.openPattern(id, pattern));
+                card.addEventListener('click', () => this.openTopic(id, pattern, curated));
                 grid.appendChild(card);
             });
             container.appendChild(section);
@@ -638,54 +466,65 @@ class GuideManager {
 
     createSection(title, subtitle) {
         const section = document.createElement('div');
-        section.className = 'guide-section';
+        section.className = 'learning-section-container';
         section.innerHTML = `
-            <div class="section-header">
-                <h2 class="section-title">${title}</h2>
-                <p class="section-subtitle">${subtitle}</p>
+            <div class="learning-section-header">
+                <h2 class="learning-section-title">${title}</h2>
+                <p class="learning-section-subtitle">${subtitle}</p>
             </div>
             <div class="section-grid"></div>
         `;
         return section;
     }
 
-    openPattern(id, pattern) {
-        const modal = document.getElementById('patternDetailModal');
-        const modalBody = document.getElementById('patternModalBody');
+    openTopic(id, pattern, curated) {
+        const modal = document.getElementById('topicDetailModal');
+        const modalBody = document.getElementById('topicModalBody');
         if (!modal || !modalBody) return;
 
         modalBody.innerHTML = `
-            <div class="pattern-detail">
-                <div class="pattern-detail-header">
+            <div class="topic-detail">
+                <div class="topic-detail-header">
+                    <div class="pattern-analogy-tag">${this.app.escapeHtml(pattern.analogy)}</div>
                     <h2>${this.app.escapeHtml(pattern.title)}</h2>
-                    <p class="pattern-detail-desc">${this.app.escapeHtml(pattern.description)}</p>
+                    <p class="topic-explanation" style="font-style: italic; margin-top: 8px;">"${this.app.escapeHtml(pattern.description)}"</p>
                 </div>
                 
-                <div class="pattern-detail-content">
+                <div class="topic-detail-content">
                     <section class="topic-section">
-                        <h3>1. Intuition</h3>
-                        <div class="topic-explanation">${this.app.escapeHtml(pattern.understanding.intuition)}</div>
+                        <h3>Intuition & Logic</h3>
+                        <div class="topic-explanation">
+                            <strong>Why it works:</strong> ${this.app.escapeHtml(pattern.understanding.intuition)}<br><br>
+                            <strong>Core Strategy:</strong> ${this.app.escapeHtml(pattern.understanding.core_logic)}
+                        </div>
                     </section>
 
                     <section class="topic-section">
-                        <h3>2. How to Identify</h3>
-                        <div class="topic-explanation">${this.app.escapeHtml(pattern.understanding.how_to_identify)}</div>
-                    </section>
-
-                    <section class="topic-section">
-                        <h3>3. Core Logic</h3>
-                        <div class="topic-explanation">${this.app.escapeHtml(pattern.understanding.core_logic)}</div>
-                    </section>
-
-                    <section class="topic-section">
-                        <h3>4. Code Template</h3>
+                        <h3>Code Template</h3>
                         <pre class="code-block"><code>${this.app.escapeHtml(pattern.template)}</code></pre>
                     </section>
 
+                    ${curated ? `
                     <section class="topic-section">
-                        <h3>5. Associated Problems</h3>
-                        <p class="section-subtitle">Click to jump to any problem in the database covered by this pattern.</p>
-                        <div class="topic-questions" id="patternProblemList">
+                        <h3>Starter Problems</h3>
+                        <div class="topic-questions starters">
+                            ${(curated.content.starters || []).map(q => `
+                                <div class="day-problem-item custom-problem" data-custom-id="${q.id}">
+                                    <div class="day-problem-info">
+                                        <div class="day-problem-id">Starter</div>
+                                        <div class="day-problem-title">${this.app.escapeHtml(q.title)}</div>
+                                    </div>
+                                    <span class="day-problem-difficulty ${q.difficulty}">${q.difficulty}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                    ` : ''}
+
+                    <section class="topic-section">
+                        <h3>All Associated LeetCode Problems</h3>
+                        <p class="section-subtitle">Every problem in the database that uses this pattern.</p>
+                        <div class="topic-questions" id="topicProblemList">
                             <div class="loading">Mapping all problems...</div>
                         </div>
                     </section>
@@ -693,22 +532,21 @@ class GuideManager {
             </div>
         `;
 
-        this.renderPatternProblems(id);
+        this.renderTopicProblems(id, curated);
         modal.style.display = 'flex';
     }
 
-    renderPatternProblems(patternId) {
-        const container = document.getElementById('patternProblemList');
+    renderTopicProblems(patternId, curated) {
+        const container = document.getElementById('topicProblemList');
         if (!container) return;
 
-        // Find all problems that match this pattern
+        // All problems matching this pattern
         const matchedProblems = this.app.problems.filter(p => {
-            const tags = p.topic_tags || [];
-            return this.app.getPatternFromTags(tags) === patternId;
+            return this.app.getPatternFromTags(p.topic_tags || []) === patternId;
         });
 
         if (matchedProblems.length === 0) {
-            container.innerHTML = '<p class="topic-empty">No problems found for this pattern in the database.</p>';
+            container.innerHTML = '<p class="topic-empty">No LeetCode problems found for this pattern.</p>';
             return;
         }
 
@@ -722,6 +560,19 @@ class GuideManager {
             </div>
         `).join('');
 
+        // Handle curated starters clicks
+        const modalBody = document.getElementById('topicModalBody');
+        modalBody.querySelectorAll('.custom-problem').forEach(item => {
+            item.addEventListener('click', () => {
+                const customId = item.dataset.customId;
+                const problem = curated.content.starters.find(p => p.id === customId);
+                this.closeModal();
+                this.app.roadmap.switchPage('problems');
+                this.app.loadCustomProblem(problem);
+            });
+        });
+
+        // Handle leetcode clicks
         container.querySelectorAll('.day-problem-item').forEach(item => {
             item.addEventListener('click', () => {
                 this.closeModal();
@@ -732,12 +583,7 @@ class GuideManager {
     }
 
     closeModal() {
-        document.getElementById('patternDetailModal').style.display = 'none';
-    }
-
-    renderMarkdown(text) {
-        if (window.marked) return marked.parse(text);
-        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        document.getElementById('topicDetailModal').style.display = 'none';
     }
 }
 
@@ -932,7 +778,6 @@ class LeetCodeApp {
         this.customSelects = {};
         this.roadmap = null;
         this.learning = null;
-        this.guide = null;
         this.topSolutions = null;
         this.currentSolutionPath = null;
 
@@ -966,13 +811,11 @@ class LeetCodeApp {
         // Instantiate managers first
         this.roadmap = new RoadmapManager(this);
         this.learning = new LearningManager(this);
-        this.guide = new GuideManager(this);
 
         // Then initialize them (can run in parallel)
         await Promise.all([
             this.roadmap.init(),
-            this.learning.init(),
-            this.guide.init()
+            this.learning.init()
         ]);
     }
 
@@ -1416,7 +1259,7 @@ class LeetCodeApp {
 
         // Pattern identification
         const patternId = this.getPatternFromTags(problem.topic_tags || []);
-        const patternName = patternId ? (this.guide.patternsData[patternId]?.title || 'Miscellaneous') : 'Miscellaneous';
+        const patternName = patternId ? (this.learning.patternsData[patternId]?.title || 'Miscellaneous') : 'Miscellaneous';
         
         // Meta info
         const acceptance = problem.acceptance_rate ? `${(problem.acceptance_rate * 100).toFixed(1)}% Acceptance` : '';
@@ -1438,10 +1281,11 @@ class LeetCodeApp {
 
         // Add pattern link listener
         const pl = document.querySelector('.pattern-link');
-        if (pl && patternId && this.guide.patternsData[patternId]) {
+        if (pl && patternId && this.learning.patternsData[patternId]) {
             pl.addEventListener('click', () => {
-                this.roadmap.switchPage('guide');
-                this.guide.openPattern(patternId, this.guide.patternsData[patternId]);
+                this.roadmap.switchPage('learning');
+                const curated = this.learning.learningData?.topics.find(t => t.id === patternId);
+                this.learning.openTopic(patternId, this.learning.patternsData[patternId], curated);
             });
         }
 
@@ -1461,7 +1305,7 @@ class LeetCodeApp {
     getPatternFromTags(tags) {
         const patternMapping = {
             "hash-table": ["Hash Table", "Counting"],
-            "two-pointers": ["Two Pointers", "Two-Pointers", "Two Pointers"],
+            "two-pointers": ["Two Pointers", "Two-Pointers", "Array", "String"],
             "sliding-window": ["Sliding Window"],
             "binary-search": ["Binary Search"],
             "dfs": ["Depth-First Search", "Tree", "Binary Tree", "Binary Search Tree"],
@@ -1475,7 +1319,9 @@ class LeetCodeApp {
             "union-find": ["Union Find", "Union-Find", "Disjoint Set"],
             "topological-sort": ["Topological Sort"],
             "trie": ["Trie"],
-            "bit-manipulation": ["Bit Manipulation"]
+            "bit-manipulation": ["Bit Manipulation"],
+            "linked-list": ["Linked List"],
+            "math-geometry": ["Math", "Geometry", "Number Theory", "Combinatorics"]
         };
 
         for (const [patternId, searchTags] of Object.entries(patternMapping)) {

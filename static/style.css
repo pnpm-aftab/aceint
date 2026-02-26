@@ -2694,6 +2694,34 @@ body {
 .learning-topics {
     max-width: 1000px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.learning-section-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.learning-section-header {
+    border-bottom: 2px solid var(--border);
+    padding-bottom: var(--space-2);
+}
+
+.learning-section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.learning-section-subtitle {
+    font-size: 13px;
+    color: var(--text-3);
+}
+
+.section-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--space-4);
@@ -2719,29 +2747,9 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-.topic-level {
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 2px 8px;
-    border-radius: 4px;
-    width: fit-content;
-}
-
-.topic-level.beginner {
-    background: rgba(46, 125, 50, 0.1);
-    color: var(--easy);
-}
-
-.topic-level.intermediate {
-    background: rgba(239, 108, 0, 0.1);
-    color: var(--medium);
-}
-
-.topic-level.advanced {
-    background: rgba(198, 40, 40, 0.1);
-    color: var(--hard);
+.topic-card:hover .pattern-analogy-tag {
+    background: var(--accent);
+    color: white;
 }
 
 .topic-title {

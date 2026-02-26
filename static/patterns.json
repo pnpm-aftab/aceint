@@ -31,7 +31,7 @@
       "how_to_identify": "Keywords: 'subarray', 'substring', 'contiguous', 'longest/shortest'.",
       "core_logic": "Expand 'right' until you hit a limit or find a solution. Then shrink 'left' to find the minimum or to make the window valid again."
     },
-    "template": "l = 0\nfor r in range(len(nums)):\n    window_sum += nums[r]\n    while window_sum > target:\n        window_sum -= nums[l]\n        l += 1"
+    "template": "l = 0\nfor r in range(len(s)):\n    window_sum += nums[r]\n    while window_sum > target:\n        window_sum -= nums[l]\n        l += 1"
   },
   "binary-search": {
     "title": "The Guessing Game (Binary Search)",
@@ -188,5 +188,29 @@
     },
     "template": "res = 0; for n in nums: res ^= n",
     "tags": ["Bit Manipulation"]
+  },
+  "linked-list": {
+    "title": "The Treasure Hunt (Linked List)",
+    "analogy": "Clues in a Bottle",
+    "description": "Each item (node) only knows its own value and where to find the next item. You can't jump to the middle; you must follow the clues from the start.",
+    "understanding": {
+      "intuition": "Great for frequent insertions and deletions at the ends. Harder to search than an array.",
+      "how_to_identify": "Keywords: 'linked list', 'node', 'next pointer', 'head', 'cycle'.",
+      "core_logic": "Always keep a reference to the 'head'. Use a 'dummy' node to simplify edge cases where the head changes."
+    },
+    "template": "dummy = ListNode(0, head)\ncurr = head\nwhile curr: ...",
+    "tags": ["Linked List"]
+  },
+  "math-geometry": {
+    "title": "The Rulebook (Math & Geometry)",
+    "analogy": "Natural Laws",
+    "description": "Sometimes the answer isn't a complex algorithm but a simple mathematical truth, like how prime numbers behave or how to calculate the area of a triangle.",
+    "understanding": {
+      "intuition": "Look for properties like prime factors, GCD, or symmetry in numbers and shapes.",
+      "how_to_identify": "Keywords: 'prime', 'multiple', 'points', 'area', 'circle', 'square'.",
+      "core_logic": "Use modular arithmetic, built-in math functions, or geometric formulas."
+    },
+    "template": "def gcd(a, b):\n    while b: a, b = b, a % b\n    return a",
+    "tags": ["Math", "Geometry", "Number Theory", "Combinatorics"]
   }
 }
