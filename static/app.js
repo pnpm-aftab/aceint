@@ -1,5 +1,14 @@
 // LeetCode Helper - SPA Logic
 
+// ====================================================
+// ICON HELPER FUNCTION (Lucide Icons)
+// ====================================================
+// Creates an icon HTML string for template literals
+function iconHtml(name, size = 18, className = '') {
+    const extraClass = className ? ` ${className}` : '';
+    return `<i data-lucide="${name}" style="width:${size}px;height:${size}px;"${extraClass}></i>`;
+}
+
 // Roadmap Manager
 class RoadmapManager {
     constructor(app) {
@@ -114,6 +123,9 @@ class RoadmapManager {
             const phaseCard = this.renderPhase(phase);
             phasesContainer.appendChild(phaseCard);
         });
+
+        // Initialize Lucide icons for newly added elements
+        if (window.lucide) lucide.createIcons();
     }
 
     updateOverallProgress() {
@@ -136,7 +148,7 @@ class RoadmapManager {
         const card = document.createElement('div');
         card.className = `phase-card${!isUnlocked ? ' locked' : ''}`;
 
-        const lockIcon = !isUnlocked ? '<span class="phase-lock">🔒</span>' : '';
+        const lockIcon = !isUnlocked ? iconHtml('lock', 16, 'phase-lock') : '';
 
         card.innerHTML = `
             <div class="phase-header">
@@ -186,8 +198,8 @@ class RoadmapManager {
         const totalProblems = day.problems?.length || 0;
         const solvedProblems = day.problems?.filter(p => this.app.isProblemSolved(p.leetcodeId)).length || 0;
 
-        const statusIcon = isCompleted ? '<span class="day-status completed">✓</span>' : '';
-        const currentIndicator = isCurrent ? '→' : '';
+        const statusIcon = isCompleted ? iconHtml('check', 12, 'day-status completed') : '';
+        const currentIndicator = isCurrent ? iconHtml('arrow-right', 12) : '';
 
         card.innerHTML = `
             <div class="day-header">
@@ -229,7 +241,7 @@ class RoadmapManager {
                 const isSolved = this.app.isProblemSolved(p.leetcodeId);
                 return `
                                 <div class="day-problem-item${isSolved ? ' solved' : ''}" data-problem-id="${p.leetcodeId}">
-                                    <div class="day-problem-check">${isSolved ? '✓' : ''}</div>
+                                    <div class="day-problem-check">${isSolved ? iconHtml('check', 10) : ''}</div>
                                     <div class="day-problem-info">
                                         <div class="day-problem-id">#${p.leetcodeId}</div>
                                         <div class="day-problem-title">${this.escapeHtml(p.title)}</div>
@@ -247,7 +259,7 @@ class RoadmapManager {
         if (day.tips && day.tips.length > 0) {
             tipsHtml = `
                 <div class="day-tips-section">
-                    <h3>💡 Tips for Today</h3>
+                    <h3>${iconHtml('lightbulb', 16)} Tips for Today</h3>
                     <ul class="day-tips-list">
                         ${day.tips.map(tip => `<li>${this.escapeHtml(tip)}</li>`).join('')}
                     </ul>
@@ -266,7 +278,7 @@ class RoadmapManager {
 
             <div class="day-detail-progress">
                 <span class="day-detail-progress-text${solvedProblems >= totalProblems ? ' all-done' : ''}">
-                    ${solvedProblems >= totalProblems ? '✓ All done!' : `Progress: ${solvedProblems}/${totalProblems} problems solved`}
+                    ${solvedProblems >= totalProblems ? `${iconHtml('check', 14)} All done!` : `Progress: ${solvedProblems}/${totalProblems} problems solved`}
                 </span>
                 <div class="day-detail-actions">
                     ${isCurrent && !isCompleted ? `
@@ -274,7 +286,7 @@ class RoadmapManager {
                             ${canMarkComplete ? 'Mark Day Complete' : 'Solve all problems first'}
                         </button>
                     ` : ''}
-                    ${isCompleted ? '<span style="color: var(--success); font-weight: 500;">Day Completed ✓</span>' : ''}
+                    ${isCompleted ? `<span style="color: var(--success); font-weight: 500;">Day Completed ${iconHtml('check', 14)}</span>` : ''}
                 </div>
             </div>
 
@@ -297,6 +309,9 @@ class RoadmapManager {
         if (markBtn && canMarkComplete) {
             markBtn.addEventListener('click', () => this.markDayComplete(day.day));
         }
+
+        // Initialize Lucide icons for modal content
+        if (window.lucide) lucide.createIcons();
 
         modal.style.display = 'flex';
     }
@@ -454,7 +469,7 @@ class LearningManager {
                     <p class="topic-desc">${this.app.escapeHtml(pattern.description)}</p>
                     <div class="topic-footer">
                         <span>${starterCount} Starters • ${leetcodeCount} Total</span>
-                        <button class="btn btn-sm btn-ghost">Learn & Practice →</button>
+                        <button class="btn btn-sm btn-ghost">Learn & Practice ${iconHtml('arrow-right', 14)}</button>
                     </div>
                 `;
                 card.addEventListener('click', () => this.openTopic(id, pattern, curated));
@@ -533,6 +548,8 @@ class LearningManager {
         `;
 
         this.renderTopicProblems(id, curated);
+        // Initialize Lucide icons for modal content
+        if (window.lucide) lucide.createIcons();
         modal.style.display = 'flex';
     }
 
@@ -891,7 +908,7 @@ class QuizManager {
         const generateQuizBtn = document.getElementById('generateQuizBtn');
         if (generateQuizBtn) {
             generateQuizBtn.disabled = true;
-            generateQuizBtn.innerHTML = '<span class="btn-icon">⟳</span> Generating...';
+            generateQuizBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Generating...`;
         }
 
         try {
@@ -927,7 +944,7 @@ class QuizManager {
         } finally {
             if (generateQuizBtn) {
                 generateQuizBtn.disabled = false;
-                generateQuizBtn.innerHTML = '<span class="btn-icon">✨</span> Generate Quiz';
+                generateQuizBtn.innerHTML = `${iconHtml('sparkles', 14, 'btn-icon')} Generate Quiz`;
             }
         }
     }
@@ -945,7 +962,7 @@ class QuizManager {
         const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
         if (regenerateQuizBtn) {
             regenerateQuizBtn.disabled = true;
-            regenerateQuizBtn.innerHTML = '<span class="btn-icon">⟳</span> Regenerating...';
+            regenerateQuizBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Regenerating...`;
         }
 
         try {
@@ -986,7 +1003,7 @@ class QuizManager {
         } finally {
             if (regenerateQuizBtn) {
                 regenerateQuizBtn.disabled = false;
-                regenerateQuizBtn.innerHTML = '<span class="btn-icon">⟳</span> Regenerate';
+                regenerateQuizBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon')} Regenerate`;
             }
         }
     }
@@ -1048,6 +1065,9 @@ class QuizManager {
 
         // Update UI to show first question
         this.updateQuizUI();
+
+        // Initialize Lucide icons for newly added elements
+        if (window.lucide) lucide.createIcons();
     }
 
     formatQuizQuestion(text) {
@@ -1140,7 +1160,7 @@ class QuizManager {
                         const explanationDiv = document.createElement('div');
                         explanationDiv.className = `quiz-explanation ${isCorrect ? 'correct' : 'incorrect'}`;
                         explanationDiv.innerHTML = `
-                            <strong>${isCorrect ? '✓ Correct!' : '✗ Incorrect'}</strong>
+                            <strong>${isCorrect ? `${iconHtml('check', 14)} Correct!` : `${iconHtml('x-circle', 14)} Incorrect`}</strong>
                             <p>${this.app.escapeHtml(question.explanation)}</p>
                         `;
                         questionCard.appendChild(explanationDiv);
@@ -1330,6 +1350,7 @@ class LeetCodeApp {
         this.searchInput = document.getElementById('searchInput');
         this.difficultyFilterEl = document.getElementById('difficultyFilter');
         this.statusFilterEl = document.getElementById('statusFilter');
+        this.tagFilterEl = document.getElementById('tagFilter');
         this.randomBtn = document.getElementById('randomBtn');
         this.collapseBtn = document.getElementById('collapseBtn');
         this.collapseIcon = document.getElementById('collapseIcon');
@@ -1479,16 +1500,37 @@ class LeetCodeApp {
     }
 
     initCustomSelects() {
-        // Initialize custom selects with change callbacks
-        this.customSelects.difficulty = new CustomSelect(
-            this.difficultyFilterEl,
-            () => this.filterProblems()
-        );
+        // Difficulty chips
+        this.difficultyFilterEl = document.getElementById('difficultyFilter');
+        if (this.difficultyFilterEl) {
+            this.difficultyFilterEl.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    this.difficultyFilterEl.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.filterProblems();
+                });
+            });
+        }
 
-        this.customSelects.status = new CustomSelect(
-            this.statusFilterEl,
-            () => this.filterProblems()
-        );
+        // Status chips
+        this.statusFilterEl = document.getElementById('statusFilter');
+        if (this.statusFilterEl) {
+            this.statusFilterEl.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    this.statusFilterEl.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.filterProblems();
+                });
+            });
+        }
+
+        // Tags Native Select
+        this.tagFilterEl = document.getElementById('tagFilter');
+        if (this.tagFilterEl) {
+            this.tagFilterEl.addEventListener('change', () => {
+                this.filterProblems();
+            });
+        }
     }
 
     initCodeMirror() {
@@ -1578,6 +1620,24 @@ class LeetCodeApp {
             const response = await fetch('/api/problems');
             this.problems = await response.json();
 
+            // Populate all tags
+            this.problems.forEach(p => {
+                if (p.topic_tags) {
+                    p.topic_tags.forEach(t => this.allTags.add(t));
+                }
+            });
+
+            // Update tag dropdown
+            if (this.tagFilterEl) {
+                this.tagFilterEl.innerHTML = '<option value="">All Tags</option>';
+                Array.from(this.allTags).sort().forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = tag;
+                    this.tagFilterEl.appendChild(option);
+                });
+            }
+
             this.problemCount.textContent = `${this.problems.length} problems`;
             this.totalProblems.textContent = this.problems.length;
 
@@ -1590,8 +1650,20 @@ class LeetCodeApp {
 
     filterProblems() {
         const search = this.searchInput.value.toLowerCase();
-        const difficulty = this.customSelects.difficulty.getValue();
-        const status = this.customSelects.status.getValue();
+        
+        let difficulty = '';
+        if (this.difficultyFilterEl) {
+            const activeChip = this.difficultyFilterEl.querySelector('.filter-chip.active');
+            difficulty = activeChip ? activeChip.dataset.value : '';
+        }
+
+        let status = '';
+        if (this.statusFilterEl) {
+            const activeChip = this.statusFilterEl.querySelector('.filter-chip.active');
+            status = activeChip ? activeChip.dataset.value : '';
+        }
+        
+        const tagFilter = this.tagFilterEl ? this.tagFilterEl.value : '';
 
         const filtered = this.problems.filter(p => {
             // Search
@@ -1607,6 +1679,9 @@ class LeetCodeApp {
             if (status === 'solved' && !p.solved) return false;
             if (status === 'unsolved' && p.solved) return false;
 
+            // Tag filter
+            if (tagFilter && !(p.topic_tags || []).includes(tagFilter)) return false;
+
             return true;
         });
 
@@ -1615,8 +1690,20 @@ class LeetCodeApp {
 
     getFilteredProblems() {
         const search = this.searchInput.value.toLowerCase();
-        const difficulty = this.customSelects.difficulty.getValue();
-        const status = this.customSelects.status.getValue();
+        
+        let difficulty = '';
+        if (this.difficultyFilterEl) {
+            const activeChip = this.difficultyFilterEl.querySelector('.filter-chip.active');
+            difficulty = activeChip ? activeChip.dataset.value : '';
+        }
+
+        let status = '';
+        if (this.statusFilterEl) {
+            const activeChip = this.statusFilterEl.querySelector('.filter-chip.active');
+            status = activeChip ? activeChip.dataset.value : '';
+        }
+        
+        const tagFilter = this.tagFilterEl ? this.tagFilterEl.value : '';
 
         return this.problems.filter(p => {
             // Search
@@ -1631,6 +1718,9 @@ class LeetCodeApp {
             // Status
             if (status === 'solved' && !p.solved) return false;
             if (status === 'unsolved' && p.solved) return false;
+
+            // Tag filter
+            if (tagFilter && !(p.topic_tags || []).includes(tagFilter)) return false;
 
             return true;
         });
@@ -1649,8 +1739,10 @@ class LeetCodeApp {
     toggleSidebar() {
         this.mainContainer.classList.toggle('sidebar-collapsed');
         const isCollapsed = this.mainContainer.classList.contains('sidebar-collapsed');
-        this.collapseIcon.textContent = isCollapsed ? '▶' : '◀';
+        // Icon flips via CSS transform, no textContent change needed
         this.collapseBtn.title = isCollapsed ? 'Show Sidebar' : 'Hide Sidebar';
+        // Re-render icon for the state change
+        if (window.lucide) lucide.createIcons();
     }
 
     renderProblemList(problems) {
@@ -1669,7 +1761,7 @@ class LeetCodeApp {
             item.dataset.id = p.id;
 
             const difficultyClass = p.difficulty || 'Medium';
-            const solvedIcon = p.solved ? '✓' : '';
+            const solvedIcon = p.solved ? iconHtml('check', 10) : '';
 
             item.innerHTML = `
                 <div class="problem-item-title">${this.escapeHtml(p.title)}</div>
@@ -1685,6 +1777,8 @@ class LeetCodeApp {
         });
 
         this.problemList.appendChild(fragment);
+        // Initialize Lucide icons for newly added elements
+        if (window.lucide) lucide.createIcons();
     }
 
 
@@ -1995,7 +2089,7 @@ class LeetCodeApp {
 
         // Show loading state
         this.runBtn.disabled = true;
-        this.runBtn.innerHTML = '<span class="btn-icon">⟳</span> Running...';
+        this.runBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Running...`;
 
         try {
             const response = await fetch('/api/run', {
@@ -2024,7 +2118,7 @@ class LeetCodeApp {
             });
         } finally {
             this.runBtn.disabled = false;
-            this.runBtn.innerHTML = '<span class="btn-icon">▶</span> Run All Tests';
+            this.runBtn.innerHTML = `${iconHtml('play', 14, 'btn-icon')} Run All Tests`;
         }
     }
 
@@ -2040,7 +2134,7 @@ class LeetCodeApp {
         const starterCode = pythonSnippet ? pythonSnippet.code : '';
 
         this.aiBtn.disabled = true;
-        this.aiBtn.innerHTML = '<span class="btn-icon">⟳</span> Generating...';
+        this.aiBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Generating...`;
 
         this.showAIPanelLoading();
 
@@ -2098,7 +2192,7 @@ class LeetCodeApp {
             this.closeAIPanel();
         } finally {
             this.aiBtn.disabled = false;
-            this.aiBtn.innerHTML = '<span class="btn-icon">✨</span>';
+            this.aiBtn.innerHTML = `${iconHtml('sparkles', 14, 'btn-icon')}`;
         }
     }
 
@@ -2289,9 +2383,9 @@ class LeetCodeApp {
             item.className = `result-item ${r.passed ? 'pass' : 'fail'}`;
 
             if (r.passed) {
-                item.innerHTML = `<span class="result-status">✓ Test case ${i + 1} passed</span>`;
+                item.innerHTML = `<span class="result-status">${iconHtml('check', 14)} Test case ${i + 1} passed</span>`;
             } else {
-                let html = `<span class="result-status">✗ Test case ${i + 1} failed</span>`;
+                let html = `<span class="result-status">${iconHtml('x-circle', 14)} Test case ${i + 1} failed</span>`;
 
                 if (r.input) {
                     html += `<div class="result-input">Input: ${this.escapeHtml(r.input)}</div>`;
@@ -2368,7 +2462,9 @@ class LeetCodeApp {
     updateSolvedButton(isSolved) {
         if (isSolved) {
             this.solvedBtn.classList.add('solved');
-            this.solvedBtn.textContent = '✓';
+            this.solvedBtn.textContent = ''; // Clear text
+            this.solvedBtn.innerHTML = iconHtml('check', 16);
+            if (window.lucide) lucide.createIcons();
             this.solvedBtn.title = 'Problem solved';
         } else {
             this.solvedBtn.classList.remove('solved');
@@ -2424,7 +2520,9 @@ class LeetCodeApp {
 
         this.hintBtn.disabled = true;
         const hintIcon = this.hintBtn.querySelector('.btn-icon');
-        if (hintIcon) hintIcon.textContent = '⟳';
+        if (hintIcon) {
+            hintIcon.outerHTML = iconHtml('refresh-cw', 14, 'btn-icon spin');
+        }
 
         // Open modal immediately with a skeleton so it feels instant
         const modal = document.getElementById('hintModal');
@@ -2438,7 +2536,12 @@ class LeetCodeApp {
             await this._fetchHintAtLevel(nextLevel, false);
         } finally {
             this.hintBtn.disabled = false;
-            if (hintIcon) hintIcon.textContent = '💡';
+            // Reset the hint button icon
+            const btnIcon = this.hintBtn.querySelector('.btn-icon') || this.hintBtn.querySelector('[data-lucide]');
+            if (btnIcon) {
+                btnIcon.outerHTML = iconHtml('lightbulb', 14, 'btn-icon');
+            }
+            if (window.lucide) lucide.createIcons();
         }
     }
 
@@ -2497,11 +2600,11 @@ class LeetCodeApp {
         this.currentHints[level - 1] = '';
         document.getElementById('hintModalContent').innerHTML = this.getHintSkeleton();
         const btn = document.getElementById('hintNewAngleBtn');
-        if (btn) { btn.disabled = true; btn.textContent = '⟳ Generating…'; }
+        if (btn) { btn.disabled = true; btn.innerHTML = `${iconHtml('refresh-cw', 14, 'spin')} Generating…`; if (window.lucide) lucide.createIcons(); }
         try {
             await this._fetchHintAtLevel(level, true);
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = '🔄 New Angle'; }
+            if (btn) { btn.disabled = false; btn.innerHTML = `${iconHtml('refresh-cw', 12)} New Angle`; if (window.lucide) lucide.createIcons(); }
         }
     }
 
@@ -2656,7 +2759,7 @@ class LeetCodeApp {
         if (nextBtn) {
             const isLastLevel = this.viewingHintLevel >= 3;
             nextBtn.disabled = isLastLevel;
-            nextBtn.textContent = isLastLevel ? 'Max hints reached' : 'Next Hint →';
+            nextBtn.innerHTML = isLastLevel ? 'Max hints reached' : `Next Hint ${iconHtml('arrow-right', 12)}`;
         }
 
         if (insertBtn) {
@@ -2682,9 +2785,10 @@ class LeetCodeApp {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
 
-        const icons = { info: 'ℹ', success: '✓', error: '✗', warning: '⚠' };
-        toast.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${this.escapeHtml(message)}</span>`;
+        const icons = { info: 'info', success: 'check-circle', error: 'x-circle', warning: 'alert-triangle' };
+        toast.innerHTML = `<i data-lucide="${icons[type] || 'info'}" class="icon-sm"></i><span>${this.escapeHtml(message)}</span>`;
         container.appendChild(toast);
+        if (window.lucide) lucide.createIcons();
 
         // Auto-remove
         const remove = () => {

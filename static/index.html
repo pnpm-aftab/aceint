@@ -13,6 +13,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
@@ -21,7 +22,7 @@
         <header class="header">
             <div class="header-left">
                 <button id="collapseBtn" class="collapse-btn" title="Toggle Sidebar">
-                    <span id="collapseIcon" class="icon-arrow-left"></span>
+                    <i data-lucide="panel-left-close" id="collapseIcon"></i>
                 </button>
                 <h1 class="logo">Aceint</h1>
             </div>
@@ -33,7 +34,7 @@
             <div class="header-right">
                 <!-- Settings Button -->
                 <button id="settingsBtn" class="btn-icon-only" title="Settings">
-                    <span class="icon-settings"></span>
+                    <i data-lucide="settings"></i>
                 </button>
             </div>
         </header>
@@ -43,7 +44,7 @@
             <div class="modal-content settings-modal">
                 <div class="modal-header">
                     <h3>Settings</h3>
-                    <button class="modal-close-btn" id="closeSettingsBtn"><span class="icon-close"></span></button>
+                    <button class="modal-close-btn" id="closeSettingsBtn"><i data-lucide="x"></i></button>
                 </div>
                 <div class="modal-body">
                     <div class="settings-section">
@@ -66,37 +67,27 @@
                     <button id="randomBtn" class="random-btn" title="Random Problem">Random</button>
                 </div>
                 <div class="sidebar-filters">
-                    <!-- Custom Difficulty Filter -->
-                    <div class="custom-select" id="difficultyFilter" data-filter="difficulty">
-                        <input type="text" class="select-input" placeholder="Difficulty" readonly>
-                        <button class="select-toggle"><span class="icon-chevron-down"></span></button>
-                        <div class="select-dropdown">
-                            <div class="select-option" value="">All Difficulty</div>
-                            <div class="select-option" value="Easy">Easy</div>
-                            <div class="select-option" value="Medium">Medium</div>
-                            <div class="select-option" value="Hard">Hard</div>
-                        </div>
+                    <!-- Difficulty Chips -->
+                    <div class="filter-group" id="difficultyFilter">
+                        <button class="filter-chip active" data-value="">All</button>
+                        <button class="filter-chip" data-value="Easy">Easy</button>
+                        <button class="filter-chip" data-value="Medium">Medium</button>
+                        <button class="filter-chip" data-value="Hard">Hard</button>
                     </div>
 
-                    <!-- Custom Status Filter -->
-                    <div class="custom-select" id="statusFilter" data-filter="status">
-                        <input type="text" class="select-input" placeholder="Status" readonly>
-                        <button class="select-toggle"><span class="icon-chevron-down"></span></button>
-                        <div class="select-dropdown">
-                            <div class="select-option" value="">All Status</div>
-                            <div class="select-option" value="solved">Solved</div>
-                            <div class="select-option" value="unsolved">Unsolved</div>
-                        </div>
+                    <!-- Status Chips -->
+                    <div class="filter-group" id="statusFilter">
+                        <button class="filter-chip active" data-value="">Any</button>
+                        <button class="filter-chip" data-value="solved">Solved</button>
+                        <button class="filter-chip" data-value="unsolved">Unsolved</button>
                     </div>
 
-                    <!-- Custom Tags Filter -->
-                    <div class="custom-select" id="tagFilter" data-filter="tag">
-                        <input type="text" class="select-input" placeholder="All Tags" readonly>
-                        <button class="select-toggle"><span class="icon-chevron-down"></span></button>
-                        <div class="select-dropdown" id="tagDropdown">
-                            <div class="select-option" value="">All Tags</div>
+                    <!-- Native Tags Filter (Too many for chips) -->
+                    <div class="filter-group">
+                        <select class="native-select" id="tagFilter">
+                            <option value="">All Tags</option>
                             <!-- Tags will be populated dynamically -->
-                        </div>
+                        </select>
                     </div>
                 </div>
                 <div class="sidebar-header">
@@ -131,7 +122,7 @@
                                     <button class="panel-tab" data-content="quiz" id="quizTabBtn">Quiz</button>
                                 </nav>
                                 <button id="clearAiChatBtn" class="btn-icon-only" title="Clear Chat" style="display:none; margin-left: auto;">
-                                    <span class="icon-close" style="font-size: 14px;"></span>
+                                    <i data-lucide="x" style="width:14px;height:14px;"></i>
                                 </button>
                             </div>
                             <div class="panel-content">
@@ -260,8 +251,8 @@
                                     <span class="console-label">Console</span>
                                     <div class="results-header-right">
                                         <span id="resultsSummary"></span>
-                                        <button class="expand-btn" id="expandResults"><span class="icon-chevron-up"></span></button>
-                                        <button class="close-btn" id="closeResults"><span class="icon-close"></span></button>
+                                        <button class="expand-btn" id="expandResults"><i data-lucide="chevron-up"></i></button>
+                                        <button class="close-btn" id="closeResults"><i data-lucide="x"></i></button>
                                     </div>
                                 </div>
                                 <div id="resultsList" class="results-list" style="display: none;"></div>
@@ -307,9 +298,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button class="modal-back-btn" id="modalBackBtn">
-                    <span class="icon-arrow-left"></span> Back to Roadmap
+                    <i data-lucide="arrow-left"></i> Back to Roadmap
                 </button>
-                <button class="modal-close-btn" id="modalCloseBtn"><span class="icon-close"></span></button>
+                <button class="modal-close-btn" id="modalCloseBtn"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body" id="modalBody"></div>
         </div>
@@ -340,7 +331,7 @@
                     <span class="hint-dot" data-level="2" title="Approach"></span>
                     <span class="hint-dot" data-level="3" title="Near-Solution"></span>
                 </div>
-                <button class="modal-close-btn" id="hintModalClose"><span class="icon-close"></span></button>
+                <button class="modal-close-btn" id="hintModalClose"><i data-lucide="x"></i></button>
             </div>
             <div id="hintModalContent" class="hint-modal-inner"></div>
             <div class="hint-modal-footer">
@@ -366,6 +357,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/theme-github.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-python.js"></script>
     <script src="app.js"></script>
+    <script>lucide.createIcons();</script>
 </body>
 
 </html>
