@@ -1,69 +1,73 @@
-# LeetCode Helper
+# Aceint (LeetCode Helper)
 
-A minimal, dark-themed web app for solving LeetCode problems locally.
+Aceint is a powerful, locally-hosted web application designed to help you master LeetCode problems through a structured, pedagogical approach. It combines a massive offline problem set with AI-driven tutoring and a comprehensive 60-day roadmap.
 
-## Features
+## 🚀 Key Features
 
-| Feature | Description |
-| ------- | ----------- |
-| Problems | 3,700+ LeetCode problems with test cases |
-| Editor | Python syntax highlighting with tab support |
-| Progress | Track solved/unsolved status |
-| Search | Filter by difficulty, status, tags |
+- **3,700+ Problems:** Full offline access to a massive library of LeetCode problems, complete with descriptions, test cases, and starter code.
+- **Pedagogical Quizzing:** Before writing code, test your understanding with AI-generated, scaffolded quizzes that follow a strict learning pipeline:
+  1. **Understanding:** Clarify I/O and problem constraints.
+  2. **Pattern:** Identify the correct algorithmic strategy.
+  3. **Invariant:** Pinpoint the core logic that remains true during execution.
+  4. **Implementation:** Structure the code flow.
+  5. **Edge Cases:** Anticipate tricky inputs.
+- **AI-Powered Tutoring:** Integrated with OpenRouter (defaulting to `openrouter/healer-alpha`) to provide:
+  - **Progressive Hints:** Get guidance without spoiling the answer.
+  - **Code Explanations:** Deep dives into logic and time/space complexity.
+  - **Chat Interface:** Ask specific questions about your current approach.
+- **60-Day Roadmap:** A structured path from "Foundations" to "Advanced Algorithms," organized into 4 phases (15 days each) with daily focus topics and curated problems.
+- **Integrated Editor:** A clean, dark-themed coding environment with Python syntax highlighting and integrated test case runner.
+- **Progress Tracking:** Automatically track your solved problems, save your best solutions, and monitor your roadmap progress.
 
-## Installation
+## 🛠️ Tech Stack
 
-```bash
-pip install -r requirements.txt
-```
+| Layer | Technology |
+| :--- | :--- |
+| **Backend** | Python (`http.server`), `requests`, `python-dotenv` |
+| **Frontend** | Vanilla HTML5/CSS3/JS, Lucide Icons, Marked.js |
+| **AI** | OpenRouter API (`openrouter/healer-alpha`) |
+| **Data** | JSON-based storage for problems, progress, and quizzes |
 
-## Usage
+## ⚙️ Installation & Setup
 
-### Web Interface
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd leetcode-helper
+   ```
 
-```bash
-python server.py
-```
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Open http://localhost:8888
+3. **Configure API Key:**
+   - Create a `.env` file in the root directory.
+   - Add your OpenRouter API key: `OPENROUTER_API_KEY=your_key_here`
+   - *Alternatively*, you can set this directly in the app's Settings modal.
 
-### CLI Workflow
+4. **Launch the app:**
+   ```bash
+   python server.py
+   ```
 
-```bash
-# Initialize a problem
-python -m leetcode_helper.cli init 1
-```
+5. **Open in your browser:**
+   Navigate to `http://localhost:8888`
 
-## Project Structure
+## 📖 Usage Guide
 
-```
-leetcode-helper/
-├── data/
-│   ├── problems.json         # Problem data
-│   ├── problems_index.json   # Fast-loading index
-│   └── progress.json         # User progress
-├── static/
-│   ├── index.html
-│   ├── style.css
-│   ├── app.js
-│   └── roadmap.json          # 60-day learning roadmap
-├── leetcode_helper/          # CLI package
-├── solutions/                # Solution files
-├── server.py                 # Web server
-└── tray_app.py               # System tray app
-```
+### 1. The Problems Tab
+Browse and filter the massive problem set by difficulty, status, or tags. Click a problem to load it into the editor.
 
-## Tech Stack
+### 2. The Quiz Bridge
+Before you code, use the **Quiz tab**. It's designed to ensure you actually *understand* the problem before you start fighting the compiler. If you fail a specific stage (like "Invariant"), you can regenerate just that stage to refine your mental model.
 
-| Component | Technology |
-| --------- | ---------- |
-| Backend | Python stdlib (`http.server`, `json`) |
-| Frontend | Vanilla HTML/CSS/JS |
-| Storage | JSON files |
+### 3. Solving & Testing
+Write your Python code in the editor. Use the **Run** button to execute it against the problem's example test cases. The console will show you exactly where your logic succeeded or failed.
 
-## Keyboard Shortcuts
+### 4. Roadmap Navigation
+Use the **Roadmap tab** to follow a structured path. Each day provides a specific focus area and a set of problems to tackle. Mark days as complete to unlock the next phase of your journey.
 
-| Shortcut | Action |
-| -------- | ------ |
-| `Tab` | Insert 4 spaces |
-| `Ctrl+C` | Stop server |
+---
+
+*Aceint: Bridge the gap from concept to code.*

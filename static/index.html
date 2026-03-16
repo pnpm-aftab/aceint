@@ -1,363 +1,699 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LeetCode Helper</title>
+        <link rel="stylesheet" href="style.css" />
+        <!-- CodeMirror 6 CSS is included in style.css -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://unpkg.com/lucide@latest"></script>
+    </head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeetCode Helper</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- CodeMirror 6 CSS is included in style.css -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-
-<body>
-    <div id="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-left">
-                <button id="collapseBtn" class="collapse-btn" title="Toggle Sidebar">
-                    <i data-lucide="panel-left-close" id="collapseIcon"></i>
-                </button>
-                <h1 class="logo">Aceint</h1>
-            </div>
-            <nav class="nav-tabs">
-                <button class="nav-tab active" data-page="problems">Problems</button>
-                <button class="nav-tab" data-page="roadmap">Roadmap</button>
-                <button class="nav-tab" data-page="learning">Learning Hub</button>
-            </nav>
-            <div class="header-right">
-                <!-- Settings Button -->
-                <button id="settingsBtn" class="btn-icon-only" title="Settings">
-                    <i data-lucide="settings"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- Settings Modal -->
-        <div id="settingsModal" class="modal" style="display: none;">
-            <div class="modal-content settings-modal">
-                <div class="modal-header">
-                    <h3>Settings</h3>
-                    <button class="modal-close-btn" id="closeSettingsBtn"><i data-lucide="x"></i></button>
+    <body>
+        <div id="app">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button
+                        id="collapseBtn"
+                        class="collapse-btn"
+                        title="Toggle Sidebar"
+                    >
+                        <i data-lucide="panel-left-close" id="collapseIcon"></i>
+                    </button>
+                    <h1 class="logo">Aceint</h1>
                 </div>
-                <div class="modal-body">
-                    <div class="settings-section">
-                        <label class="settings-label">OpenRouter API Key</label>
-                        <input type="password" id="apiKeyInput" class="settings-input" placeholder="sk-or-...">
-                        <p class="settings-hint">Get a free API key at <a href="https://openrouter.ai/keys"
-                                target="_blank">openrouter.ai/keys</a></p>
-                        <button id="saveApiKeyBtn" class="btn btn-primary">Save</button>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-page="problems">
+                        Problems
+                    </button>
+                    <button class="nav-tab" data-page="roadmap">Roadmap</button>
+                    <button class="nav-tab" data-page="learning">
+                        Learning Hub
+                    </button>
+                </nav>
+                <div class="header-right">
+                    <!-- Settings Button -->
+                    <button
+                        id="settingsBtn"
+                        class="btn-icon-only"
+                        title="Settings"
+                    >
+                        <i data-lucide="settings"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Settings Modal -->
+            <div id="settingsModal" class="modal" style="display: none">
+                <div class="modal-content settings-modal">
+                    <div class="modal-header">
+                        <h3>Settings</h3>
+                        <button class="modal-close-btn" id="closeSettingsBtn">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="settings-section">
+                            <label class="settings-label"
+                                >OpenRouter API Key</label
+                            >
+                            <input
+                                type="password"
+                                id="apiKeyInput"
+                                class="settings-input"
+                                placeholder="sk-or-..."
+                            />
+                            <p class="settings-hint">
+                                Get a free API key at
+                                <a
+                                    href="https://openrouter.ai/keys"
+                                    target="_blank"
+                                    >openrouter.ai/keys</a
+                                >
+                            </p>
+                            <button id="saveApiKeyBtn" class="btn btn-primary">
+                                Save
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Main Content -->
-        <div class="main-container">
-            <!-- Sidebar - Problem List -->
-            <aside class="sidebar">
-                <div class="sidebar-search">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search problems...">
-                    <button id="randomBtn" class="random-btn" title="Random Problem">Random</button>
-                </div>
-                <div class="sidebar-filters">
-                    <!-- Difficulty Chips -->
-                    <div class="filter-group" id="difficultyFilter">
-                        <button class="filter-chip active" data-value="">All</button>
-                        <button class="filter-chip" data-value="Easy">Easy</button>
-                        <button class="filter-chip" data-value="Medium">Medium</button>
-                        <button class="filter-chip" data-value="Hard">Hard</button>
+            <!-- Main Content -->
+            <div class="main-container">
+                <!-- Sidebar - Problem List -->
+                <aside class="sidebar">
+                    <div class="sidebar-search">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            class="search-input"
+                            placeholder="Search..."
+                        />
+                        <button
+                            id="randomBtn"
+                            class="random-btn"
+                            title="Random Problem"
+                        >
+                            <i data-lucide="shuffle"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar-filters">
+                        <!-- Difficulty Chips -->
+                        <div class="filter-group" id="difficultyFilter">
+                            <button class="filter-chip active" data-value="">
+                                All
+                            </button>
+                            <button class="filter-chip" data-value="Easy">
+                                Easy
+                            </button>
+                            <button class="filter-chip" data-value="Medium">
+                                Medium
+                            </button>
+                            <button class="filter-chip" data-value="Hard">
+                                Hard
+                            </button>
+                        </div>
+
+                        <!-- Status Chips -->
+                        <div class="filter-group" id="statusFilter">
+                            <button class="filter-chip active" data-value="">
+                                Any
+                            </button>
+                            <button class="filter-chip" data-value="solved">
+                                Solved
+                            </button>
+                            <button class="filter-chip" data-value="unsolved">
+                                Unsolved
+                            </button>
+                        </div>
+
+                        <!-- Native Tags Filter (Too many for chips) -->
+                        <div class="filter-group">
+                            <select class="native-select" id="tagFilter">
+                                <option value="">All Tags</option>
+                                <!-- Tags will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sidebar-header">
+                        <span id="problemCount">Loading...</span>
+                        <span>Problem List</span>
+                    </div>
+                    <div id="problemList" class="problem-list"></div>
+                </aside>
+
+                <!-- Main Area - Problem View / Editor -->
+                <main class="main-content">
+                    <!-- Welcome Screen -->
+                    <div id="welcomeScreen" class="welcome-screen">
+                        <div class="welcome-content">
+                            <h2>Select a problem to start</h2>
+                            <p>
+                                Choose from
+                                <span id="totalProblems">0</span> problems
+                            </p>
+                        </div>
                     </div>
 
-                    <!-- Status Chips -->
-                    <div class="filter-group" id="statusFilter">
-                        <button class="filter-chip active" data-value="">Any</button>
-                        <button class="filter-chip" data-value="solved">Solved</button>
-                        <button class="filter-chip" data-value="unsolved">Unsolved</button>
-                    </div>
-
-                    <!-- Native Tags Filter (Too many for chips) -->
-                    <div class="filter-group">
-                        <select class="native-select" id="tagFilter">
-                            <option value="">All Tags</option>
-                            <!-- Tags will be populated dynamically -->
-                        </select>
-                    </div>
-                </div>
-                <div class="sidebar-header">
-                    <span id="problemCount">Loading...</span>
-                    <span>Problem List</span>
-                </div>
-                <div id="problemList" class="problem-list"></div>
-            </aside>
-
-            <!-- Main Area - Problem View / Editor -->
-            <main class="main-content">
-                <!-- Welcome Screen -->
-                <div id="welcomeScreen" class="welcome-screen">
-                    <div class="welcome-content">
-                        <h2>Select a problem to start</h2>
-                        <p>Choose from <span id="totalProblems">0</span> problems</p>
-                    </div>
-                </div>
-
-                <!-- Problem View -->
-                <div id="problemView" class="problem-view" style="display: none;">
-                    <div class="problem-content-split">
-                        <!-- Left Panel: Content -->
-                        <div class="description-panel">
-                            <div class="panel-header">
-                                <nav class="panel-tabs">
-                                    <button class="panel-tab active" data-content="description">Description</button>
-                                    <button class="panel-tab" data-content="best-solution" id="bestSolutionTabBtn"
-                                        style="display:none">Best Solution</button>
-                                    <button class="panel-tab" data-content="ai-solution" id="aiTabBtn"
-                                        style="display:none">Chat with AI</button>
-                                    <button class="panel-tab" data-content="quiz" id="quizTabBtn">Quiz</button>
-                                </nav>
-                                <button id="clearAiChatBtn" class="btn-icon-only" title="Clear Chat" style="display:none; margin-left: auto;">
-                                    <i data-lucide="x" style="width:14px;height:14px;"></i>
-                                </button>
-                            </div>
-                            <div class="panel-content">
-                                <!-- Description Content -->
-                                <div id="content-description" class="tab-content active">
-                                    <div class="problem-header">
-                                        <div class="problem-title-section">
-                                            <span class="problem-id" id="problemId"></span>
-                                            <h2 class="problem-title" id="problemTitle"></h2>
-                                            <span class="badge difficulty-badge" id="problemDifficulty"></span>
-                                            <button class="solved-btn" id="solvedBtn" title="Not solved"></button>
-                                        </div>
-                                        <div class="problem-meta" id="problemMeta"></div>
-                                        <div class="problem-tags" id="problemTags"></div>
-                                    </div>
-
-                                    <div class="description-content" id="problemContent"></div>
-
-                                    <!-- Test Cases -->
-                                    <div class="test-cases-section">
-                                        <h3>Example Test Cases</h3>
-                                        <div id="testCasesList" class="test-cases-list"></div>
-                                    </div>
+                    <!-- Problem View -->
+                    <div
+                        id="problemView"
+                        class="problem-view"
+                        style="display: none"
+                    >
+                        <div class="problem-content-split">
+                            <!-- Left Panel: Content -->
+                            <div class="description-panel">
+                                <div class="panel-header">
+                                    <nav class="panel-tabs">
+                                        <button
+                                            class="panel-tab active"
+                                            data-content="description"
+                                        >
+                                            Description
+                                        </button>
+                                        <button
+                                            class="panel-tab"
+                                            data-content="best-solution"
+                                            id="bestSolutionTabBtn"
+                                            style="display: none"
+                                        >
+                                            Best Solution
+                                        </button>
+                                        <button
+                                            class="panel-tab"
+                                            data-content="ai-solution"
+                                            id="aiTabBtn"
+                                            style="display: none"
+                                        >
+                                            Chat with AI
+                                        </button>
+                                        <button
+                                            class="panel-tab"
+                                            data-content="quiz"
+                                            id="quizTabBtn"
+                                        >
+                                            Quiz
+                                        </button>
+                                    </nav>
+                                    <button
+                                        id="clearAiChatBtn"
+                                        class="btn-icon-only"
+                                        title="Clear Chat"
+                                        style="display: none; margin-left: auto"
+                                    >
+                                        <i
+                                            data-lucide="x"
+                                            style="width: 14px; height: 14px"
+                                        ></i>
+                                    </button>
                                 </div>
-
-                                <!-- Best Solution Content -->
-                                <div id="content-best-solution" class="tab-content">
-                                    <div class="best-solution-container">
+                                <div class="panel-content">
+                                    <!-- Description Content -->
+                                    <div
+                                        id="content-description"
+                                        class="tab-content active"
+                                    >
                                         <div class="problem-header">
-                                            <h2 class="problem-title">Expert Solution</h2>
-                                            <div class="problem-meta" id="bestSolutionMeta"></div>
+                                            <div class="problem-title-section">
+                                                <span
+                                                    class="problem-id"
+                                                    id="problemId"
+                                                ></span>
+                                                <h2
+                                                    class="problem-title"
+                                                    id="problemTitle"
+                                                ></h2>
+                                                <span
+                                                    class="badge difficulty-badge"
+                                                    id="problemDifficulty"
+                                                ></span>
+                                                <button
+                                                    class="solved-btn"
+                                                    id="solvedBtn"
+                                                    title="Not solved"
+                                                ></button>
+                                            </div>
+                                            <div
+                                                class="problem-meta"
+                                                id="problemMeta"
+                                            ></div>
+                                            <div
+                                                class="problem-tags"
+                                                id="problemTags"
+                                            ></div>
                                         </div>
-                                        <div class="description-content">
-                                            <section class="topic-section">
-                                                <h3>Approach</h3>
-                                                <div id="bestSolutionExplanation"></div>
-                                            </section>
-                                            <section class="topic-section">
-                                                <h3>Implementation</h3>
-                                                <div id="bestSolutionCode"></div>
-                                                <button class="btn btn-secondary btn-sm" id="applyBestSolutionBtn" style="margin-top: 12px;">Apply to Editor</button>
-                                            </section>
+
+                                        <div
+                                            class="description-content"
+                                            id="problemContent"
+                                        ></div>
+
+                                        <!-- Test Cases -->
+                                        <div class="test-cases-section">
+                                            <h3>Example Test Cases</h3>
+                                            <div
+                                                id="testCasesList"
+                                                class="test-cases-list"
+                                            ></div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Chat with AI Content -->
-                                <div id="content-ai-solution" class="tab-content">
-                                    <div class="ai-solution-container">
-                                        <!-- Single Chat Interface -->
-                                        <div class="ai-panel-body">
-                                            <div class="ai-chat-area" id="aiChatArea">
-                                                <!-- AI messages go here -->
+                                    <!-- Best Solution Content -->
+                                    <div
+                                        id="content-best-solution"
+                                        class="tab-content"
+                                    >
+                                        <div class="best-solution-container">
+                                            <div class="problem-header">
+                                                <h2 class="problem-title">
+                                                    Expert Solution
+                                                </h2>
+                                                <div
+                                                    class="problem-meta"
+                                                    id="bestSolutionMeta"
+                                                ></div>
                                             </div>
-                                        </div>
-                                        <!-- Ask AI inline chat -->
-                                        <div class="ai-ask-bar">
-                                            <div id="aiSuggestions" class="ai-suggestions" style="display:none">
-                                                <!-- Suggested buttons go here -->
-                                            </div>
-                                            <div class="ai-ask-input-row">
-                                                <input type="text" id="aiAskInput" class="ai-ask-input"
-                                                    placeholder="Ask about this solution or problem..." />
-                                                <button class="btn btn-primary btn-sm" id="aiAskSendBtn">Ask</button>
+                                            <div class="description-content">
+                                                <section class="topic-section">
+                                                    <h3>Approach</h3>
+                                                    <div
+                                                        id="bestSolutionExplanation"
+                                                    ></div>
+                                                </section>
+                                                <section class="topic-section">
+                                                    <h3>Implementation</h3>
+                                                    <div
+                                                        id="bestSolutionCode"
+                                                    ></div>
+                                                    <button
+                                                        class="btn btn-secondary btn-sm"
+                                                        id="applyBestSolutionBtn"
+                                                        style="margin-top: 12px"
+                                                    >
+                                                        Apply to Editor
+                                                    </button>
+                                                </section>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Quiz Content -->
-                                <div id="content-quiz" class="tab-content">
-                                    <div class="quiz-container">
-                                        <div class="quiz-header">
-                                            <h2 class="quiz-title">Problem Quiz</h2>
-                                            <div class="quiz-progress">
-                                                <span id="quizProgressText">Question 1 of 5</span>
+                                    <!-- Chat with AI Content -->
+                                    <div
+                                        id="content-ai-solution"
+                                        class="tab-content"
+                                    >
+                                        <div class="ai-solution-container">
+                                            <!-- Single Chat Interface -->
+                                            <div class="ai-panel-body">
+                                                <div
+                                                    class="ai-chat-area"
+                                                    id="aiChatArea"
+                                                >
+                                                    <!-- AI messages go here -->
+                                                </div>
                                             </div>
-                                            <div class="quiz-header-buttons">
-                                                <button id="generateQuizBtn" class="btn btn-secondary btn-sm">Generate Quiz</button>
-                                                <button id="regenerateQuizBtn" class="btn btn-secondary btn-sm" style="display:none;">⟳ Regenerate</button>
+                                            <!-- Ask AI inline chat -->
+                                            <div class="ai-ask-bar">
+                                                <div
+                                                    id="aiSuggestions"
+                                                    class="ai-suggestions"
+                                                    style="display: none"
+                                                >
+                                                    <!-- Suggested buttons go here -->
+                                                </div>
+                                                <div class="ai-ask-input-row">
+                                                    <input
+                                                        type="text"
+                                                        id="aiAskInput"
+                                                        class="ai-ask-input"
+                                                        placeholder="Ask about this solution or problem..."
+                                                    />
+                                                    <button
+                                                        class="btn btn-primary btn-sm"
+                                                        id="aiAskSendBtn"
+                                                    >
+                                                        Ask
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div id="quizQuestionsArea" class="quiz-questions-area">
-                                            <!-- Quiz questions will be rendered here -->
-                                        </div>
-                                        <div id="quizActionsArea" class="quiz-actions" style="display:none;">
-                                            <button id="prevQuestionBtn" class="btn btn-secondary">← Previous</button>
-                                            <button id="nextQuestionBtn" class="btn btn-secondary">Next →</button>
-                                            <button id="submitQuizBtn" class="btn btn-primary">Submit Quiz</button>
-                                        </div>
-                                        <div id="quizResultsArea" class="quiz-results" style="display:none;">
-                                            <h3>Quiz Results</h3>
-                                            <div id="quizScore"></div>
-                                            <button id="retakeQuizBtn" class="btn btn-secondary btn-sm" style="margin-top:12px;">Retake Quiz</button>
+                                    </div>
+
+                                    <!-- Quiz Content -->
+                                    <div id="content-quiz" class="tab-content">
+                                        <div class="quiz-container">
+                                            <div class="quiz-header">
+                                                <h2 class="quiz-title">
+                                                    Problem Quiz
+                                                </h2>
+                                                <div class="quiz-progress">
+                                                    <div id="quizStageIndicator" class="quiz-stage-indicator"></div>
+                                                    <span id="quizProgressText"
+                                                        >Question 1 of 5</span
+                                                    >
+                                                </div>
+                                                <div
+                                                    class="quiz-header-buttons"
+                                                >
+                                                    <button
+                                                        id="generateQuizBtn"
+                                                        class="btn btn-secondary btn-sm"
+                                                    >
+                                                        Generate Quiz
+                                                    </button>
+                                                    <button
+                                                        id="regenerateQuizBtn"
+                                                        class="btn btn-secondary btn-sm"
+                                                        style="display: none"
+                                                    >
+                                                        ⟳ Regenerate
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div
+                                                id="quizQuestionsArea"
+                                                class="quiz-questions-area"
+                                            >
+                                                <!-- Quiz questions will be rendered here -->
+                                            </div>
+                                            <div
+                                                id="quizActionsArea"
+                                                class="quiz-actions"
+                                                style="display: none"
+                                            >
+                                                <button
+                                                    id="prevQuestionBtn"
+                                                    class="btn btn-secondary"
+                                                >
+                                                    ← Previous
+                                                </button>
+                                                <button
+                                                    id="nextQuestionBtn"
+                                                    class="btn btn-secondary"
+                                                >
+                                                    Next →
+                                                </button>
+                                                <button
+                                                    id="submitQuizBtn"
+                                                    class="btn btn-primary"
+                                                >
+                                                    Submit Quiz
+                                                </button>
+                                            </div>
+                                            <div
+                                                id="quizResultsArea"
+                                                class="quiz-results"
+                                                style="display: none"
+                                            >
+                                                <h3>Quiz Results</h3>
+                                                <div id="quizScore"></div>
+                                                <div
+                                                    class="quiz-results-actions"
+                                                    style="
+                                                        margin-top: 12px;
+                                                        display: flex;
+                                                        gap: 8px;
+                                                        flex-wrap: wrap;
+                                                    "
+                                                >
+                                                    <button
+                                                        id="retakeQuizBtn"
+                                                        class="btn btn-secondary btn-sm"
+                                                    >
+                                                        Retake Quiz
+                                                    </button>
+                                                    <button
+                                                        id="regenerateMissedQuizBtn"
+                                                        class="btn btn-primary btn-sm"
+                                                        style="display: none"
+                                                    >
+                                                        Regenerate Missed Stages
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Right Panel: Editor & Results -->
-                        <div class="editor-panel">
-                            <div class="editor-header">
-                                <div class="editor-header-left">
-                                    <div class="lang-selector">
-                                        <span>Python 3</span>
+                            <!-- Right Panel: Editor & Results -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <div class="editor-header-left">
+                                        <div class="lang-selector">
+                                            <span>Python 3</span>
+                                        </div>
+                                        <span
+                                            id="draftBadge"
+                                            class="draft-badge"
+                                            style="display: none"
+                                            >unsaved</span
+                                        >
                                     </div>
-                                    <span id="draftBadge" class="draft-badge" style="display:none">unsaved</span>
-                                </div>
-                                <div class="editor-header-right">
-                                    <button class="btn btn-ghost" id="quizBtn" title="Take Quiz">Quiz</button>
-                                    <button class="btn btn-ghost" id="aiBtn" title="Chat with AI">Chat with AI</button>
-                                    <button class="btn btn-ghost" id="resetBtn" title="Reset Code">Reset</button>
-                                    <button class="btn btn-secondary" id="runBtn">Run</button>
-                                    <button class="btn btn-primary" id="submitBtn">Submit</button>
-                                </div>
-                            </div>
-
-                            <!-- CodeMirror 6 mounts here -->
-                            <div id="editor-main-mount"></div>
-                            <textarea id="codeEditor" style="display:none"></textarea>
-
-                            <!-- Console / Test Results -->
-                            <div id="testResults" class="test-results">
-                                <div class="results-header" id="resultsHeader">
-                                    <span class="console-label">Console</span>
-                                    <div class="results-header-right">
-                                        <span id="resultsSummary"></span>
-                                        <button class="expand-btn" id="expandResults"><i data-lucide="chevron-up"></i></button>
-                                        <button class="close-btn" id="closeResults"><i data-lucide="x"></i></button>
+                                    <div class="editor-header-right">
+                                        <button
+                                            class="btn btn-ghost"
+                                            id="quizBtn"
+                                            title="Take Quiz"
+                                        >
+                                            Quiz
+                                        </button>
+                                        <button
+                                            class="btn btn-ghost"
+                                            id="aiBtn"
+                                            title="Chat with AI"
+                                        >
+                                            Chat with AI
+                                        </button>
+                                        <button
+                                            class="btn btn-ghost"
+                                            id="resetBtn"
+                                            title="Reset Code"
+                                        >
+                                            Reset
+                                        </button>
+                                        <button
+                                            class="btn btn-secondary"
+                                            id="runBtn"
+                                        >
+                                            Run
+                                        </button>
+                                        <button
+                                            class="btn btn-primary"
+                                            id="submitBtn"
+                                        >
+                                            Submit
+                                        </button>
                                     </div>
                                 </div>
-                                <div id="resultsList" class="results-list" style="display: none;"></div>
+
+                                <!-- CodeMirror 6 mounts here -->
+                                <div id="editor-main-mount"></div>
+                                <textarea
+                                    id="codeEditor"
+                                    style="display: none"
+                                ></textarea>
+
+                                <!-- Console / Test Results -->
+                                <div id="testResults" class="test-results">
+                                    <div
+                                        class="results-header"
+                                        id="resultsHeader"
+                                    >
+                                        <span class="console-label"
+                                            >Console</span
+                                        >
+                                        <div class="results-header-right">
+                                            <span id="resultsSummary"></span>
+                                            <button
+                                                class="expand-btn"
+                                                id="expandResults"
+                                            >
+                                                <i data-lucide="chevron-up"></i>
+                                            </button>
+                                            <button
+                                                class="close-btn"
+                                                id="closeResults"
+                                            >
+                                                <i data-lucide="x"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div
+                                        id="resultsList"
+                                        class="results-list"
+                                        style="display: none"
+                                    ></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </main>
+                </main>
 
-            <!-- Roadmap Page -->
-            <div id="roadmapPage" class="roadmap-page" style="display: none;">
-                <div class="roadmap-header">
-                    <h1 class="roadmap-title">60-Day Mastery Roadmap</h1>
-                    <div class="roadmap-progress">
-                        <span class="roadmap-progress-text">Day <span id="currentDayDisplay">1</span> of 60</span>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" id="roadmapProgressBar"></div>
+                <!-- Roadmap Page -->
+                <div
+                    id="roadmapPage"
+                    class="roadmap-page"
+                    style="display: none"
+                >
+                    <div class="roadmap-header">
+                        <h1 class="roadmap-title">60-Day Mastery Roadmap</h1>
+                        <div class="roadmap-progress">
+                            <span class="roadmap-progress-text"
+                                >Day <span id="currentDayDisplay">1</span> of
+                                60</span
+                            >
+                            <div class="progress-bar-container">
+                                <div
+                                    class="progress-bar"
+                                    id="roadmapProgressBar"
+                                ></div>
+                            </div>
+                            <span
+                                class="roadmap-progress-percent"
+                                id="roadmapProgressPercent"
+                                >0%</span
+                            >
                         </div>
-                        <span class="roadmap-progress-percent" id="roadmapProgressPercent">0%</span>
+                    </div>
+                    <div class="roadmap-phases" id="roadmapPhases"></div>
+                </div>
+
+                <!-- Learning Page -->
+                <div
+                    id="learningPage"
+                    class="learning-page"
+                    style="display: none"
+                >
+                    <div class="learning-header">
+                        <h1 class="learning-title">Python Learning Hub</h1>
+                        <p class="learning-subtitle">
+                            Master algorithmic patterns using intuitive
+                            analogies and solve every problem in the database.
+                        </p>
+                    </div>
+                    <div class="learning-topics" id="learningTopics"></div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="app-footer">
+                <p>&copy; Aceint LeetCode Helper. All rights reserved.</p>
+            </footer>
+        </div>
+
+        <!-- Day Detail Modal -->
+        <div id="dayDetailModal" class="modal" style="display: none">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="modal-back-btn" id="modalBackBtn">
+                        <i data-lucide="arrow-left"></i> Back to Roadmap
+                    </button>
+                    <button class="modal-close-btn" id="modalCloseBtn">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+            </div>
+        </div>
+
+        <!-- Topic Detail Modal -->
+        <div id="topicDetailModal" class="modal" style="display: none">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="modal-back-btn" id="topicModalBackBtn">
+                        <span class="icon-arrow-left"></span> Back to Learning
+                    </button>
+                    <button class="modal-close-btn" id="topicModalCloseBtn">
+                        <span class="icon-close"></span>
+                    </button>
+                </div>
+                <div class="modal-body" id="topicModalBody"></div>
+            </div>
+        </div>
+
+        <!-- Hint Modal -->
+        <div id="hintModal" class="modal hint-modal" style="display: none">
+            <div class="modal-content hint-modal-content">
+                <div class="modal-header hint-modal-header">
+                    <div class="hint-header-left">
+                        <span class="hint-icon-title">Hint</span>
+                    </div>
+                    <div class="hint-progress-dots" id="hintProgressDots">
+                        <span
+                            class="hint-dot"
+                            data-level="1"
+                            title="Nudge"
+                        ></span>
+                        <span
+                            class="hint-dot"
+                            data-level="2"
+                            title="Approach"
+                        ></span>
+                        <span
+                            class="hint-dot"
+                            data-level="3"
+                            title="Near-Solution"
+                        ></span>
+                    </div>
+                    <button class="modal-close-btn" id="hintModalClose">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div id="hintModalContent" class="hint-modal-inner"></div>
+                <div class="hint-modal-footer">
+                    <div class="hint-nav-left">
+                        <button
+                            class="btn btn-ghost btn-sm"
+                            id="hintPrevBtn"
+                            disabled
+                        >
+                            Previous
+                        </button>
+                        <button class="btn btn-ghost btn-sm" id="hintNextBtn">
+                            Next
+                        </button>
+                    </div>
+                    <div class="hint-nav-right">
+                        <button
+                            class="btn btn-ghost btn-sm"
+                            id="hintNewAngleBtn"
+                            title="Get a different approach for this hint level"
+                        >
+                            Regenerate
+                        </button>
+                        <button
+                            class="btn btn-secondary btn-sm"
+                            id="hintInsertBtn"
+                            title="Insert hint template into your editor"
+                        >
+                            Insert
+                        </button>
                     </div>
                 </div>
-                <div class="roadmap-phases" id="roadmapPhases"></div>
-            </div>
-
-            <!-- Learning Page -->
-            <div id="learningPage" class="learning-page" style="display: none;">
-                <div class="learning-header">
-                    <h1 class="learning-title">Python Learning Hub</h1>
-                    <p class="learning-subtitle">Master algorithmic patterns using intuitive analogies and solve every problem in the database.</p>
-                </div>
-                <div class="learning-topics" id="learningTopics"></div>
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="app-footer">
-            <p>&copy; Aceint LeetCode Helper. All rights reserved.</p>
-        </footer>
-    </div>
+        <!-- Toast Container -->
+        <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Day Detail Modal -->
-    <div id="dayDetailModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class="modal-back-btn" id="modalBackBtn">
-                    <i data-lucide="arrow-left"></i> Back to Roadmap
-                </button>
-                <button class="modal-close-btn" id="modalCloseBtn"><i data-lucide="x"></i></button>
-            </div>
-            <div class="modal-body" id="modalBody"></div>
-        </div>
-    </div>
-
-    <!-- Topic Detail Modal -->
-    <div id="topicDetailModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class="modal-back-btn" id="topicModalBackBtn">
-                    <span class="icon-arrow-left"></span> Back to Learning
-                </button>
-                <button class="modal-close-btn" id="topicModalCloseBtn"><span class="icon-close"></span></button>
-            </div>
-            <div class="modal-body" id="topicModalBody"></div>
-        </div>
-    </div>
-
-    <!-- Hint Modal -->
-    <div id="hintModal" class="modal hint-modal" style="display: none;">
-        <div class="modal-content hint-modal-content">
-            <div class="modal-header hint-modal-header">
-                <div class="hint-header-left">
-                    <span class="hint-icon-title">Hint</span>
-                </div>
-                <div class="hint-progress-dots" id="hintProgressDots">
-                    <span class="hint-dot" data-level="1" title="Nudge"></span>
-                    <span class="hint-dot" data-level="2" title="Approach"></span>
-                    <span class="hint-dot" data-level="3" title="Near-Solution"></span>
-                </div>
-                <button class="modal-close-btn" id="hintModalClose"><i data-lucide="x"></i></button>
-            </div>
-            <div id="hintModalContent" class="hint-modal-inner"></div>
-            <div class="hint-modal-footer">
-                <div class="hint-nav-left">
-                    <button class="btn btn-ghost btn-sm" id="hintPrevBtn" disabled>Previous</button>
-                    <button class="btn btn-ghost btn-sm" id="hintNextBtn">Next</button>
-                </div>
-                <div class="hint-nav-right">
-                    <button class="btn btn-ghost btn-sm" id="hintNewAngleBtn"
-                        title="Get a different approach for this hint level">Regenerate</button>
-                    <button class="btn btn-secondary btn-sm" id="hintInsertBtn"
-                        title="Insert hint template into your editor">Insert</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Ace Editor Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/theme-github.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-python.js"></script>
-    <script src="app.js"></script>
-    <script>lucide.createIcons();</script>
-</body>
-
+        <!-- Ace Editor Scripts -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/theme-github.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/mode-python.js"></script>
+        <script src="app.js"></script>
+        <script>
+            lucide.createIcons();
+        </script>
+    </body>
 </html>

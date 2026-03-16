@@ -1,24 +1,36 @@
 """LeetCode Helper - Pure Python HTTP server."""
-import http.server
+
+import ast
+import datetime
 import html
+import http.server
 import json
+import mimetypes
 import os
 import socketserver
 import sys
 import threading
 import urllib.parse
-import mimetypes
-import ast
-import requests
 from pathlib import Path
-from leetcode_helper.runner import execute_code, get_arg_count, make_compilable_starter, get_python3_starter, parse_test_cases, extract_expected_outputs, compare_results
+
+import requests
 from dotenv import load_dotenv
+
+from leetcode_helper.runner import (
+    compare_results,
+    execute_code,
+    extract_expected_outputs,
+    get_arg_count,
+    get_python3_starter,
+    make_compilable_starter,
+    parse_test_cases,
+)
 
 # Load environment variables
 load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-AURORA_MODEL = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+AURORA_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/healer-alpha")
 
 
 # Configuration
@@ -64,7 +76,16 @@ def load_progress():
         with open(progress_file, "r", encoding="utf-8") as f:
             return json.load(f)
     # New structure: {"solved": {"problem_id": {"code": "...", "timestamp": "...", "passed": True}}}
-    return {"solved": {}, "submissions": {}, "roadmap": {"currentDay": 1, "currentPhase": 1, "completedDays": [], "unlockedPhases": [1]}}
+    return {
+        "solved": {},
+        "submissions": {},
+        "roadmap": {
+            "currentDay": 1,
+            "currentPhase": 1,
+            "completedDays": [],
+            "unlockedPhases": [1],
+        },
+    }
 
 
 def save_progress(progress):
@@ -79,7 +100,11 @@ def load_quizzes():
     quizzes_file = DATA_DIR / "quizzes.json"
     if quizzes_file.exists():
         with open(quizzes_file, "r", encoding="utf-8") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                print(f"[QUIZ] Error: quizzes.json is corrupted. Starting with empty quiz data.")
+                return {}
     return {}
 
 
@@ -260,7 +285,7 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
         code = data.get("code", "")
         problem_id = str(data.get("problem_id", ""))
         class_name = data.get("class_name", "Solution")
-        function_name = data.get("function_name") # Will be auto-detected if None
+        function_name = data.get("function_name")  # Will be auto-detected if None
 
         if not code:
             self.send_json({"error": "No code provided"}, 400)
@@ -271,7 +296,9 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
         if problem:
             starter = get_python3_starter(problem)
             arg_count = get_arg_count(starter)
-            test_cases = parse_test_cases(problem.get("example_test_cases", ""), arg_count)
+            test_cases = parse_test_cases(
+                problem.get("example_test_cases", ""), arg_count
+            )
             expected_outputs = extract_expected_outputs(problem.get("content", ""))
         else:
             # Fallback to provided data if problem not found in cache
@@ -281,23 +308,28 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
         results = []
         for i, test_input in enumerate(test_cases):
             expected = expected_outputs[i] if i < len(expected_outputs) else None
-            result = self.execute_test(code, test_input, i, class_name, function_name, expected)
+            result = self.execute_test(
+                code, test_input, i, class_name, function_name, expected
+            )
             results.append(result)
 
         passed = sum(1 for r in results if r["passed"])
-        self.send_json({
-            "results": results,
-            "passed": passed,
-            "total": len(results),
-        })
+        self.send_json(
+            {
+                "results": results,
+                "passed": passed,
+                "total": len(results),
+            }
+        )
 
-
-    def execute_test(self, code, test_input, index, class_name, function_name, expected_output=None):
+    def execute_test(
+        self, code, test_input, index, class_name, function_name, expected_output=None
+    ):
         """Execute a single test case using the new runner."""
         try:
             # The test_input from the web might be a list of inputs already
             actual = execute_code(code, test_input, class_name, function_name)
-            
+
             # Compare output with expected
             if expected_output:
                 try:
@@ -315,9 +347,9 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
                         expected_val = None
                     else:
                         expected_val = expected_output
-                
+
                 passed = compare_results(actual, expected_val)
-                
+
                 return {
                     "passed": passed,
                     "input": str(test_input),
@@ -333,6 +365,7 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             return {
                 "passed": False,
@@ -340,54 +373,80 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
                 "test_input": str(test_input),
             }
 
-    def _build_ai_messages(self, conversation_history, problem_title, problem_description, starter_code, current_code, test_results, test_cases, mode="chat", hint_level=1, question=None):
+    def _build_ai_messages(
+        self,
+        conversation_history,
+        problem_title,
+        problem_description,
+        starter_code,
+        current_code,
+        test_results,
+        test_cases,
+        mode="chat",
+        hint_level=1,
+        question=None,
+    ):
         """Build unified AI messages for all interactions.
-        
+
         Args:
             mode: 'solution', 'chat', or 'hint'
             hint_level: hint level for hint mode
             question: optional direct question for chat mode
         """
         context_blocks = []
-        
+
         if problem_title:
             context_blocks.append(f"Problem: {problem_title}")
-        
+
         if problem_description:
             context_blocks.append(f"Description: {problem_description[:3000]}")
-        
+
         if mode != "solution" and mode != "chat" and starter_code:
             context_blocks.append(f"Starter Code:\n```python\n{starter_code}\n```")
-        
+
         if current_code:
-            context_blocks.append(f"Current Code in Editor:\n```python\n{current_code}\n```")
-        
+            context_blocks.append(
+                f"Current Code in Editor:\n```python\n{current_code}\n```"
+            )
+
         if test_results:
             passed_count = test_results.get("passed", 0)
             total_count = test_results.get("total", 0)
-            
+
             test_guidance = ""
             if total_count > 0:
                 if passed_count == 0:
-                    test_guidance = "No tests pass - focus on fixing the core logic/algorithm."
+                    test_guidance = (
+                        "No tests pass - focus on fixing the core logic/algorithm."
+                    )
                 elif passed_count < total_count:
                     test_guidance = f"Some tests fail ({total_count - passed_count}/{total_count}) - focus on edge cases or specific test failures."
                 else:
                     test_guidance = "All tests pass - you can suggest optimizations or alternative approaches."
-            
-            context_blocks.append(f"Test Results: {passed_count}/{total_count} tests passed")
+
+            context_blocks.append(
+                f"Test Results: {passed_count}/{total_count} tests passed"
+            )
             context_blocks.append(f"Guidance: {test_guidance}")
-            
+
             if test_results.get("results"):
-                failed_cases = [r for r in test_results["results"] if not r.get("passed", True)]
+                failed_cases = [
+                    r for r in test_results["results"] if not r.get("passed", True)
+                ]
                 if failed_cases:
                     context_blocks.append("\nFailed Test Cases:")
                     for i, case in enumerate(failed_cases[:2], 1):
                         context_blocks.append(f"  Case {i}:")
-                        context_blocks.append(f"    Input: {case.get('input', '')[:100]}")
-                        context_blocks.append(f"    Expected: {case.get('expected', '')[:100]}")
-                        context_blocks.append(f"    Actual: {case.get('actual', '')[:100]}")
-        
+                        context_blocks.append(
+                            f"    Input: {case.get('input', '')[:100]}"
+                        )
+                        context_blocks.append(
+                            f"    Expected: {case.get('expected', '')[:100]}"
+                        )
+                        context_blocks.append(
+                            f"    Actual: {case.get('actual', '')[:100]}"
+                        )
+
         if test_cases and mode != "chat":
             # Format test cases for context
             test_cases_str = ""
@@ -395,8 +454,8 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
                 if isinstance(tc, list):
                     test_cases_str += f"Input: {tc}\n"
                 elif isinstance(tc, dict):
-                    input_val = tc.get('input', '')
-                    output_val = tc.get('output', '')
+                    input_val = tc.get("input", "")
+                    output_val = tc.get("output", "")
                     test_cases_str += f"Input: {input_val}"
                     if output_val:
                         test_cases_str += f" Output: {output_val}"
@@ -404,12 +463,12 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
                 elif isinstance(tc, str):
                     test_cases_str += f"Input: {tc}\n"
             context_blocks.append(f"Test Cases:\n{test_cases_str}")
-        
+
         context_str = "\n\n".join(context_blocks)
-        
+
         # Build prompt based on mode
         if mode == "solution":
-            prompt = f"""You are a helpful Python coding tutor helping with LeetCode-style problems. 
+            prompt = f"""You are a helpful Python coding tutor helping with LeetCode-style problems.
 {context_str}
 
 Task:
@@ -438,9 +497,9 @@ Response Format:
             hint_guidance_map = {
                 1: "Show a basic structure: imports, class definition, method signature, and main data structures. Leave the core logic as a simple TODO comment.",
                 2: "Show the main loop or recursion structure. Fill in key data structures. Leave only the tricky comparison or calculation as TODO.",
-                3: "Show a nearly complete solution. Leave only 1-2 lines blank (the key insight or edge case handling). Add brief comments where helpful, not everywhere."
+                3: "Show a nearly complete solution. Leave only 1-2 lines blank (the key insight or edge case handling). Add brief comments where helpful, not everywhere.",
             }
-            
+
             prompt = f"""You are a helpful Python tutor. Provide progressive code hints to guide the user to a working solution.
 
 {context_str}
@@ -466,10 +525,10 @@ Output only the Python code (no ```python``` wrapper)."""
         else:  # chat mode
             if not question and conversation_history:
                 question = conversation_history[-1].get("text", "")
-            
+
             if not question:
                 raise ValueError("Question required in chat mode")
-            
+
             prompt = f"""You are a helpful Python tutor helping a user with a coding problem.
 
 {context_str}
@@ -502,7 +561,7 @@ Guidelines:
 Response Format:
 - Use clean Markdown.
 """
-        
+
         return [{"role": "user", "content": prompt}]
 
     def get_ai_solution(self):
@@ -531,11 +590,11 @@ Response Format:
 
         # Build context for initial solution request
         problem_id = str(data.get("problem_id", ""))
-        
+
         # Add conversation context if exists
         conversation_history = data.get("conversation_history", [])
         test_results = data.get("test_results", None)
-        
+
         # Build unified chat message list with context
         messages = self._build_ai_messages(
             conversation_history=conversation_history,
@@ -545,7 +604,7 @@ Response Format:
             current_code=current_code,
             test_results=test_results,
             test_cases=test_cases,
-            mode="solution"
+            mode="solution",
         )
 
         # Log what we're sending
@@ -562,28 +621,35 @@ Response Format:
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:8888",
-                    "X-Title": "LeetCode Helper"
+                    "X-Title": "LeetCode Helper",
                 },
                 json={
                     "model": AURORA_MODEL,
                     "messages": messages,
                     "max_tokens": 3500,
                 },
-                timeout=60
+                timeout=60,
             )
 
             if response.status_code != 200:
-                self.send_json({
-                    "error": f"AI request failed: {response.status_code}",
-                    "details": response.text
-                }, 500)
+                self.send_json(
+                    {
+                        "error": f"AI request failed: {response.status_code}",
+                        "details": response.text,
+                    },
+                    500,
+                )
                 return
 
             result = response.json()
-            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
-            
+            content = (
+                result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            )
+
             # Log solution for debugging
-            print(f"[AI SOLUTION] Content type: {type(content).__name__}, Content preview: {content[:200]}")
+            print(
+                f"[AI SOLUTION] Content type: {type(content).__name__}, Content preview: {content[:200]}"
+            )
 
             if not content:
                 self.send_json({"error": "Empty response from AI"}, 500)
@@ -631,7 +697,7 @@ Response Format:
             test_results=test_results,
             test_cases=[],
             mode="chat",
-            question=question
+            question=question,
         )
 
         # Log what we're sending
@@ -648,25 +714,31 @@ Response Format:
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:8888",
-                    "X-Title": "LeetCode Helper"
+                    "X-Title": "LeetCode Helper",
                 },
                 json={
                     "model": AURORA_MODEL,
                     "messages": messages,
                     "max_tokens": 1500,
                 },
-                timeout=45
+                timeout=45,
             )
 
             if response.status_code != 200:
-                self.send_json({"error": f"AI request failed: {response.status_code}"}, 500)
+                self.send_json(
+                    {"error": f"AI request failed: {response.status_code}"}, 500
+                )
                 return
 
             result = response.json()
-            answer = result.get("choices", [{}])[0].get("message", {}).get("content", "")
-            
+            answer = (
+                result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            )
+
             # Log the answer type and content for debugging
-            print(f"[CHAT] Answer type: {type(answer).__name__}, Answer value: {answer[:200] if answer else 'None'}")
+            print(
+                f"[CHAT] Answer type: {type(answer).__name__}, Answer value: {answer[:200] if answer else 'None'}"
+            )
 
             if not answer:
                 self.send_json({"error": "Empty response from AI"}, 500)
@@ -714,7 +786,7 @@ Response Format:
             test_results=test_results,
             test_cases=[],
             mode="chat",
-            question=question
+            question=question,
         )
 
         # Log what we're sending
@@ -738,7 +810,7 @@ Response Format:
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:8888",
-                    "X-Title": "LeetCode Helper"
+                    "X-Title": "LeetCode Helper",
                 },
                 json={
                     "model": AURORA_MODEL,
@@ -747,30 +819,46 @@ Response Format:
                     "stream": True,
                 },
                 timeout=60,
-                stream=True
+                stream=True,
             )
 
             if response.status_code != 200:
-                self.wfile.write(b"data: " + json.dumps({"error": f"AI request failed: {response.status_code}"}).encode() + b"\n\n")
+                self.wfile.write(
+                    b"data: "
+                    + json.dumps(
+                        {"error": f"AI request failed: {response.status_code}"}
+                    ).encode()
+                    + b"\n\n"
+                )
                 return
 
             # Stream the response
             for line in response.iter_lines():
                 if line:
-                    line = line.decode('utf-8')
-                    if line.startswith('data: '):
+                    line = line.decode("utf-8")
+                    if line.startswith("data: "):
                         data_str = line[6:]
-                        if data_str == '[DONE]':
+                        if data_str == "[DONE]":
                             break
                         try:
                             data = json.loads(data_str)
-                            if 'choices' in data and len(data['choices']) > 0:
-                                delta = data['choices'][0].get('delta', {})
-                                content = delta.get('content', '')
+                            if "choices" in data and len(data["choices"]) > 0:
+                                delta = data["choices"][0].get("delta", {})
+                                content = delta.get("content", "")
                                 # Only send if content is a non-empty string
-                                if content and isinstance(content, str) and content.strip():
-                                    print(f"[STREAM] Sending content: {content[:100]}... (type: {type(content).__name__})")
-                                    self.wfile.write(b"data: " + json.dumps({"content": content}).encode() + b"\n\n")
+                                if (
+                                    content
+                                    and isinstance(content, str)
+                                    and content.strip()
+                                ):
+                                    print(
+                                        f"[STREAM] Sending content: {content[:100]}... (type: {type(content).__name__})"
+                                    )
+                                    self.wfile.write(
+                                        b"data: "
+                                        + json.dumps({"content": content}).encode()
+                                        + b"\n\n"
+                                    )
                                     self.wfile.flush()
                         except json.JSONDecodeError:
                             continue
@@ -779,11 +867,18 @@ Response Format:
             self.wfile.write(b"data: [DONE]\n\n")
 
         except requests.exceptions.Timeout:
-            self.wfile.write(b"data: " + json.dumps({"error": "Request timed out. Please try again."}).encode() + b"\n\n")
+            self.wfile.write(
+                b"data: "
+                + json.dumps({"error": "Request timed out. Please try again."}).encode()
+                + b"\n\n"
+            )
         except Exception as e:
             import traceback
+
             traceback.print_exc()
-            self.wfile.write(b"data: " + json.dumps({"error": str(e)}).encode() + b"\n\n")
+            self.wfile.write(
+                b"data: " + json.dumps({"error": str(e)}).encode() + b"\n\n"
+            )
 
     def get_hint(self):
         """Generate progressive hint - unified with chat system."""
@@ -814,12 +909,16 @@ Response Format:
 
             global progress
             progress.setdefault("hints", {})
-            
+
             problem_id = str(problem_id)
             hint_data = progress["hints"].get(problem_id, {"hints": [], "revealed": 0})
-            
-            needs_generation = regenerate or not hint_data["hints"] or len(hint_data["hints"]) < hint_level
-            
+
+            needs_generation = (
+                regenerate
+                or not hint_data["hints"]
+                or len(hint_data["hints"]) < hint_level
+            )
+
             if needs_generation and hint_level <= 3:
                 # Build unified messages using the new system
                 messages = self._build_ai_messages(
@@ -831,7 +930,7 @@ Response Format:
                     test_results=None,  # Hints don't include test results
                     test_cases=[],
                     mode="hint",
-                    hint_level=hint_level
+                    hint_level=hint_level,
                 )
 
                 # Log what we're sending
@@ -847,56 +946,71 @@ Response Format:
                         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                         "Content-Type": "application/json",
                         "HTTP-Referer": "http://localhost:8888",
-                        "X-Title": "LeetCode Helper"
+                        "X-Title": "LeetCode Helper",
                     },
                     json={
                         "model": AURORA_MODEL,
                         "messages": messages,
                         "max_tokens": 1000,
                     },
-                    timeout=60
+                    timeout=60,
                 )
 
                 if response.status_code != 200:
-                    self.send_json({
-                        "error": f"AI request failed: {response.status_code}",
-                        "details": response.text[:500]
-                    }, 500)
+                    self.send_json(
+                        {
+                            "error": f"AI request failed: {response.status_code}",
+                            "details": response.text[:500],
+                        },
+                        500,
+                    )
                     return
 
                 result = response.json()
-                content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
-                
+                content = (
+                    result.get("choices", [{}])[0].get("message", {}).get("content", "")
+                )
+
                 if not content:
-                    print(f"Empty AI response for hint level {hint_level}, problem {problem_id}")
-                    self.send_json({"error": "AI returned empty response. Please try again."}, 500)
+                    print(
+                        f"Empty AI response for hint level {hint_level}, problem {problem_id}"
+                    )
+                    self.send_json(
+                        {"error": "AI returned empty response. Please try again."}, 500
+                    )
                     return
 
                 content = content.strip()
-                print(f"[HINT] Hint level {hint_level} content type: {type(content).__name__}, content preview: {content[:150]}")
-                
+                print(
+                    f"[HINT] Hint level {hint_level} content type: {type(content).__name__}, content preview: {content[:150]}"
+                )
+
                 while len(hint_data["hints"]) < hint_level:
                     hint_data["hints"].append("")
                 hint_data["hints"][hint_level - 1] = content
-                
+
                 progress["hints"][problem_id] = hint_data
                 save_progress(progress)
 
-                self.send_json({
-                    "hint": content,
-                    "hint_level": hint_level,
-                    "total_hints": 3,
-                    "is_new": True
-                })
+                self.send_json(
+                    {
+                        "hint": content,
+                        "hint_level": hint_level,
+                        "total_hints": 3,
+                        "is_new": True,
+                    }
+                )
 
             else:
                 if hint_data["hints"] and len(hint_data["hints"]) >= hint_level:
-                    self.send_json({
-                        "hint": hint_data["hints"][hint_level - 1],
-                        "hint_level": hint_level,
-                        "total_hints": 3,
-                        "is_new": False
-                    })
+                    self.send_json(
+                        {
+                            "hint": hint_data["hints"][hint_level - 1],
+                            "hint_level": hint_level,
+                            "total_hints": 3,
+                            "is_new": False,
+                        }
+                    )
                 else:
                     self.send_json({"error": "Hint not available"}, 404)
 
@@ -904,26 +1018,37 @@ Response Format:
             self.send_json({"error": "Request timed out. Please try again."}, 504)
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             self.send_json({"error": f"Server error: {str(e)}"}, 500)
 
-    def build_hint_prompt(self, problem_title, problem_description, starter_code, hint_level, previous_hints, current_code):
+    def build_hint_prompt(
+        self,
+        problem_title,
+        problem_description,
+        starter_code,
+        hint_level,
+        previous_hints,
+        current_code,
+    ):
         """Build a prompt to generate code hints that can be inserted into editor."""
-        
+
         hint_guidance = {
             1: "Show the basic structure: imports, class definition, method signature, and main data structures. Leave the core logic as a simple TODO comment.",
             2: "Show the main loop or recursion structure. Fill in key data structures. Leave only the tricky comparison or calculation as TODO.",
-            3: "Show a nearly complete solution. Leave only 1-2 lines blank (the key insight or edge case handling). Add brief comments where helpful, not everywhere."
+            3: "Show a nearly complete solution. Leave only 1-2 lines blank (the key insight or edge case handling). Add brief comments where helpful, not everywhere.",
         }
-        
+
         user_code_context = ""
         if current_code and current_code.strip() != starter_code.strip():
             user_code_context = f"\n\nUser's current attempt:\n```python\n{current_code}\n```\nNotice where they might be stuck and help from there."
-        
+
         previous_hints_text = ""
         if previous_hints:
-            previous_hints_text = "\n\nPrevious hints (don't repeat):\n" + "\n".join([f"- {h[:200]}" for i, h in enumerate(previous_hints) if h])
-        
+            previous_hints_text = "\n\nPrevious hints (don't repeat):\n" + "\n".join(
+                [f"- {h[:200]}" for i, h in enumerate(previous_hints) if h]
+            )
+
         prompt = f"""You are a helpful Python tutor. Provide progressive code hints to guide the user to a working solution.
 
 Problem: {problem_title}
@@ -953,7 +1078,7 @@ Example format for TODO:
     # HINT: check if value already exists
 
 Output only the Python code (no ```python``` wrapper)."""
-        
+
         return prompt
 
     def update_progress(self):
@@ -981,7 +1106,7 @@ Output only the Python code (no ```python``` wrapper)."""
                 progress.setdefault("solved", {})[problem_id] = {
                     "code": code,
                     "timestamp": __import__("datetime").datetime.now().isoformat(),
-                    "passed": True
+                    "passed": True,
                 }
                 save_progress(progress)
             self.send_json({"success": True, "progress": progress})
@@ -999,7 +1124,9 @@ Output only the Python code (no ```python``` wrapper)."""
                 # Only save if problem is already solved or has previous saved code
                 if problem_id in progress.get("solved", {}):
                     progress["solved"][problem_id]["code"] = code
-                    progress["solved"][problem_id]["timestamp"] = __import__("datetime").datetime.now().isoformat()
+                    progress["solved"][problem_id]["timestamp"] = (
+                        __import__("datetime").datetime.now().isoformat()
+                    )
                     save_progress(progress)
             self.send_json({"success": True, "progress": progress})
 
@@ -1021,12 +1148,15 @@ Output only the Python code (no ```python``` wrapper)."""
 
     def get_roadmap_progress(self):
         """Get roadmap progress."""
-        roadmap_progress = progress.get("roadmap", {
-            "currentDay": 1,
-            "currentPhase": 1,
-            "completedDays": [],
-            "unlockedPhases": [1]
-        })
+        roadmap_progress = progress.get(
+            "roadmap",
+            {
+                "currentDay": 1,
+                "currentPhase": 1,
+                "completedDays": [],
+                "unlockedPhases": [1],
+            },
+        )
         self.send_json(roadmap_progress)
 
     def update_roadmap_progress(self):
@@ -1051,7 +1181,7 @@ Output only the Python code (no ```python``` wrapper)."""
                 "currentDay": 1,
                 "currentPhase": 1,
                 "completedDays": [],
-                "unlockedPhases": [1]
+                "unlockedPhases": [1],
             }
 
         roadmap = progress["roadmap"]
@@ -1126,15 +1256,9 @@ Output only the Python code (no ```python``` wrapper)."""
         # Check if quiz exists
         if problem_id in quizzes:
             quiz_data = quizzes[problem_id]
-            self.send_json({
-                "quiz": quiz_data,
-                "exists": True
-            })
+            self.send_json({"quiz": quiz_data, "exists": True})
         else:
-            self.send_json({
-                "quiz": None,
-                "exists": False
-            })
+            self.send_json({"quiz": None, "exists": False})
 
     def generate_quiz(self):
         """Generate quiz for a problem using AI with structured output."""
@@ -1152,23 +1276,45 @@ Output only the Python code (no ```python``` wrapper)."""
             self.send_json({"error": "Invalid JSON"}, 400)
             return
 
-        problem_id = data.get("problem_id")
+        problem_id = str(data.get("problem_id", ""))
         problem_title = data.get("problem_title", "")
         problem_description = data.get("problem_description", "")
         starter_code = data.get("starter_code", "")
         force_regenerate = data.get("force_regenerate", False)
+        regenerate_stages = data.get("regenerate_stages", [])
 
         if not problem_id or not problem_title:
             self.send_json({"error": "Problem ID and title required"}, 400)
             return
 
+        allowed_stages = {
+            "understanding",
+            "pattern",
+            "invariant",
+            "implementation",
+            "edge_case",
+        }
+        if regenerate_stages is None:
+            regenerate_stages = []
+        if not isinstance(regenerate_stages, list) or not all(
+            isinstance(stage, str) and stage in allowed_stages
+            for stage in regenerate_stages
+        ):
+            self.send_json(
+                {"error": "regenerate_stages must be an array of valid stage names"},
+                400,
+            )
+            return
+
         # Check if quiz already exists and not forcing regeneration
-        if not force_regenerate and problem_id in quizzes:
-            self.send_json({
-                "quiz": quizzes[problem_id],
-                "exists": True,
-                "success": True  # Include success field for consistency
-            })
+        if not force_regenerate and not regenerate_stages and problem_id in quizzes:
+            self.send_json(
+                {
+                    "quiz": quizzes[problem_id],
+                    "exists": True,
+                    "success": True,  # Include success field for consistency
+                }
+            )
             return
 
         # Build prompt for quiz generation
@@ -1189,27 +1335,39 @@ Output only the Python code (no ```python``` wrapper)."""
 {context_str}
 
 Task:
-Create 5 multiple-choice questions that will help the user better understand this problem and guide them toward coding a solution.
+Create exactly 5 multiple-choice questions that guide the user from understanding to implementation, so they are ready to code the solution afterward.
 
-Question Types:
-1. Input/Output Analysis: Ask what the function should return for given inputs
-2. Edge Cases: Ask about empty inputs, single elements, duplicates, boundary values
-3. Code Snippet Completion: Show incomplete code snippet and ask what should fill the blank
-4. Algorithm Approach: Ask about the best data structure or strategy
-5. Time/Space Complexity: Ask about O(n) or O(n^2) complexity
+Required staged sequence (exact order):
+1. understanding: Clarify what the function must compute for concrete input/output.
+2. pattern: Identify the best algorithmic pattern/data structure.
+3. invariant: Identify the key invariant or state relationship that remains true while iterating/processing.
+4. implementation: Choose the correct next code step / code fill-in aligned to Python starter structure.
+5. edge_case: Validate behavior on tricky boundary/edge cases and confirm complexity target.
+
+Targeted regeneration mode:
+- The client may request a partial regeneration with regenerate_stages.
+- If regenerate_stages is provided and non-empty, ONLY regenerate questions whose "stage" is in regenerate_stages.
+- For stages not listed in regenerate_stages, keep existing questions unchanged from the provided existing quiz context.
+- Return a full 5-question quiz in final output (all stages present exactly once), preserving stage order above.
 
 Rules:
-1. Provide exactly 5 questions (no more, no less)
-2. Each question must have exactly 4 options (A, B, C, D)
-3. Indicate correct answer with index (0 for A, 1 for B, 2 for C, 3 for D)
-4. Include a brief explanation for each question
-5. Questions should be specific and practical - help user code the solution
-6. Focus on Python implementation details when relevant
+1. Provide exactly 5 questions (no more, no less), one per stage above, in that order.
+2. Each question must have exactly 4 options.
+3. Indicate correct answer with index (0-3).
+4. Include a concise explanation focused on how this helps coding.
+5. Keep options plausible and non-trivial.
+6. Keep wording specific to this problem (avoid generic advice).
+7. Focus on Python implementation details when relevant.
+8. For at least one question, force reasoning over a concrete mini example.
+9. Return strict JSON only.
 
 IMPORTANT: Return your response as valid JSON matching this exact schema:
 {{
   "questions": [
     {{
+      "stage": "understanding",
+      "objective": "what this question unlocks for solving",
+      "difficulty": "easy",
       "question": "question text here",
       "options": ["option A", "option B", "option C", "option D"],
       "correct_index": 0,
@@ -1217,6 +1375,23 @@ IMPORTANT: Return your response as valid JSON matching this exact schema:
     }}
   ]
 }}
+
+Allowed values:
+- stage: one of ["understanding", "pattern", "invariant", "implementation", "edge_case"]
+- difficulty: one of ["easy", "medium", "hard"]
+
+Existing quiz context (if available) and requested regenerate_stages:
+{
+            json.dumps(
+                {
+                    "regenerate_stages": regenerate_stages,
+                    "existing_quiz": quizzes.get(problem_id, {}).get("questions", [])
+                    if problem_id in quizzes
+                    else [],
+                },
+                ensure_ascii=False,
+            )
+        }
 
 Do not include markdown code fences, comments, or extra text. Return ONLY the JSON."""
 
@@ -1233,13 +1408,16 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:8888",
-                    "X-Title": "LeetCode Helper"
+                    "X-Title": "LeetCode Helper",
                 },
                 json={
                     "model": AURORA_MODEL,
                     "messages": [
-                        {"role": "system", "content": "You are a helpful Python tutor creating quizzes for coding problems."},
-                        {"role": "user", "content": prompt}
+                        {
+                            "role": "system",
+                            "content": "You are a helpful Python tutor creating quizzes for coding problems.",
+                        },
+                        {"role": "user", "content": prompt},
                     ],
                     "response_format": {
                         "type": "json_schema",
@@ -1251,47 +1429,77 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
                                 "properties": {
                                     "questions": {
                                         "type": "array",
+                                        "minItems": 5,
+                                        "maxItems": 5,
                                         "items": {
                                             "type": "object",
                                             "properties": {
+                                                "stage": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "understanding",
+                                                        "pattern",
+                                                        "invariant",
+                                                        "implementation",
+                                                        "edge_case",
+                                                    ],
+                                                },
+                                                "objective": {"type": "string"},
+                                                "difficulty": {
+                                                    "type": "string",
+                                                    "enum": ["easy", "medium", "hard"],
+                                                },
                                                 "question": {"type": "string"},
                                                 "options": {
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                     "minItems": 4,
-                                                    "maxItems": 4
+                                                    "maxItems": 4,
                                                 },
                                                 "correct_index": {
                                                     "type": "integer",
                                                     "minimum": 0,
-                                                    "maximum": 3
+                                                    "maximum": 3,
                                                 },
-                                                "explanation": {"type": "string"}
+                                                "explanation": {"type": "string"},
                                             },
-                                            "required": ["question", "options", "correct_index", "explanation"],
-                                            "additionalProperties": False
-                                        }
+                                            "required": [
+                                                "stage",
+                                                "objective",
+                                                "difficulty",
+                                                "question",
+                                                "options",
+                                                "correct_index",
+                                                "explanation",
+                                            ],
+                                            "additionalProperties": False,
+                                        },
                                     }
                                 },
                                 "required": ["questions"],
-                                "additionalProperties": False
-                            }
-                        }
+                                "additionalProperties": False,
+                            },
+                        },
                     },
                     "max_tokens": 3000,
                 },
-                timeout=60
+                timeout=60,
             )
 
             if response.status_code != 200:
-                self.send_json({
-                    "error": f"AI request failed: {response.status_code}",
-                    "details": response.text[:500]
-                }, 500)
+                self.send_json(
+                    {
+                        "error": f"AI request failed: {response.status_code}",
+                        "details": response.text[:500],
+                    },
+                    500,
+                )
                 return
 
             result = response.json()
-            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            content = (
+                result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            )
 
             if not content:
                 self.send_json({"error": "Empty response from AI"}, 500)
@@ -1308,13 +1516,64 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
             # Validate structure
             if "questions" not in quiz_json or not quiz_json["questions"]:
                 print(f"[QUIZ] Invalid quiz structure: {quiz_json}")
-                self.send_json({"error": "AI returned invalid quiz structure - no questions"}, 500)
+                self.send_json(
+                    {"error": "AI returned invalid quiz structure - no questions"}, 500
+                )
                 return
 
-            # Save quiz (even if not exactly 5 questions, accept what we get)
+            # Normalize and merge quiz questions by stage
+            generated_questions = quiz_json["questions"]
+            existing_questions = (
+                quizzes.get(problem_id, {}).get("questions", [])
+                if problem_id in quizzes
+                else []
+            )
+
+            def _stage_index_map(questions):
+                mapping = {}
+                if isinstance(questions, list):
+                    for q in questions:
+                        if isinstance(q, dict):
+                            stage = q.get("stage")
+                            if isinstance(stage, str) and stage in allowed_stages:
+                                mapping[stage] = q
+                return mapping
+
+            target_stage_order = [
+                "understanding",
+                "pattern",
+                "invariant",
+                "implementation",
+                "edge_case",
+            ]
+            generated_by_stage = _stage_index_map(generated_questions)
+            existing_by_stage = _stage_index_map(existing_questions)
+
+            # Construct final questions based on target order and regeneration rules
+            final_questions = []
+            for stage in target_stage_order:
+                if regenerate_stages and stage in regenerate_stages:
+                    # If we specifically wanted to regenerate this stage, prefer generated
+                    if stage in generated_by_stage:
+                        final_questions.append(generated_by_stage[stage])
+                    elif stage in existing_by_stage:
+                        final_questions.append(existing_by_stage[stage])
+                else:
+                    # Not in regeneration mode for this stage, prefer existing, then generated
+                    if stage in existing_by_stage:
+                        final_questions.append(existing_by_stage[stage])
+                    elif stage in generated_by_stage:
+                        final_questions.append(generated_by_stage[stage])
+
+            # Final fallback: if we still don't have questions (unlikely),
+            # just take whatever we got from the AI
+            if not final_questions:
+                final_questions = generated_questions
+
+            # Save quiz
             quiz_data = {
-                "questions": quiz_json["questions"],
-                "generated_at": __import__("datetime").datetime.now().isoformat()
+                "questions": final_questions,
+                "generated_at": datetime.datetime.now().isoformat(),
             }
 
             quizzes[problem_id] = quiz_data
@@ -1327,16 +1586,19 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
                 print(f"[QUIZ] Failed to save quiz: {save_error}")
                 # Continue anyway - quiz is in memory
 
-            self.send_json({
-                "quiz": quiz_data,
-                "exists": True,  # Quiz exists now (was generated or regenerated)
-                "success": True
-            })
+            self.send_json(
+                {
+                    "quiz": quiz_data,
+                    "exists": True,  # Quiz exists now (was generated or regenerated)
+                    "success": True,
+                }
+            )
 
         except requests.exceptions.Timeout:
             self.send_json({"error": "Request timed out. Please try again."}, 504)
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             self.send_json({"error": f"Server error: {str(e)}"}, 500)
 
@@ -1365,6 +1627,7 @@ def main():
 
     class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         """Threaded HTTP server for concurrent requests."""
+
         daemon_threads = True
         allow_reuse_address = True
 

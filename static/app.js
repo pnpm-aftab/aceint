@@ -4,153 +4,164 @@
 // ICON HELPER FUNCTION (Lucide Icons)
 // ====================================================
 // Creates an icon HTML string for template literals
-function iconHtml(name, size = 18, className = '') {
-    const extraClass = className ? ` ${className}` : '';
-    return `<i data-lucide="${name}" style="width:${size}px;height:${size}px;"${extraClass}></i>`;
+function iconHtml(name, size = 18, className = "") {
+  const extraClass = className ? ` ${className}` : "";
+  return `<i data-lucide="${name}" style="width:${size}px;height:${size}px;"${extraClass}></i>`;
 }
 
 // Roadmap Manager
 class RoadmapManager {
-    constructor(app) {
-        this.app = app;
-        this.roadmapData = null;
-        this.userProgress = {
-            currentDay: 1,
-            currentPhase: 1,
-            completedDays: [],
-            unlockedPhases: [1]
-        };
-        this.currentView = 'problems';
-    }
+  constructor(app) {
+    this.app = app;
+    this.roadmapData = null;
+    this.userProgress = {
+      currentDay: 1,
+      currentPhase: 1,
+      completedDays: [],
+      unlockedPhases: [1],
+    };
+    this.currentView = "problems";
+  }
 
-    async init() {
-        await this.loadRoadmapData();
-        await this.loadRoadmapProgress();
-        this.bindEvents();
-    }
+  async init() {
+    await this.loadRoadmapData();
+    await this.loadRoadmapProgress();
+    this.bindEvents();
+  }
 
-    async loadRoadmapData() {
-        try {
-            const response = await fetch('/static/roadmap.json');
-            this.roadmapData = await response.json();
-        } catch (error) {
-            console.error('Failed to load roadmap data:', error);
+  async loadRoadmapData() {
+    try {
+      const response = await fetch("/static/roadmap.json");
+      this.roadmapData = await response.json();
+    } catch (error) {
+      console.error("Failed to load roadmap data:", error);
+    }
+  }
+
+  async loadRoadmapProgress() {
+    try {
+      const response = await fetch("/api/roadmap/progress");
+      const data = await response.json();
+      if (data.currentDay) {
+        this.userProgress = data;
+      }
+    } catch (error) {
+      console.error("Failed to load roadmap progress:", error);
+    }
+  }
+
+  bindEvents() {
+    // Nav tabs
+    document.querySelectorAll(".nav-tab").forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        const page = e.target.dataset.page;
+        this.switchPage(page);
+      });
+    });
+
+    // Modal close buttons
+    document
+      .getElementById("modalBackBtn")
+      ?.addEventListener("click", () => this.closeModal());
+    document
+      .getElementById("modalCloseBtn")
+      ?.addEventListener("click", () => this.closeModal());
+
+    // Close modal on backdrop click
+    document
+      .getElementById("dayDetailModal")
+      ?.addEventListener("click", (e) => {
+        if (e.target.id === "dayDetailModal") {
+          this.closeModal();
         }
+      });
+  }
+
+  switchPage(page) {
+    this.currentView = page;
+
+    // Update nav tabs
+    document.querySelectorAll(".nav-tab").forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.page === page);
+    });
+
+    // Show/hide pages
+    const mainContent = document.querySelector(".main-content");
+    const sidebar = document.querySelector(".sidebar");
+    const roadmapPage = document.getElementById("roadmapPage");
+    const learningPage = document.getElementById("learningPage");
+
+    if (page === "roadmap") {
+      mainContent.style.display = "none";
+      sidebar.style.display = "none";
+      roadmapPage.style.display = "flex";
+      roadmapPage.style.flexDirection = "column";
+      learningPage.style.display = "none";
+      this.renderRoadmap();
+    } else if (page === "learning") {
+      mainContent.style.display = "none";
+      sidebar.style.display = "none";
+      roadmapPage.style.display = "none";
+      learningPage.style.display = "flex";
+      learningPage.style.flexDirection = "column";
+      if (this.app.learning) {
+        this.app.learning.renderLearning();
+      }
+    } else {
+      mainContent.style.display = "flex";
+      sidebar.style.display = "flex";
+      roadmapPage.style.display = "none";
+      learningPage.style.display = "none";
     }
+  }
 
-    async loadRoadmapProgress() {
-        try {
-            const response = await fetch('/api/roadmap/progress');
-            const data = await response.json();
-            if (data.currentDay) {
-                this.userProgress = data;
-            }
-        } catch (error) {
-            console.error('Failed to load roadmap progress:', error);
-        }
-    }
+  renderRoadmap() {
+    if (!this.roadmapData) return;
 
-    bindEvents() {
-        // Nav tabs
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const page = e.target.dataset.page;
-                this.switchPage(page);
-            });
-        });
+    const phasesContainer = document.getElementById("roadmapPhases");
+    phasesContainer.innerHTML = "";
 
-        // Modal close buttons
-        document.getElementById('modalBackBtn')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('modalCloseBtn')?.addEventListener('click', () => this.closeModal());
+    // Update overall progress
+    this.updateOverallProgress();
 
-        // Close modal on backdrop click
-        document.getElementById('dayDetailModal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'dayDetailModal') {
-                this.closeModal();
-            }
-        });
-    }
+    // Render each phase
+    this.roadmapData.phases.forEach((phase) => {
+      const phaseCard = this.renderPhase(phase);
+      phasesContainer.appendChild(phaseCard);
+    });
 
-    switchPage(page) {
-        this.currentView = page;
+    // Initialize Lucide icons for newly added elements
+    if (window.lucide) lucide.createIcons();
+  }
 
-        // Update nav tabs
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.page === page);
-        });
+  updateOverallProgress() {
+    const currentDay = this.userProgress.currentDay || 1;
+    const completedCount = this.userProgress.completedDays?.length || 0;
+    const percent = Math.round((completedCount / 60) * 100);
 
-        // Show/hide pages
-        const mainContent = document.querySelector('.main-content');
-        const sidebar = document.querySelector('.sidebar');
-        const roadmapPage = document.getElementById('roadmapPage');
-        const learningPage = document.getElementById('learningPage');
+    document.getElementById("currentDayDisplay").textContent = currentDay;
+    document.getElementById("roadmapProgressBar").style.width = `${percent}%`;
+    document.getElementById("roadmapProgressPercent").textContent =
+      `${percent}%`;
+  }
 
-        if (page === 'roadmap') {
-            mainContent.style.display = 'none';
-            sidebar.style.display = 'none';
-            roadmapPage.style.display = 'flex';
-            roadmapPage.style.flexDirection = 'column';
-            learningPage.style.display = 'none';
-            this.renderRoadmap();
-        } else if (page === 'learning') {
-            mainContent.style.display = 'none';
-            sidebar.style.display = 'none';
-            roadmapPage.style.display = 'none';
-            learningPage.style.display = 'flex';
-            learningPage.style.flexDirection = 'column';
-            if (this.app.learning) {
-                this.app.learning.renderLearning();
-            }
-        } else {
-            mainContent.style.display = 'flex';
-            sidebar.style.display = 'flex';
-            roadmapPage.style.display = 'none';
-            learningPage.style.display = 'none';
-        }
-    }
+  renderPhase(phase) {
+    const isUnlocked =
+      this.userProgress.unlockedPhases?.includes(phase.id) || phase.id === 1;
+    const phaseDays = phase.days || [];
+    const totalDays = phaseDays.length;
+    const completedDays = phaseDays.filter((d) =>
+      this.userProgress.completedDays?.includes(d.day),
+    ).length;
+    const phasePercent =
+      totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 
-    renderRoadmap() {
-        if (!this.roadmapData) return;
+    const card = document.createElement("div");
+    card.className = `phase-card${!isUnlocked ? " locked" : ""}`;
 
-        const phasesContainer = document.getElementById('roadmapPhases');
-        phasesContainer.innerHTML = '';
+    const lockIcon = !isUnlocked ? iconHtml("lock", 16, "phase-lock") : "";
 
-        // Update overall progress
-        this.updateOverallProgress();
-
-        // Render each phase
-        this.roadmapData.phases.forEach(phase => {
-            const phaseCard = this.renderPhase(phase);
-            phasesContainer.appendChild(phaseCard);
-        });
-
-        // Initialize Lucide icons for newly added elements
-        if (window.lucide) lucide.createIcons();
-    }
-
-    updateOverallProgress() {
-        const currentDay = this.userProgress.currentDay || 1;
-        const completedCount = this.userProgress.completedDays?.length || 0;
-        const percent = Math.round((completedCount / 60) * 100);
-
-        document.getElementById('currentDayDisplay').textContent = currentDay;
-        document.getElementById('roadmapProgressBar').style.width = `${percent}%`;
-        document.getElementById('roadmapProgressPercent').textContent = `${percent}%`;
-    }
-
-    renderPhase(phase) {
-        const isUnlocked = this.userProgress.unlockedPhases?.includes(phase.id) || phase.id === 1;
-        const phaseDays = phase.days || [];
-        const totalDays = phaseDays.length;
-        const completedDays = phaseDays.filter(d => this.userProgress.completedDays?.includes(d.day)).length;
-        const phasePercent = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
-
-        const card = document.createElement('div');
-        card.className = `phase-card${!isUnlocked ? ' locked' : ''}`;
-
-        const lockIcon = !isUnlocked ? iconHtml('lock', 16, 'phase-lock') : '';
-
-        card.innerHTML = `
+    card.innerHTML = `
             <div class="phase-header">
                 <span class="phase-icon">${phase.icon}</span>
                 <div class="phase-info">
@@ -171,37 +182,43 @@ class RoadmapManager {
             <div class="phase-days"></div>
         `;
 
-        // Render days
-        const daysContainer = card.querySelector('.phase-days');
-        phaseDays.forEach(day => {
-            const dayCard = this.renderDayCard(day, phase);
-            daysContainer.appendChild(dayCard);
-        });
+    // Render days
+    const daysContainer = card.querySelector(".phase-days");
+    phaseDays.forEach((day) => {
+      const dayCard = this.renderDayCard(day, phase);
+      daysContainer.appendChild(dayCard);
+    });
 
-        // Toggle collapse on header click
-        const header = card.querySelector('.phase-header');
-        header.addEventListener('click', () => {
-            daysContainer.style.display = daysContainer.style.display === 'none' ? 'grid' : 'none';
-        });
+    // Toggle collapse on header click
+    const header = card.querySelector(".phase-header");
+    header.addEventListener("click", () => {
+      daysContainer.style.display =
+        daysContainer.style.display === "none" ? "grid" : "none";
+    });
 
-        return card;
-    }
+    return card;
+  }
 
-    renderDayCard(day, phase) {
-        const isCompleted = this.userProgress.completedDays?.includes(day.day);
-        const isCurrent = this.userProgress.currentDay === day.day;
-        const isUnlocked = this.userProgress.unlockedPhases?.includes(phase.id) || phase.id === 1;
+  renderDayCard(day, phase) {
+    const isCompleted = this.userProgress.completedDays?.includes(day.day);
+    const isCurrent = this.userProgress.currentDay === day.day;
+    const isUnlocked =
+      this.userProgress.unlockedPhases?.includes(phase.id) || phase.id === 1;
 
-        const card = document.createElement('div');
-        card.className = `day-card${isCompleted ? ' completed' : ''}${isCurrent ? ' current' : ''}${!isUnlocked ? ' locked' : ''}`;
+    const card = document.createElement("div");
+    card.className = `day-card${isCompleted ? " completed" : ""}${isCurrent ? " current" : ""}${!isUnlocked ? " locked" : ""}`;
 
-        const totalProblems = day.problems?.length || 0;
-        const solvedProblems = day.problems?.filter(p => this.app.isProblemSolved(p.leetcodeId)).length || 0;
+    const totalProblems = day.problems?.length || 0;
+    const solvedProblems =
+      day.problems?.filter((p) => this.app.isProblemSolved(p.leetcodeId))
+        .length || 0;
 
-        const statusIcon = isCompleted ? iconHtml('check', 12, 'day-status completed') : '';
-        const currentIndicator = isCurrent ? iconHtml('arrow-right', 12) : '';
+    const statusIcon = isCompleted
+      ? iconHtml("check", 12, "day-status completed")
+      : "";
+    const currentIndicator = isCurrent ? iconHtml("arrow-right", 12) : "";
 
-        card.innerHTML = `
+    card.innerHTML = `
             <div class="day-header">
                 <span class="day-number">${currentIndicator} Day ${day.day}</span>
                 <span class="day-title">${day.title}</span>
@@ -213,35 +230,40 @@ class RoadmapManager {
             </div>
         `;
 
-        if (isUnlocked) {
-            card.addEventListener('click', () => this.openDayDetail(day, phase));
-        }
-
-        return card;
+    if (isUnlocked) {
+      card.addEventListener("click", () => this.openDayDetail(day, phase));
     }
 
-    openDayDetail(day, phase) {
-        const modal = document.getElementById('dayDetailModal');
-        const modalBody = document.getElementById('modalBody');
+    return card;
+  }
 
-        const totalProblems = day.problems?.length || 0;
-        const solvedProblems = day.problems?.filter(p => this.app.isProblemSolved(p.leetcodeId)).length || 0;
-        const isCompleted = this.userProgress.completedDays?.includes(day.day);
-        const isCurrent = this.userProgress.currentDay === day.day;
+  openDayDetail(day, phase) {
+    const modal = document.getElementById("dayDetailModal");
+    const modalBody = document.getElementById("modalBody");
 
-        const canMarkComplete = solvedProblems >= totalProblems && !isCompleted;
+    const totalProblems = day.problems?.length || 0;
+    const solvedProblems =
+      day.problems?.filter((p) => this.app.isProblemSolved(p.leetcodeId))
+        .length || 0;
+    const isCompleted = this.userProgress.completedDays?.includes(day.day);
+    const isCurrent = this.userProgress.currentDay === day.day;
 
-        let problemsHtml = '';
-        if (day.problems && day.problems.length > 0) {
-            problemsHtml = `
+    const canMarkComplete = solvedProblems >= totalProblems && !isCompleted;
+
+    let problemsHtml = "";
+    if (day.problems && day.problems.length > 0) {
+      problemsHtml = `
                 <div class="day-problems-section">
                     <h3>Problems for Today</h3>
                     <div class="day-problem-list">
-                        ${day.problems.map(p => {
-                const isSolved = this.app.isProblemSolved(p.leetcodeId);
-                return `
-                                <div class="day-problem-item${isSolved ? ' solved' : ''}" data-problem-id="${p.leetcodeId}">
-                                    <div class="day-problem-check">${isSolved ? iconHtml('check', 10) : ''}</div>
+                        ${day.problems
+                          .map((p) => {
+                            const isSolved = this.app.isProblemSolved(
+                              p.leetcodeId,
+                            );
+                            return `
+                                <div class="day-problem-item${isSolved ? " solved" : ""}" data-problem-id="${p.leetcodeId}">
+                                    <div class="day-problem-check">${isSolved ? iconHtml("check", 10) : ""}</div>
                                     <div class="day-problem-info">
                                         <div class="day-problem-id">#${p.leetcodeId}</div>
                                         <div class="day-problem-title">${this.escapeHtml(p.title)}</div>
@@ -249,25 +271,26 @@ class RoadmapManager {
                                     <span class="day-problem-difficulty ${p.difficulty}">${p.difficulty}</span>
                                 </div>
                             `;
-            }).join('')}
+                          })
+                          .join("")}
                     </div>
                 </div>
             `;
-        }
+    }
 
-        let tipsHtml = '';
-        if (day.tips && day.tips.length > 0) {
-            tipsHtml = `
+    let tipsHtml = "";
+    if (day.tips && day.tips.length > 0) {
+      tipsHtml = `
                 <div class="day-tips-section">
-                    <h3>${iconHtml('lightbulb', 16)} Tips for Today</h3>
+                    <h3>${iconHtml("lightbulb", 16)} Tips for Today</h3>
                     <ul class="day-tips-list">
-                        ${day.tips.map(tip => `<li>${this.escapeHtml(tip)}</li>`).join('')}
+                        ${day.tips.map((tip) => `<li>${this.escapeHtml(tip)}</li>`).join("")}
                     </ul>
                 </div>
             `;
-        }
+    }
 
-        modalBody.innerHTML = `
+    modalBody.innerHTML = `
             <div class="day-detail-header">
                 <h2 class="day-detail-title">Day ${day.day}: ${this.escapeHtml(day.title)}</h2>
                 <div class="day-detail-focus">
@@ -277,16 +300,20 @@ class RoadmapManager {
             </div>
 
             <div class="day-detail-progress">
-                <span class="day-detail-progress-text${solvedProblems >= totalProblems ? ' all-done' : ''}">
-                    ${solvedProblems >= totalProblems ? `${iconHtml('check', 14)} All done!` : `Progress: ${solvedProblems}/${totalProblems} problems solved`}
+                <span class="day-detail-progress-text${solvedProblems >= totalProblems ? " all-done" : ""}">
+                    ${solvedProblems >= totalProblems ? `${iconHtml("check", 14)} All done!` : `Progress: ${solvedProblems}/${totalProblems} problems solved`}
                 </span>
                 <div class="day-detail-actions">
-                    ${isCurrent && !isCompleted ? `
-                        <button class="mark-day-btn" ${canMarkComplete ? '' : 'disabled'}>
-                            ${canMarkComplete ? 'Mark Day Complete' : 'Solve all problems first'}
+                    ${
+                      isCurrent && !isCompleted
+                        ? `
+                        <button class="mark-day-btn" ${canMarkComplete ? "" : "disabled"}>
+                            ${canMarkComplete ? "Mark Day Complete" : "Solve all problems first"}
                         </button>
-                    ` : ''}
-                    ${isCompleted ? `<span style="color: var(--success); font-weight: 500;">Day Completed ${iconHtml('check', 14)}</span>` : ''}
+                    `
+                        : ""
+                    }
+                    ${isCompleted ? `<span style="color: var(--success); font-weight: 500;">Day Completed ${iconHtml("check", 14)}</span>` : ""}
                 </div>
             </div>
 
@@ -294,217 +321,262 @@ class RoadmapManager {
             ${tipsHtml}
         `;
 
-        // Add click handlers for problems
-        modalBody.querySelectorAll('.day-problem-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const problemId = item.dataset.problemId;
-                this.closeModal();
-                this.switchPage('problems');
-                this.app.loadProblem(problemId);
-            });
-        });
+    // Add click handlers for problems
+    modalBody.querySelectorAll(".day-problem-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const problemId = item.dataset.problemId;
+        this.closeModal();
+        this.switchPage("problems");
+        this.app.loadProblem(problemId);
+      });
+    });
 
-        // Add click handler for mark day complete
-        const markBtn = modalBody.querySelector('.mark-day-btn');
-        if (markBtn && canMarkComplete) {
-            markBtn.addEventListener('click', () => this.markDayComplete(day.day));
-        }
-
-        // Initialize Lucide icons for modal content
-        if (window.lucide) lucide.createIcons();
-
-        modal.style.display = 'flex';
+    // Add click handler for mark day complete
+    const markBtn = modalBody.querySelector(".mark-day-btn");
+    if (markBtn && canMarkComplete) {
+      markBtn.addEventListener("click", () => this.markDayComplete(day.day));
     }
 
-    closeModal() {
-        document.getElementById('dayDetailModal').style.display = 'none';
-    }
+    // Initialize Lucide icons for modal content
+    if (window.lucide) lucide.createIcons();
 
-    async markDayComplete(day) {
-        try {
-            const response = await fetch('/api/roadmap/progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'complete_day', day: day })
-            });
+    modal.style.display = "flex";
+  }
 
-            const data = await response.json();
-            if (data.success) {
-                this.userProgress = data.progress;
-                this.closeModal();
-                this.renderRoadmap();
-            }
-        } catch (error) {
-            console.error('Failed to mark day complete:', error);
-        }
-    }
+  closeModal() {
+    document.getElementById("dayDetailModal").style.display = "none";
+  }
 
-    async setCurrentDay(day) {
-        try {
-            const response = await fetch('/api/roadmap/progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'set_day', day: day })
-            });
+  async markDayComplete(day) {
+    try {
+      const response = await fetch("/api/roadmap/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "complete_day", day: day }),
+      });
 
-            const data = await response.json();
-            if (data.success) {
-                this.userProgress = data.progress;
-                this.renderRoadmap();
-            }
-        } catch (error) {
-            console.error('Failed to set current day:', error);
-        }
-    }
-
-    updateProgress() {
-        // Recalculate phase unlocks based on completed days
-        const phases = this.roadmapData?.phases || [];
-
-        phases.forEach((phase, index) => {
-            const prevPhase = index > 0 ? phases[index - 1] : null;
-            const prevPhaseComplete = !prevPhase || this.isPhaseComplete(prevPhase);
-
-            if (prevPhaseComplete && !this.userProgress.unlockedPhases?.includes(phase.id)) {
-                this.userProgress.unlockedPhases = this.userProgress.unlockedPhases || [];
-                this.userProgress.unlockedPhases.push(phase.id);
-
-                // Auto-advance current day if needed
-                if (this.userProgress.currentDay < phase.startDay) {
-                    this.userProgress.currentDay = phase.startDay;
-                }
-            }
-        });
-
+      const data = await response.json();
+      if (data.success) {
+        this.userProgress = data.progress;
+        this.closeModal();
         this.renderRoadmap();
+      }
+    } catch (error) {
+      console.error("Failed to mark day complete:", error);
     }
+  }
 
-    isPhaseComplete(phase) {
-        if (!phase.days) return false;
-        return phase.days.every(d => this.userProgress.completedDays?.includes(d.day));
-    }
+  async setCurrentDay(day) {
+    try {
+      const response = await fetch("/api/roadmap/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_day", day: day }),
+      });
 
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+      const data = await response.json();
+      if (data.success) {
+        this.userProgress = data.progress;
+        this.renderRoadmap();
+      }
+    } catch (error) {
+      console.error("Failed to set current day:", error);
     }
+  }
+
+  updateProgress() {
+    // Recalculate phase unlocks based on completed days
+    const phases = this.roadmapData?.phases || [];
+
+    phases.forEach((phase, index) => {
+      const prevPhase = index > 0 ? phases[index - 1] : null;
+      const prevPhaseComplete = !prevPhase || this.isPhaseComplete(prevPhase);
+
+      if (
+        prevPhaseComplete &&
+        !this.userProgress.unlockedPhases?.includes(phase.id)
+      ) {
+        this.userProgress.unlockedPhases =
+          this.userProgress.unlockedPhases || [];
+        this.userProgress.unlockedPhases.push(phase.id);
+
+        // Auto-advance current day if needed
+        if (this.userProgress.currentDay < phase.startDay) {
+          this.userProgress.currentDay = phase.startDay;
+        }
+      }
+    });
+
+    this.renderRoadmap();
+  }
+
+  isPhaseComplete(phase) {
+    if (!phase.days) return false;
+    return phase.days.every((d) =>
+      this.userProgress.completedDays?.includes(d.day),
+    );
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
 }
 
 // Custom Select Dropdown Component
 
 // Learning Manager
 class LearningManager {
-    constructor(app) {
-        this.app = app;
-        this.learningData = null;
-        this.patternsData = null;
-    }
+  constructor(app) {
+    this.app = app;
+    this.learningData = null;
+    this.patternsData = null;
+  }
 
-    async init() {
-        await Promise.all([this.loadLearningData(), this.loadPatternsData()]);
-        this.bindEvents();
-    }
+  async init() {
+    await Promise.all([this.loadLearningData(), this.loadPatternsData()]);
+    this.bindEvents();
+  }
 
-    async loadLearningData() {
-        try {
-            const response = await fetch('/static/learning.json');
-            this.learningData = await response.json();
-        } catch (error) {
-            console.error('Failed to load learning data:', error);
+  async loadLearningData() {
+    try {
+      const response = await fetch("/static/learning.json");
+      this.learningData = await response.json();
+    } catch (error) {
+      console.error("Failed to load learning data:", error);
+    }
+  }
+
+  async loadPatternsData() {
+    try {
+      const response = await fetch("/static/patterns.json");
+      this.patternsData = await response.json();
+    } catch (error) {
+      console.error("Failed to load patterns data:", error);
+    }
+  }
+
+  bindEvents() {
+    document
+      .getElementById("topicModalBackBtn")
+      ?.addEventListener("click", () => this.closeModal());
+    document
+      .getElementById("topicModalCloseBtn")
+      ?.addEventListener("click", () => this.closeModal());
+    document
+      .getElementById("topicDetailModal")
+      ?.addEventListener("click", (e) => {
+        if (e.target.id === "topicDetailModal") {
+          this.closeModal();
         }
-    }
+      });
+  }
 
-    async loadPatternsData() {
-        try {
-            const response = await fetch('/static/patterns.json');
-            this.patternsData = await response.json();
-        } catch (error) {
-            console.error('Failed to load patterns data:', error);
-        }
-    }
+  renderLearning() {
+    if (!this.patternsData) return;
+    const container = document.getElementById("learningTopics");
+    if (!container) return;
+    container.innerHTML = "";
 
-    bindEvents() {
-        document.getElementById('topicModalBackBtn')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('topicModalCloseBtn')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('topicDetailModal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'topicDetailModal') {
-                this.closeModal();
-            }
-        });
-    }
+    const levels = [
+      {
+        title: "Level 1: The Building Blocks",
+        subtitle: "How computers store and quickly find data.",
+        ids: ["hash-table", "prefix-sum"],
+      },
+      {
+        title: "Level 2: The Squeeze & Search",
+        subtitle: "Efficiently finding items in sorted lists.",
+        ids: ["binary-search", "two-pointers"],
+      },
+      {
+        title: "Level 3: The Sliding View",
+        subtitle: "Processing chunks of data in one pass.",
+        ids: ["sliding-window", "monotonic-stack"],
+      },
+      {
+        title: "Level 4: The Explorers",
+        subtitle: "Finding paths and trying every combination.",
+        ids: ["dfs", "bfs", "backtracking"],
+      },
+      {
+        title: "Level 5: Master Strategist",
+        subtitle: "Advanced techniques for maximum performance.",
+        ids: [
+          "dynamic-programming",
+          "greedy",
+          "heap",
+          "union-find",
+          "trie",
+          "topological-sort",
+          "bit-manipulation",
+          "math-geometry",
+        ],
+      },
+    ];
 
-    renderLearning() {
-        if (!this.patternsData) return;
-        const container = document.getElementById('learningTopics');
-        if (!container) return;
-        container.innerHTML = '';
+    levels.forEach((level) => {
+      const section = this.createSection(level.title, level.subtitle);
+      const grid = section.querySelector(".section-grid");
 
-        const levels = [
-            { title: "Level 1: The Building Blocks", subtitle: "How computers store and quickly find data.", ids: ["hash-table", "prefix-sum"] },
-            { title: "Level 2: The Squeeze & Search", subtitle: "Efficiently finding items in sorted lists.", ids: ["binary-search", "two-pointers"] },
-            { title: "Level 3: The Sliding View", subtitle: "Processing chunks of data in one pass.", ids: ["sliding-window", "monotonic-stack"] },
-            { title: "Level 4: The Explorers", subtitle: "Finding paths and trying every combination.", ids: ["dfs", "bfs", "backtracking"] },
-            { title: "Level 5: Master Strategist", subtitle: "Advanced techniques for maximum performance.", ids: ["dynamic-programming", "greedy", "heap", "union-find", "trie", "topological-sort", "bit-manipulation", "math-geometry"] }
-        ];
+      level.ids.forEach((id) => {
+        const pattern = this.patternsData[id];
+        if (!pattern) return;
 
-        levels.forEach(level => {
-            const section = this.createSection(level.title, level.subtitle);
-            const grid = section.querySelector('.section-grid');
-            
-            level.ids.forEach(id => {
-                const pattern = this.patternsData[id];
-                if (!pattern) return;
+        // Find curated topic if exists
+        const curated = this.learningData?.topics.find((t) => t.id === id);
+        const starterCount = (curated?.content.starters || []).length;
+        const leetcodeCount = this.app.problems.filter(
+          (p) => this.app.getPatternFromTags(p.topic_tags || []) === id,
+        ).length;
 
-                // Find curated topic if exists
-                const curated = this.learningData?.topics.find(t => t.id === id);
-                const starterCount = (curated?.content.starters || []).length;
-                const leetcodeCount = this.app.problems.filter(p => this.app.getPatternFromTags(p.topic_tags || []) === id).length;
-
-                const card = document.createElement('div');
-                card.className = 'topic-card';
-                card.innerHTML = `
+        const card = document.createElement("div");
+        card.className = "topic-card";
+        card.innerHTML = `
                     <div class="pattern-analogy-tag">${this.app.escapeHtml(pattern.analogy)}</div>
                     <h3 class="topic-title">${this.app.escapeHtml(pattern.title)}</h3>
                     <p class="topic-desc">${this.app.escapeHtml(pattern.description)}</p>
                     <div class="topic-footer">
                         <span>${starterCount} Starters • ${leetcodeCount} Total</span>
-                        <button class="btn btn-sm btn-ghost">Learn & Practice ${iconHtml('arrow-right', 14)}</button>
+                        <button class="btn btn-sm btn-ghost">Learn & Practice ${iconHtml("arrow-right", 14)}</button>
                     </div>
                 `;
-                card.addEventListener('click', () => this.openTopic(id, pattern, curated));
-                grid.appendChild(card);
-            });
-            container.appendChild(section);
-        });
-    }
+        card.addEventListener("click", () =>
+          this.openTopic(id, pattern, curated),
+        );
+        grid.appendChild(card);
+      });
+      container.appendChild(section);
+    });
+  }
 
-    createSection(title, subtitle) {
-        const section = document.createElement('div');
-        section.className = 'learning-section-container';
-        section.innerHTML = `
+  createSection(title, subtitle) {
+    const section = document.createElement("div");
+    section.className = "learning-section-container";
+    section.innerHTML = `
             <div class="learning-section-header">
                 <h2 class="learning-section-title">${title}</h2>
                 <p class="learning-section-subtitle">${subtitle}</p>
             </div>
             <div class="section-grid"></div>
         `;
-        return section;
-    }
+    return section;
+  }
 
-    openTopic(id, pattern, curated) {
-        const modal = document.getElementById('topicDetailModal');
-        const modalBody = document.getElementById('topicModalBody');
-        if (!modal || !modalBody) return;
+  openTopic(id, pattern, curated) {
+    const modal = document.getElementById("topicDetailModal");
+    const modalBody = document.getElementById("topicModalBody");
+    if (!modal || !modalBody) return;
 
-        modalBody.innerHTML = `
+    modalBody.innerHTML = `
             <div class="topic-detail">
                 <div class="topic-detail-header">
                     <div class="pattern-analogy-tag">${this.app.escapeHtml(pattern.analogy)}</div>
                     <h2>${this.app.escapeHtml(pattern.title)}</h2>
                     <p class="topic-explanation" style="font-style: italic; margin-top: 8px;">"${this.app.escapeHtml(pattern.description)}"</p>
                 </div>
-                
+
                 <div class="topic-detail-content">
                     <section class="topic-section">
                         <h3>Intuition & Logic</h3>
@@ -519,11 +591,15 @@ class LearningManager {
                         <pre class="code-block"><code>${this.app.escapeHtml(pattern.template)}</code></pre>
                     </section>
 
-                    ${curated ? `
+                    ${
+                      curated
+                        ? `
                     <section class="topic-section">
                         <h3>Starter Problems</h3>
                         <div class="topic-questions starters">
-                            ${(curated.content.starters || []).map(q => `
+                            ${(curated.content.starters || [])
+                              .map(
+                                (q) => `
                                 <div class="day-problem-item custom-problem" data-custom-id="${q.id}">
                                     <div class="day-problem-info">
                                         <div class="day-problem-id">Starter</div>
@@ -531,10 +607,14 @@ class LearningManager {
                                     </div>
                                     <span class="day-problem-difficulty ${q.difficulty}">${q.difficulty}</span>
                                 </div>
-                            `).join('')}
+                            `,
+                              )
+                              .join("")}
                         </div>
                     </section>
-                    ` : ''}
+                    `
+                        : ""
+                    }
 
                     <section class="topic-section">
                         <h3>All Associated LeetCode Problems</h3>
@@ -547,27 +627,30 @@ class LearningManager {
             </div>
         `;
 
-        this.renderTopicProblems(id, curated);
-        // Initialize Lucide icons for modal content
-        if (window.lucide) lucide.createIcons();
-        modal.style.display = 'flex';
+    this.renderTopicProblems(id, curated);
+    // Initialize Lucide icons for modal content
+    if (window.lucide) lucide.createIcons();
+    modal.style.display = "flex";
+  }
+
+  renderTopicProblems(patternId, curated) {
+    const container = document.getElementById("topicProblemList");
+    if (!container) return;
+
+    // All problems matching this pattern
+    const matchedProblems = this.app.problems.filter((p) => {
+      return this.app.getPatternFromTags(p.topic_tags || []) === patternId;
+    });
+
+    if (matchedProblems.length === 0) {
+      container.innerHTML =
+        '<p class="topic-empty">No LeetCode problems found for this pattern.</p>';
+      return;
     }
 
-    renderTopicProblems(patternId, curated) {
-        const container = document.getElementById('topicProblemList');
-        if (!container) return;
-
-        // All problems matching this pattern
-        const matchedProblems = this.app.problems.filter(p => {
-            return this.app.getPatternFromTags(p.topic_tags || []) === patternId;
-        });
-
-        if (matchedProblems.length === 0) {
-            container.innerHTML = '<p class="topic-empty">No LeetCode problems found for this pattern.</p>';
-            return;
-        }
-
-        container.innerHTML = matchedProblems.map(p => `
+    container.innerHTML = matchedProblems
+      .map(
+        (p) => `
             <div class="day-problem-item" data-problem-id="${p.id}">
                 <div class="day-problem-info">
                     <div class="day-problem-id">#${p.frontend_id || p.id}</div>
@@ -575,2231 +658,2612 @@ class LearningManager {
                 </div>
                 <span class="day-problem-difficulty ${p.difficulty}">${p.difficulty}</span>
             </div>
-        `).join('');
+        `,
+      )
+      .join("");
 
-        // Handle curated starters clicks
-        const modalBody = document.getElementById('topicModalBody');
-        modalBody.querySelectorAll('.custom-problem').forEach(item => {
-            item.addEventListener('click', () => {
-                const customId = item.dataset.customId;
-                const problem = curated.content.starters.find(p => p.id === customId);
-                this.closeModal();
-                this.app.roadmap.switchPage('problems');
-                this.app.loadCustomProblem(problem);
-            });
-        });
+    // Handle curated starters clicks
+    const modalBody = document.getElementById("topicModalBody");
+    modalBody.querySelectorAll(".custom-problem").forEach((item) => {
+      item.addEventListener("click", () => {
+        const customId = item.dataset.customId;
+        const problem = curated.content.starters.find((p) => p.id === customId);
+        this.closeModal();
+        this.app.roadmap.switchPage("problems");
+        this.app.loadCustomProblem(problem);
+      });
+    });
 
-        // Handle leetcode clicks
-        container.querySelectorAll('.day-problem-item').forEach(item => {
-            item.addEventListener('click', () => {
-                this.closeModal();
-                this.app.roadmap.switchPage('problems');
-                this.app.loadProblem(item.dataset.problemId);
-            });
-        });
-    }
+    // Handle leetcode clicks
+    container.querySelectorAll(".day-problem-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        this.closeModal();
+        this.app.roadmap.switchPage("problems");
+        this.app.loadProblem(item.dataset.problemId);
+      });
+    });
+  }
 
-    closeModal() {
-        document.getElementById('topicDetailModal').style.display = 'none';
-    }
+  closeModal() {
+    document.getElementById("topicDetailModal").style.display = "none";
+  }
 }
 
 // Custom Select Dropdown Component
 class CustomSelect {
-    constructor(element, onChange) {
-        this.container = element;
-        this.input = element.querySelector('.select-input');
-        this.toggle = element.querySelector('.select-toggle');
-        this.dropdown = element.querySelector('.select-dropdown');
-        this.options = Array.from(element.querySelectorAll('.select-option'));
-        this.onChange = onChange;
-        this.selectedValue = '';
-        this.selectedIndex = -1;
-        this.isOpen = false;
+  constructor(element, onChange) {
+    this.container = element;
+    this.input = element.querySelector(".select-input");
+    this.toggle = element.querySelector(".select-toggle");
+    this.dropdown = element.querySelector(".select-dropdown");
+    this.options = Array.from(element.querySelectorAll(".select-option"));
+    this.onChange = onChange;
+    this.selectedValue = "";
+    this.selectedIndex = -1;
+    this.isOpen = false;
 
-        this.init();
-    }
+    this.init();
+  }
 
-    init() {
-        // Toggle dropdown on input click or toggle button click
-        this.input.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.open();
-        });
+  init() {
+    // Toggle dropdown on input click or toggle button click
+    this.input.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.open();
+    });
 
-        this.toggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleDropdown();
-        });
+    this.toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.toggleDropdown();
+    });
 
-        // Handle typing to filter
-        this.input.addEventListener('input', () => {
-            this.input.removeAttribute('readonly');
-            this.filterOptions(this.input.value);
-            this.open();
-        });
+    // Handle typing to filter
+    this.input.addEventListener("input", () => {
+      this.input.removeAttribute("readonly");
+      this.filterOptions(this.input.value);
+      this.open();
+    });
 
-        this.input.addEventListener('keydown', (e) => {
-            this.handleKeydown(e);
-        });
+    this.input.addEventListener("keydown", (e) => {
+      this.handleKeydown(e);
+    });
 
-        // Handle option selection
-        this.options.forEach((option, index) => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.selectOption(option);
-            });
-        });
+    // Handle option selection
+    this.options.forEach((option, index) => {
+      option.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.selectOption(option);
+      });
+    });
 
-        // Close on click outside
-        document.addEventListener('click', (e) => {
-            if (!this.container.contains(e.target)) {
-                this.close();
-            }
-        });
-    }
-
-    toggleDropdown() {
-        this.isOpen ? this.close() : this.open();
-    }
-
-    open() {
-        this.isOpen = true;
-        this.container.classList.add('open');
-        this.selectedIndex = -1;
-        this.updateHighlight();
-    }
-
-    close() {
-        this.isOpen = false;
-        this.container.classList.remove('open');
-        this.input.setAttribute('readonly', '');
-        // Reset to selected value text
-        if (this.selectedValue) {
-            const selectedOption = this.options.find(opt => opt.getAttribute('value') === this.selectedValue);
-            if (selectedOption) {
-                this.input.value = selectedOption.textContent;
-            }
-        } else {
-            this.input.value = this.options[0]?.textContent || '';
-        }
-    }
-
-    filterOptions(search) {
-        const searchLower = search.toLowerCase();
-        this.options.forEach(option => {
-            const text = option.textContent.toLowerCase();
-            if (text.includes(searchLower)) {
-                option.classList.remove('hidden');
-            } else {
-                option.classList.add('hidden');
-            }
-        });
-    }
-
-    handleKeydown(e) {
-        const visibleOptions = this.options.filter(opt => !opt.classList.contains('hidden'));
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (!this.isOpen) this.open();
-            this.selectedIndex = Math.min(this.selectedIndex + 1, visibleOptions.length - 1);
-            this.updateHighlight();
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (!this.isOpen) this.open();
-            this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
-            this.updateHighlight();
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (this.isOpen && this.selectedIndex >= 0 && visibleOptions[this.selectedIndex]) {
-                this.selectOption(visibleOptions[this.selectedIndex]);
-            } else {
-                this.close();
-            }
-        } else if (e.key === 'Escape') {
-            this.close();
-        } else if (e.key === 'Tab') {
-            this.close();
-        }
-    }
-
-    updateHighlight() {
-        const visibleOptions = this.options.filter(opt => !opt.classList.contains('hidden'));
-        visibleOptions.forEach((option, index) => {
-            option.classList.toggle('selected', index === this.selectedIndex);
-        });
-    }
-
-    selectOption(option) {
-        // Update UI
-        this.options.forEach(opt => opt.classList.remove('selected'));
-        option.classList.add('selected');
-        this.input.value = option.textContent;
-        this.selectedValue = option.getAttribute('value');
-
+    // Close on click outside
+    document.addEventListener("click", (e) => {
+      if (!this.container.contains(e.target)) {
         this.close();
+      }
+    });
+  }
 
-        // Trigger change callback
-        if (this.onChange) {
-            this.onChange(this.selectedValue);
-        }
-    }
+  toggleDropdown() {
+    this.isOpen ? this.close() : this.open();
+  }
 
-    setValue(value) {
-        this.selectedValue = value;
-        const option = this.options.find(opt => opt.getAttribute('value') === value);
-        if (option) {
-            this.input.value = option.textContent;
-            this.options.forEach(opt => opt.classList.remove('selected'));
-            option.classList.add('selected');
-        } else {
-            this.input.value = this.options[0]?.textContent || '';
-        }
-    }
+  open() {
+    this.isOpen = true;
+    this.container.classList.add("open");
+    this.selectedIndex = -1;
+    this.updateHighlight();
+  }
 
-    getValue() {
-        return this.selectedValue;
+  close() {
+    this.isOpen = false;
+    this.container.classList.remove("open");
+    this.input.setAttribute("readonly", "");
+    // Reset to selected value text
+    if (this.selectedValue) {
+      const selectedOption = this.options.find(
+        (opt) => opt.getAttribute("value") === this.selectedValue,
+      );
+      if (selectedOption) {
+        this.input.value = selectedOption.textContent;
+      }
+    } else {
+      this.input.value = this.options[0]?.textContent || "";
     }
+  }
 
-    addOption(value, text) {
-        const option = document.createElement('div');
-        option.className = 'select-option';
-        option.setAttribute('value', value);
-        option.textContent = text;
-        option.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.selectOption(option);
-        });
-        this.dropdown.appendChild(option);
-        this.options.push(option);
-    }
+  filterOptions(search) {
+    const searchLower = search.toLowerCase();
+    this.options.forEach((option) => {
+      const text = option.textContent.toLowerCase();
+      if (text.includes(searchLower)) {
+        option.classList.remove("hidden");
+      } else {
+        option.classList.add("hidden");
+      }
+    });
+  }
 
-    clearOptions() {
-        // Keep the first default option
-        const defaultOption = this.options[0];
-        this.dropdown.innerHTML = '';
-        this.dropdown.appendChild(defaultOption);
-        this.options = [defaultOption];
+  handleKeydown(e) {
+    const visibleOptions = this.options.filter(
+      (opt) => !opt.classList.contains("hidden"),
+    );
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!this.isOpen) this.open();
+      this.selectedIndex = Math.min(
+        this.selectedIndex + 1,
+        visibleOptions.length - 1,
+      );
+      this.updateHighlight();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!this.isOpen) this.open();
+      this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
+      this.updateHighlight();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (
+        this.isOpen &&
+        this.selectedIndex >= 0 &&
+        visibleOptions[this.selectedIndex]
+      ) {
+        this.selectOption(visibleOptions[this.selectedIndex]);
+      } else {
+        this.close();
+      }
+    } else if (e.key === "Escape") {
+      this.close();
+    } else if (e.key === "Tab") {
+      this.close();
     }
+  }
+
+  updateHighlight() {
+    const visibleOptions = this.options.filter(
+      (opt) => !opt.classList.contains("hidden"),
+    );
+    visibleOptions.forEach((option, index) => {
+      option.classList.toggle("selected", index === this.selectedIndex);
+    });
+  }
+
+  selectOption(option) {
+    // Update UI
+    this.options.forEach((opt) => opt.classList.remove("selected"));
+    option.classList.add("selected");
+    this.input.value = option.textContent;
+    this.selectedValue = option.getAttribute("value");
+
+    this.close();
+
+    // Trigger change callback
+    if (this.onChange) {
+      this.onChange(this.selectedValue);
+    }
+  }
+
+  setValue(value) {
+    this.selectedValue = value;
+    const option = this.options.find(
+      (opt) => opt.getAttribute("value") === value,
+    );
+    if (option) {
+      this.input.value = option.textContent;
+      this.options.forEach((opt) => opt.classList.remove("selected"));
+      option.classList.add("selected");
+    } else {
+      this.input.value = this.options[0]?.textContent || "";
+    }
+  }
+
+  getValue() {
+    return this.selectedValue;
+  }
+
+  addOption(value, text) {
+    const option = document.createElement("div");
+    option.className = "select-option";
+    option.setAttribute("value", value);
+    option.textContent = text;
+    option.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.selectOption(option);
+    });
+    this.dropdown.appendChild(option);
+    this.options.push(option);
+  }
+
+  clearOptions() {
+    // Keep the first default option
+    const defaultOption = this.options[0];
+    this.dropdown.innerHTML = "";
+    this.dropdown.appendChild(defaultOption);
+    this.options = [defaultOption];
+  }
 }
 
 // Quiz Manager
 class QuizManager {
-    constructor(app) {
-        this.app = app;
-        this.currentQuiz = null;
-        this.currentQuizProblemId = null;
-        this.currentQuestionIndex = 0;
-        this.userAnswers = {};
-        this.quizGenerated = false;
-        this.quizExistsForProblem = false;
+  constructor(app) {
+    this.app = app;
+    this.currentQuiz = null;
+    this.currentQuizProblemId = null;
+    this.currentQuestionIndex = 0;
+    this.userAnswers = {};
+    this.quizGenerated = false;
+    this.quizExistsForProblem = false;
+    this.lastMissedStages = [];
+  }
+
+  async init() {
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    // Quiz tab button
+    const quizTabBtn = document.getElementById("quizTabBtn");
+    if (quizTabBtn) {
+      quizTabBtn.addEventListener("click", () => {
+        this.app.switchDescriptionTab("quiz");
+        this.loadQuiz();
+      });
     }
 
-    async init() {
-        this.bindEvents();
+    // Generate quiz button
+    const generateQuizBtn = document.getElementById("generateQuizBtn");
+    if (generateQuizBtn) {
+      generateQuizBtn.addEventListener("click", () => this.generateQuiz());
     }
 
-    bindEvents() {
-        // Quiz tab button
-        const quizTabBtn = document.getElementById('quizTabBtn');
-        if (quizTabBtn) {
-            quizTabBtn.addEventListener('click', () => {
-                this.app.switchDescriptionTab('quiz');
-                this.loadQuiz();
-            });
-        }
-
-        // Generate quiz button
-        const generateQuizBtn = document.getElementById('generateQuizBtn');
-        if (generateQuizBtn) {
-            generateQuizBtn.addEventListener('click', () => this.generateQuiz());
-        }
-
-        // Next question button
-        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
-        if (nextQuestionBtn) {
-            nextQuestionBtn.addEventListener('click', () => this.showNextQuestion());
-        }
-
-        // Submit quiz button
-        const submitQuizBtn = document.getElementById('submitQuizBtn');
-        if (submitQuizBtn) {
-            submitQuizBtn.addEventListener('click', () => this.submitQuiz());
-        }
-
-        // Retake quiz button
-        const retakeQuizBtn = document.getElementById('retakeQuizBtn');
-        if (retakeQuizBtn) {
-            retakeQuizBtn.addEventListener('click', () => this.retakeQuiz());
-        }
-
-        // Previous question button
-        const prevQuestionBtn = document.getElementById('prevQuestionBtn');
-        if (prevQuestionBtn) {
-            prevQuestionBtn.addEventListener('click', () => this.showPreviousQuestion());
-        }
-
-        // Regenerate quiz button
-        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
-        if (regenerateQuizBtn) {
-            regenerateQuizBtn.addEventListener('click', () => this.regenerateQuiz());
-        }
+    // Next question button
+    const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+    if (nextQuestionBtn) {
+      nextQuestionBtn.addEventListener("click", () => this.showNextQuestion());
     }
 
-    async loadQuiz() {
-        if (!this.app.currentProblem) return;
+    // Submit quiz button
+    const submitQuizBtn = document.getElementById("submitQuizBtn");
+    if (submitQuizBtn) {
+      submitQuizBtn.addEventListener("click", () => this.submitQuiz());
+    }
 
-        const problemId = this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+    // Retake quiz button
+    const retakeQuizBtn = document.getElementById("retakeQuizBtn");
+    if (retakeQuizBtn) {
+      retakeQuizBtn.addEventListener("click", () => this.retakeQuiz());
+    }
 
-        // Show generate button if quiz doesn't exist
-        const generateQuizBtn = document.getElementById('generateQuizBtn');
-        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
-        const quizResultsArea = document.getElementById('quizResultsArea');
-        const quizActionsArea = document.getElementById('quizActionsArea');
+    // Previous question button
+    const prevQuestionBtn = document.getElementById("prevQuestionBtn");
+    if (prevQuestionBtn) {
+      prevQuestionBtn.addEventListener("click", () =>
+        this.showPreviousQuestion(),
+      );
+    }
 
-        // Check if current quiz belongs to this problem
-        const currentQuizProblemId = this.currentQuizProblemId || '';
+    // Regenerate quiz button
+    const regenerateQuizBtn = document.getElementById("regenerateQuizBtn");
+    if (regenerateQuizBtn) {
+      regenerateQuizBtn.addEventListener("click", () => this.regenerateQuiz());
+    }
 
-        if (currentQuizProblemId !== String(problemId)) {
-            // Different problem - reset quiz state
-            this.currentQuiz = null;
-            this.currentQuizProblemId = String(problemId);
-        }
+    // Regenerate missed stages button
+    const regenerateMissedQuizBtn = document.getElementById(
+      "regenerateMissedQuizBtn",
+    );
+    if (regenerateMissedQuizBtn) {
+      regenerateMissedQuizBtn.addEventListener("click", () =>
+        this.regenerateMissedStagesQuiz(),
+      );
+    }
+  }
 
-        if (!this.currentQuiz) {
-            // Check if quiz exists on server
-            try {
-                const response = await fetch(`/api/quiz?problem_id=${problemId}`);
-                const data = await response.json();
+  async loadQuiz() {
+    if (!this.app.currentProblem) return;
 
-                if (data.exists && data.quiz) {
-                    this.currentQuiz = data.quiz;
-                    this.quizGenerated = true;
-                    this.renderQuiz();
-                } else {
-                    // Show generate button, hide regenerate button
-                    if (generateQuizBtn) generateQuizBtn.style.display = 'inline-flex';
-                    const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
-                    if (regenerateQuizBtn) regenerateQuizBtn.style.display = 'none';
-                    if (quizQuestionsArea) quizQuestionsArea.innerHTML = '<p class="quiz-empty">No quiz available yet. Click "Generate Quiz" to create one.</p>';
-                    if (quizResultsArea) quizResultsArea.style.display = 'none';
-                    if (quizActionsArea) quizActionsArea.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Failed to load quiz:', error);
-                this.showToast('Failed to load quiz', 'error');
-            }
+    const problemId =
+      this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+
+    // Show generate button if quiz doesn't exist
+    const generateQuizBtn = document.getElementById("generateQuizBtn");
+    const quizQuestionsArea = document.getElementById("quizQuestionsArea");
+    const quizResultsArea = document.getElementById("quizResultsArea");
+    const quizActionsArea = document.getElementById("quizActionsArea");
+
+    // Check if current quiz belongs to this problem
+    const currentQuizProblemId = this.currentQuizProblemId || "";
+
+    if (currentQuizProblemId !== String(problemId)) {
+      // Different problem - reset quiz state
+      this.currentQuiz = null;
+      this.currentQuizProblemId = String(problemId);
+    }
+
+    if (!this.currentQuiz) {
+      // Check if quiz exists on server
+      try {
+        const response = await fetch(`/api/quiz?problem_id=${problemId}`);
+        const data = await response.json();
+
+        if (data.exists && data.quiz) {
+          this.currentQuiz = data.quiz;
+          this.quizGenerated = true;
+          this.renderQuiz();
         } else {
-            this.renderQuiz();
+          // Show generate button, hide regenerate button
+          if (generateQuizBtn) generateQuizBtn.style.display = "inline-flex";
+          const regenerateQuizBtn =
+            document.getElementById("regenerateQuizBtn");
+          if (regenerateQuizBtn) regenerateQuizBtn.style.display = "none";
+          if (quizQuestionsArea)
+            quizQuestionsArea.innerHTML =
+              '<p class="quiz-empty">No quiz available yet. Click "Generate Quiz" to create one.</p>';
+          if (quizResultsArea) quizResultsArea.style.display = "none";
+          if (quizActionsArea) quizActionsArea.style.display = "none";
         }
+      } catch (error) {
+        console.error("Failed to load quiz:", error);
+        this.showToast("Failed to load quiz", "error");
+      }
+    } else {
+      this.renderQuiz();
+    }
+  }
+
+  async generateQuiz() {
+    if (!this.app.currentProblem) return;
+
+    const problemId =
+      this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+    const problemTitle = this.app.currentProblem.title;
+    const problemDescription =
+      this.app.currentProblem.content ||
+      this.app.currentProblem.description ||
+      "";
+    const snippets = this.app.currentProblem.code_snippets || [];
+    const pythonSnippet = snippets.find(
+      (s) => s.lang === "python3" || s.lang === "python",
+    );
+    const starterCode = pythonSnippet ? pythonSnippet.code : "";
+
+    const generateQuizBtn = document.getElementById("generateQuizBtn");
+    if (generateQuizBtn) {
+      generateQuizBtn.disabled = true;
+      generateQuizBtn.innerHTML = `${iconHtml("refresh-cw", 14, "btn-icon spin")} Generating...`;
     }
 
-    async generateQuiz() {
-        if (!this.app.currentProblem) return;
+    try {
+      const response = await fetch("/api/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problem_id: problemId,
+          problem_title: problemTitle,
+          problem_description: problemDescription,
+          starter_code: starterCode,
+        }),
+      });
 
-        const problemId = this.app.currentProblem.id || this.app.currentProblem.frontend_id;
-        const problemTitle = this.app.currentProblem.title;
-        const problemDescription = this.app.currentProblem.content || this.app.currentProblem.description || '';
-        const snippets = this.app.currentProblem.code_snippets || [];
-        const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
-        const starterCode = pythonSnippet ? pythonSnippet.code : '';
+      const result = await response.json();
 
-        const generateQuizBtn = document.getElementById('generateQuizBtn');
-        if (generateQuizBtn) {
-            generateQuizBtn.disabled = true;
-            generateQuizBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Generating...`;
-        }
+      if (result.success && result.quiz) {
+        this.currentQuiz = result.quiz;
+        this.currentQuizProblemId = String(problemId);
+        this.quizGenerated = false;
+        this.quizExistsForProblem = true;
 
-        try {
-            const response = await fetch('/api/quiz', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    problem_id: problemId,
-                    problem_title: problemTitle,
-                    problem_description: problemDescription,
-                    starter_code: starterCode
-                })
-            });
+        this.renderQuiz();
+        this.showToast("Quiz generated successfully!", "success");
+      } else if (result.error) {
+        this.showToast(`Failed to generate: ${result.error}`, "error");
+      } else {
+        this.showToast("Failed to generate quiz", "error");
+      }
+    } catch (error) {
+      console.error("Failed to generate quiz:", error);
+      this.showToast("Failed to connect to server", "error");
+    } finally {
+      if (generateQuizBtn) {
+        generateQuizBtn.disabled = false;
+        generateQuizBtn.innerHTML = `${iconHtml("sparkles", 14, "btn-icon")} Generate Quiz`;
+      }
+    }
+  }
 
-            const result = await response.json();
+  async regenerateQuiz() {
+    if (!this.app.currentProblem) return;
 
-            if (result.success && result.quiz) {
-                this.currentQuiz = result.quiz;
-                this.currentQuizProblemId = String(problemId);
-                this.quizGenerated = false;
-                this.quizExistsForProblem = true;
+    const problemId =
+      this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+    const problemTitle = this.app.currentProblem.title;
+    const problemDescription =
+      this.app.currentProblem.content ||
+      this.app.currentProblem.description ||
+      "";
+    const snippets = this.app.currentProblem.code_snippets || [];
+    const pythonSnippet = snippets.find(
+      (s) => s.lang === "python3" || s.lang === "python",
+    );
+    const starterCode = pythonSnippet ? pythonSnippet.code : "";
 
-                this.renderQuiz();
-                this.showToast('Quiz generated successfully!', 'success');
-            } else if (result.error) {
-                this.showToast(`Failed to generate: ${result.error}`, 'error');
-            } else {
-                this.showToast('Failed to generate quiz', 'error');
-            }
-        } catch (error) {
-            console.error('Failed to generate quiz:', error);
-            this.showToast('Failed to connect to server', 'error');
-        } finally {
-            if (generateQuizBtn) {
-                generateQuizBtn.disabled = false;
-                generateQuizBtn.innerHTML = `${iconHtml('sparkles', 14, 'btn-icon')} Generate Quiz`;
-            }
-        }
+    const regenerateQuizBtn = document.getElementById("regenerateQuizBtn");
+    if (regenerateQuizBtn) {
+      regenerateQuizBtn.disabled = true;
+      regenerateQuizBtn.innerHTML = `${iconHtml("refresh-cw", 14, "btn-icon spin")} Regenerating...`;
     }
 
-    async regenerateQuiz() {
-        if (!this.app.currentProblem) return;
+    try {
+      const response = await fetch("/api/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problem_id: problemId,
+          problem_title: problemTitle,
+          problem_description: problemDescription,
+          starter_code: starterCode,
+          force_regenerate: true, // Force regeneration instead of using cached quiz
+        }),
+      });
 
-        const problemId = this.app.currentProblem.id || this.app.currentProblem.frontend_id;
-        const problemTitle = this.app.currentProblem.title;
-        const problemDescription = this.app.currentProblem.content || this.app.currentProblem.description || '';
-        const snippets = this.app.currentProblem.code_snippets || [];
-        const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
-        const starterCode = pythonSnippet ? pythonSnippet.code : '';
+      const result = await response.json();
 
-        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
-        if (regenerateQuizBtn) {
-            regenerateQuizBtn.disabled = true;
-            regenerateQuizBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Regenerating...`;
-        }
+      if (result.success && result.quiz) {
+        this.currentQuiz = result.quiz;
+        this.currentQuizProblemId = String(problemId);
+        this.quizGenerated = false;
+        this.quizExistsForProblem = true;
 
-        try {
-            const response = await fetch('/api/quiz', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    problem_id: problemId,
-                    problem_title: problemTitle,
-                    problem_description: problemDescription,
-                    starter_code: starterCode,
-                    force_regenerate: true  // Force regeneration instead of using cached quiz
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success && result.quiz) {
-                this.currentQuiz = result.quiz;
-                this.currentQuizProblemId = String(problemId);
-                this.quizGenerated = false;
-                this.quizExistsForProblem = true;
-
-                // Reset to first question
-                this.currentQuestionIndex = 0;
-                this.userAnswers = {};
-
-                this.renderQuiz();
-                this.showToast('Quiz regenerated successfully!', 'success');
-            } else if (result.error) {
-                this.showToast(`Failed to regenerate: ${result.error}`, 'error');
-            } else {
-                this.showToast('Failed to regenerate quiz', 'error');
-            }
-        } catch (error) {
-            console.error('Failed to regenerate quiz:', error);
-            this.showToast('Failed to connect to server', 'error');
-        } finally {
-            if (regenerateQuizBtn) {
-                regenerateQuizBtn.disabled = false;
-                regenerateQuizBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon')} Regenerate`;
-            }
-        }
-    }
-
-    async checkQuizAvailability(problemId) {
-        // Quiz buttons are now always visible, so we only need to check if a quiz exists
-        // The loadQuiz() method will handle showing the quiz or the generate button
-        try {
-            const response = await fetch(`/api/quiz?problem_id=${problemId}`);
-            const data = await response.json();
-
-            // Store quiz existence in cache for later
-            this.quizExistsForProblem = data.exists && data.quiz;
-        } catch (error) {
-            console.error('Failed to check quiz availability:', error);
-            this.quizExistsForProblem = false;
-        }
-    }
-
-    renderQuiz() {
-        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
-        const quizResultsArea = document.getElementById('quizResultsArea');
-        const generateQuizBtn = document.getElementById('generateQuizBtn');
-        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
-        const quizProgressText = document.getElementById('quizProgressText');
-        const quizActionsArea = document.getElementById('quizActionsArea');
-
-        if (!this.currentQuiz || !quizQuestionsArea) return;
-
-        // Hide generate button and results, show regenerate button
-        if (generateQuizBtn) generateQuizBtn.style.display = 'none';
-        if (regenerateQuizBtn) regenerateQuizBtn.style.display = 'inline-flex';
-        if (quizResultsArea) quizResultsArea.style.display = 'none';
-
-        // Render questions
-        quizQuestionsArea.innerHTML = '';
-
-        if (!this.currentQuiz.questions || this.currentQuiz.questions.length === 0) {
-            quizQuestionsArea.innerHTML = '<p class="quiz-empty">No questions available.</p>';
-            return;
-        }
-
-        this.currentQuiz.questions.forEach((question, index) => {
-            const questionCard = this.createQuestionCard(question, index);
-            quizQuestionsArea.appendChild(questionCard);
-        });
-
-        // Update progress
-        if (quizProgressText && this.currentQuiz.questions) {
-            quizProgressText.textContent = `Question 1 of ${this.currentQuiz.questions.length}`;
-        }
-
-        // Show quiz actions
-        if (quizActionsArea) quizActionsArea.style.display = 'flex';
-
-        // Reset state
+        // Reset to first question
         this.currentQuestionIndex = 0;
         this.userAnswers = {};
 
-        // Update UI to show first question
-        this.updateQuizUI();
+        this.renderQuiz();
+        this.showToast("Quiz regenerated successfully!", "success");
+      } else if (result.error) {
+        this.showToast(`Failed to regenerate: ${result.error}`, "error");
+      } else {
+        this.showToast("Failed to regenerate quiz", "error");
+      }
+    } catch (error) {
+      console.error("Failed to regenerate quiz:", error);
+      this.showToast("Failed to connect to server", "error");
+    } finally {
+      if (regenerateQuizBtn) {
+        regenerateQuizBtn.disabled = false;
+        regenerateQuizBtn.innerHTML = `${iconHtml("refresh-cw", 14, "btn-icon")} Regenerate`;
+      }
+    }
+  }
 
-        // Initialize Lucide icons for newly added elements
-        if (window.lucide) lucide.createIcons();
+  async checkQuizAvailability(problemId) {
+    // Quiz buttons are now always visible, so we only need to check if a quiz exists
+    // The loadQuiz() method will handle showing the quiz or the generate button
+    try {
+      const response = await fetch(`/api/quiz?problem_id=${problemId}`);
+      const data = await response.json();
+
+      // Store quiz existence in cache for later
+      this.quizExistsForProblem = data.exists && data.quiz;
+    } catch (error) {
+      console.error("Failed to check quiz availability:", error);
+      this.quizExistsForProblem = false;
+    }
+  }
+
+  renderQuiz() {
+    const quizQuestionsArea = document.getElementById("quizQuestionsArea");
+    const quizResultsArea = document.getElementById("quizResultsArea");
+    const generateQuizBtn = document.getElementById("generateQuizBtn");
+    const regenerateQuizBtn = document.getElementById("regenerateQuizBtn");
+    const quizProgressText = document.getElementById("quizProgressText");
+    const quizActionsArea = document.getElementById("quizActionsArea");
+
+    if (!this.currentQuiz || !quizQuestionsArea) return;
+
+    // Hide generate button and results, show regenerate button
+    if (generateQuizBtn) generateQuizBtn.style.display = "none";
+    if (regenerateQuizBtn) regenerateQuizBtn.style.display = "inline-flex";
+    if (quizResultsArea) quizResultsArea.style.display = "none";
+
+    // Render questions
+    quizQuestionsArea.innerHTML = "";
+
+    if (
+      !this.currentQuiz.questions ||
+      this.currentQuiz.questions.length === 0
+    ) {
+      quizQuestionsArea.innerHTML =
+        '<p class="quiz-empty">No questions available.</p>';
+      return;
     }
 
-    formatQuizQuestion(text) {
-        // Format quiz question text - handle code and special characters
-        let formatted = this.app.escapeHtml(text);
+    this.currentQuiz.questions.forEach((question, index) => {
+      const questionCard = this.createQuestionCard(question, index);
+      quizQuestionsArea.appendChild(questionCard);
+    });
 
-        // Replace function names (camelCase) with code tags
-        formatted = formatted.replace(/\b([a-z]+[A-Z][a-zA-Z]+)\b/g, '<code>$1</code>');
-
-        // Replace single-quoted strings with code tags
-        formatted = formatted.replace(/'([^']+)'/g, "'<code>$1</code>'");
-
-        // Replace double-quoted strings with code tags
-        formatted = formatted.replace(/"([^"]+)"/g, '"<code>$1</code>"');
-
-        return formatted;
+    // Update progress
+    if (quizProgressText && this.currentQuiz.questions) {
+      quizProgressText.textContent = `Question 1 of ${this.currentQuiz.questions.length}`;
     }
 
-    createQuestionCard(question, index) {
-        const card = document.createElement('div');
-        card.className = `quiz-question-card ${index === this.currentQuestionIndex ? 'active' : ''}`;
-        card.dataset.index = index;
-        card.style.display = index === this.currentQuestionIndex ? 'block' : 'none';
+    // Show quiz actions
+    if (quizActionsArea) quizActionsArea.style.display = "flex";
 
-        const optionsHtml = question.options.map((option, optIndex) => `
-            <label class="quiz-option ${this.userAnswers[index] === optIndex ? 'selected' : ''}">
-                <input type="radio" name="quiz-q${index}" value="${optIndex}" ${this.userAnswers[index] === optIndex ? 'checked' : ''}>
+    // Reset state
+    this.currentQuestionIndex = 0;
+    this.userAnswers = {};
+    this.lastMissedStages = [];
+
+    // Update UI to show first question
+    this.updateQuizUI();
+
+    // Initialize Lucide icons for newly added elements
+    if (window.lucide) lucide.createIcons();
+  }
+
+  formatQuizQuestion(text) {
+    // Format quiz question text - handle code and special characters
+    let formatted = this.app.escapeHtml(text);
+
+    // Replace function names (camelCase) with code tags
+    formatted = formatted.replace(
+      /\b([a-z]+[A-Z][a-zA-Z]+)\b/g,
+      "<code>$1</code>",
+    );
+
+    // Replace single-quoted strings with code tags
+    formatted = formatted.replace(/'([^']+)'/g, "'<code>$1</code>'");
+
+    // Replace double-quoted strings with code tags
+    formatted = formatted.replace(/"([^"]+)"/g, '"<code>$1</code>"');
+
+    return formatted;
+  }
+
+  createQuestionCard(question, index) {
+    const card = document.createElement("div");
+    card.className = `quiz-question-card ${index === this.currentQuestionIndex ? "active" : ""}`;
+    card.dataset.index = index;
+    card.style.display = index === this.currentQuestionIndex ? "block" : "none";
+
+    const optionsHtml = question.options
+      .map(
+        (option, optIndex) => `
+            <label class="quiz-option ${this.userAnswers[index] === optIndex ? "selected" : ""}">
+                <input type="radio" name="quiz-q${index}" value="${optIndex}" ${this.userAnswers[index] === optIndex ? "checked" : ""}>
                 <span class="quiz-option-letter">${String.fromCharCode(65 + optIndex)}.</span>
                 <span class="quiz-option-text">${this.formatQuizQuestion(option)}</span>
             </label>
-        `).join('');
+        `,
+      )
+      .join("");
 
-        card.innerHTML = `
+    const stageLabel = question.stage
+      ? question.stage
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+      : "";
+    const objectiveText = question.objective
+      ? this.app.escapeHtml(question.objective)
+      : "";
+    const difficultyText = question.difficulty
+      ? this.app.escapeHtml(question.difficulty)
+      : "";
+
+    card.innerHTML = `
             <div class="quiz-question-header">
                 <span class="quiz-question-number">Question ${index + 1}</span>
+                ${stageLabel ? `<span class="quiz-stage-badge">${this.app.escapeHtml(stageLabel)}</span>` : ""}
             </div>
+            ${objectiveText ? `<div class="quiz-question-objective"><strong>Objective:</strong> ${objectiveText}</div>` : ""}
+            ${difficultyText ? `<div class="quiz-question-difficulty"><strong>Difficulty:</strong> ${difficultyText}</div>` : ""}
             <div class="quiz-question-text">${this.formatQuizQuestion(question.question)}</div>
             <div class="quiz-options">
                 ${optionsHtml}
             </div>
         `;
 
-        // Add event listeners to options
-        card.querySelectorAll('input[type="radio"]').forEach(input => {
-            input.addEventListener('change', (e) => {
-                this.selectAnswer(index, parseInt(e.target.value));
-            });
-        });
+    // Add event listeners to options
+    card.querySelectorAll('input[type="radio"]').forEach((input) => {
+      input.addEventListener("change", (e) => {
+        this.selectAnswer(index, parseInt(e.target.value));
+      });
+    });
 
-        return card;
+    return card;
+  }
+
+  selectAnswer(questionIndex, optionIndex) {
+    this.userAnswers[questionIndex] = optionIndex;
+
+    // Update UI
+    const questionCard = document.querySelector(
+      `.quiz-question-card[data-index="${questionIndex}"]`,
+    );
+    if (questionCard) {
+      questionCard.querySelectorAll(".quiz-option").forEach((opt, idx) => {
+        opt.classList.toggle("selected", idx === optionIndex);
+        opt.querySelector("input").checked = idx === optionIndex;
+      });
     }
+  }
 
-    selectAnswer(questionIndex, optionIndex) {
-        this.userAnswers[questionIndex] = optionIndex;
+  async submitQuiz() {
+    if (!this.currentQuiz) return;
 
-        // Update UI
-        const questionCard = document.querySelector(`.quiz-question-card[data-index="${questionIndex}"]`);
-        if (questionCard) {
-            questionCard.querySelectorAll('.quiz-option').forEach((opt, idx) => {
-                opt.classList.toggle('selected', idx === optionIndex);
-                opt.querySelector('input').checked = idx === optionIndex;
-            });
-        }
-    }
+    const questions = this.currentQuiz.questions;
+    let correctCount = 0;
 
-    async submitQuiz() {
-        if (!this.currentQuiz) return;
+    // Calculate score
+    questions.forEach((question, index) => {
+      const userAnswer = this.userAnswers[index];
+      const isCorrect = userAnswer === question.correct_index;
+      if (isCorrect) correctCount++;
 
-        const questions = this.currentQuiz.questions;
-        let correctCount = 0;
+      // Update UI to show correct/incorrect
+      const questionCard = document.querySelector(
+        `.quiz-question-card[data-index="${index}"]`,
+      );
+      if (questionCard) {
+        questionCard.classList.add("answered");
 
-        // Calculate score
-        questions.forEach((question, index) => {
-            const userAnswer = this.userAnswers[index];
-            const isCorrect = userAnswer === question.correct_index;
-            if (isCorrect) correctCount++;
+        // Only highlight selected option if user answered this question
+        if (userAnswer !== undefined) {
+          const selectedOption =
+            questionCard.querySelectorAll(".quiz-option")[userAnswer];
+          if (selectedOption) {
+            selectedOption.classList.add(isCorrect ? "correct" : "incorrect");
 
-            // Update UI to show correct/incorrect
-            const questionCard = document.querySelector(`.quiz-question-card[data-index="${index}"]`);
-            if (questionCard) {
-                questionCard.classList.add('answered');
-
-                // Only highlight selected option if user answered this question
-                if (userAnswer !== undefined) {
-                    const selectedOption = questionCard.querySelectorAll('.quiz-option')[userAnswer];
-                    if (selectedOption) {
-                        selectedOption.classList.add(isCorrect ? 'correct' : 'incorrect');
-
-                        // Show explanation
-                        const explanationDiv = document.createElement('div');
-                        explanationDiv.className = `quiz-explanation ${isCorrect ? 'correct' : 'incorrect'}`;
-                        explanationDiv.innerHTML = `
-                            <strong>${isCorrect ? `${iconHtml('check', 14)} Correct!` : `${iconHtml('x-circle', 14)} Incorrect`}</strong>
+            // Show explanation
+            const explanationDiv = document.createElement("div");
+            explanationDiv.className = `quiz-explanation ${isCorrect ? "correct" : "incorrect"}`;
+            explanationDiv.innerHTML = `
+                            <strong>${isCorrect ? `${iconHtml("check", 14)} Correct!` : `${iconHtml("x-circle", 14)} Incorrect`}</strong>
                             <p>${this.app.escapeHtml(question.explanation)}</p>
                         `;
-                        questionCard.appendChild(explanationDiv);
-                    }
-                }
+            questionCard.appendChild(explanationDiv);
+          }
+        }
 
-                // Disable options
-                questionCard.querySelectorAll('input[type="radio"]').forEach(input => {
-                    input.disabled = true;
-                });
-            }
-        });
+        // Disable options
+        questionCard
+          .querySelectorAll('input[type="radio"]')
+          .forEach((input) => {
+            input.disabled = true;
+          });
+      }
+    });
 
-        // Show results
-        this.showResults(correctCount, questions.length);
-    }
+    // Show results
+    this.showResults(correctCount, questions.length);
+  }
 
-    showResults(correctCount, totalQuestions) {
-        const quizResultsArea = document.getElementById('quizResultsArea');
-        const quizScore = document.getElementById('quizScore');
-        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
-        const quizActionsArea = document.getElementById('quizActionsArea');
-        const regenerateQuizBtn = document.getElementById('regenerateQuizBtn');
+  showResults(correctCount, totalQuestions) {
+    const quizResultsArea = document.getElementById("quizResultsArea");
+    const quizScore = document.getElementById("quizScore");
+    const quizQuestionsArea = document.getElementById("quizQuestionsArea");
+    const quizActionsArea = document.getElementById("quizActionsArea");
+    const regenerateQuizBtn = document.getElementById("regenerateQuizBtn");
+    const regenerateMissedQuizBtn = document.getElementById(
+      "regenerateMissedQuizBtn",
+    );
 
-        if (!quizResultsArea || !quizScore) return;
+    if (!quizResultsArea || !quizScore) return;
 
-        // Hide questions and actions, show results
-        if (quizQuestionsArea) quizQuestionsArea.style.display = 'none';
-        if (quizActionsArea) quizActionsArea.style.display = 'none';
-        if (regenerateQuizBtn) regenerateQuizBtn.style.display = 'none';
+    // Hide questions and actions, show results
+    if (quizQuestionsArea) quizQuestionsArea.style.display = "none";
+    if (quizActionsArea) quizActionsArea.style.display = "none";
+    if (regenerateQuizBtn) regenerateQuizBtn.style.display = "none";
 
-        // Calculate percentage safely (avoid division by zero)
-        const percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-        quizScore.innerHTML = `
+    // Calculate percentage safely (avoid division by zero)
+    const percentage =
+      totalQuestions > 0
+        ? Math.round((correctCount / totalQuestions) * 100)
+        : 0;
+
+    const checklistByStage = {
+      understanding: "Restate input/output in your own words before coding.",
+      pattern: "Commit to one pattern + data structure before writing loops.",
+      invariant: "Write the key invariant as a comment above your loop.",
+      implementation: "Outline exact step order, then fill code top-down.",
+      edge_case: "Run manual checks: empty/single/boundary/duplicate cases.",
+    };
+
+    const missedItems = [];
+    const missedStagesSet = new Set();
+    const questions = (this.currentQuiz && this.currentQuiz.questions) || [];
+    questions.forEach((question, index) => {
+      const userAnswer = this.userAnswers[index];
+      const isCorrect = userAnswer === question.correct_index;
+      if (!isCorrect) {
+        const stage = question.stage || "understanding";
+        missedStagesSet.add(stage);
+        const stageTitle = stage
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        const checklistText =
+          checklistByStage[stage] || "Review this concept and retry the step.";
+        missedItems.push(
+          `<li><strong>${this.app.escapeHtml(stageTitle)}:</strong> ${this.app.escapeHtml(checklistText)}</li>`,
+        );
+      }
+    });
+
+    this.lastMissedStages = Array.from(missedStagesSet);
+
+    const readyToCodeChecklistHtml =
+      missedItems.length > 0
+        ? `<div class="quiz-ready-checklist">
+                <h4>Ready-to-Code Checklist (based on missed stages)</h4>
+                <ul>
+                    ${missedItems.join("")}
+                </ul>
+           </div>`
+        : `<div class="quiz-ready-checklist">
+                <h4>Ready-to-Code Checklist</h4>
+                <ul>
+                    <li><strong>Understanding:</strong> You can explain exactly what output is required.</li>
+                    <li><strong>Pattern:</strong> You know which strategy/data structure to use.</li>
+                    <li><strong>Invariant:</strong> You can state what must remain true during iteration.</li>
+                    <li><strong>Implementation:</strong> You can code the steps in correct order.</li>
+                    <li><strong>Edge Cases:</strong> You can test tricky boundaries before submit.</li>
+                </ul>
+           </div>`;
+
+    quizScore.innerHTML = `
             <div class="quiz-score-summary">
                 <div class="quiz-score-large">${correctCount}/${totalQuestions}</div>
                 <div class="quiz-score-percent">${percentage}%</div>
-                <p class="quiz-score-message">${percentage >= 80 ? 'Excellent! You have a good understanding.' : percentage >= 60 ? 'Good! Keep learning.' : 'Review the problem and try again.'}</p>
+                <p class="quiz-score-message">${percentage >= 80 ? "Excellent! You have a good understanding." : percentage >= 60 ? "Good! Keep learning." : "Review the problem and try again."}</p>
+                ${readyToCodeChecklistHtml}
             </div>
         `;
 
-        quizResultsArea.style.display = 'block';
+    quizResultsArea.style.display = "block";
+
+    if (regenerateMissedQuizBtn) {
+      if (this.lastMissedStages.length > 0) {
+        regenerateMissedQuizBtn.style.display = "inline-flex";
+        regenerateMissedQuizBtn.disabled = false;
+      } else {
+        regenerateMissedQuizBtn.style.display = "none";
+      }
+    }
+  }
+
+  showNextQuestion() {
+    if (
+      !this.currentQuiz ||
+      this.currentQuestionIndex >= this.currentQuiz.questions.length - 1
+    )
+      return;
+
+    this.currentQuestionIndex++;
+    this.updateQuizUI();
+  }
+
+  showPreviousQuestion() {
+    if (!this.currentQuiz || this.currentQuestionIndex <= 0) return;
+
+    this.currentQuestionIndex--;
+    this.updateQuizUI();
+  }
+
+  updateQuizUI() {
+    const quizProgressText = document.getElementById("quizProgressText");
+    const quizStageIndicator = document.getElementById("quizStageIndicator");
+    const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+    const prevQuestionBtn = document.getElementById("prevQuestionBtn");
+    const submitQuizBtn = document.getElementById("submitQuizBtn");
+
+    if (this.currentQuiz && this.currentQuiz.questions) {
+      const currentQuestion =
+        this.currentQuiz.questions[this.currentQuestionIndex];
+
+      if (quizProgressText) {
+        quizProgressText.textContent = `Question ${this.currentQuestionIndex + 1} of ${this.currentQuiz.questions.length}`;
+      }
+
+      if (quizStageIndicator && currentQuestion) {
+        const stageLabel = currentQuestion.stage
+          ? currentQuestion.stage
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase())
+          : "Quiz";
+        quizStageIndicator.textContent = stageLabel;
+        quizStageIndicator.dataset.stage = currentQuestion.stage || "";
+      }
     }
 
-    showNextQuestion() {
-        if (!this.currentQuiz || this.currentQuestionIndex >= this.currentQuiz.questions.length - 1) return;
+    // Update question visibility
+    document.querySelectorAll(".quiz-question-card").forEach((card, index) => {
+      card.style.display =
+        index === this.currentQuestionIndex ? "block" : "none";
+      card.classList.toggle("active", index === this.currentQuestionIndex);
+    });
 
-        this.currentQuestionIndex++;
-        this.updateQuizUI();
+    // Update button visibility
+    const isFirstQuestion = this.currentQuestionIndex <= 0;
+    const isLastQuestion =
+      this.currentQuiz &&
+      this.currentQuiz.questions.length &&
+      this.currentQuestionIndex >= this.currentQuiz.questions.length - 1;
+
+    if (prevQuestionBtn) {
+      prevQuestionBtn.style.display = isFirstQuestion ? "none" : "inline-block";
     }
-
-    showPreviousQuestion() {
-        if (!this.currentQuiz || this.currentQuestionIndex <= 0) return;
-
-        this.currentQuestionIndex--;
-        this.updateQuizUI();
+    if (nextQuestionBtn) {
+      nextQuestionBtn.style.display = isLastQuestion ? "none" : "inline-block";
     }
+    if (submitQuizBtn) {
+      submitQuizBtn.style.display = isLastQuestion ? "inline-block" : "none";
+    }
+  }
 
-    updateQuizUI() {
-        const quizProgressText = document.getElementById('quizProgressText');
-        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
-        const prevQuestionBtn = document.getElementById('prevQuestionBtn');
-        const submitQuizBtn = document.getElementById('submitQuizBtn');
+  retakeQuiz() {
+    // Reset quiz state
+    this.currentQuestionIndex = 0;
+    this.userAnswers = {};
+    this.lastMissedStages = [];
 
-        if (quizProgressText && this.currentQuiz && this.currentQuiz.questions) {
-            quizProgressText.textContent = `Question ${this.currentQuestionIndex + 1} of ${this.currentQuiz.questions.length}`;
-        }
+    // Get quiz container to scope selections
+    const quizQuestionsArea = document.getElementById("quizQuestionsArea");
+    if (!quizQuestionsArea) return;
 
-        // Update question visibility
-        document.querySelectorAll('.quiz-question-card').forEach((card, index) => {
-            card.style.display = index === this.currentQuestionIndex ? 'block' : 'none';
-            card.classList.toggle('active', index === this.currentQuestionIndex);
+    // Remove answered classes and explanations
+    quizQuestionsArea
+      .querySelectorAll(".quiz-question-card")
+      .forEach((card) => {
+        card.classList.remove("answered");
+        const explanationDiv = card.querySelector(".quiz-explanation");
+        if (explanationDiv) explanationDiv.remove();
+
+        // Reset option states
+        card.querySelectorAll(".quiz-option").forEach((opt) => {
+          opt.classList.remove("correct", "incorrect", "selected");
+          const input = opt.querySelector("input");
+          if (input) input.checked = false;
         });
 
-        // Update button visibility
-        const isFirstQuestion = this.currentQuestionIndex <= 0;
-        const isLastQuestion = this.currentQuiz && this.currentQuiz.questions.length &&
-            this.currentQuestionIndex >= this.currentQuiz.questions.length - 1;
+        // Re-enable options
+        card.querySelectorAll('input[type="radio"]').forEach((input) => {
+          input.disabled = false;
+        });
+      });
 
-        if (prevQuestionBtn) {
-            prevQuestionBtn.style.display = isFirstQuestion ? 'none' : 'inline-block';
-        }
-        if (nextQuestionBtn) {
-            nextQuestionBtn.style.display = isLastQuestion ? 'none' : 'inline-block';
-        }
-        if (submitQuizBtn) {
-            submitQuizBtn.style.display = isLastQuestion ? 'inline-block' : 'none';
-        }
+    // Re-render quiz
+    this.renderQuiz();
+  }
+
+  async regenerateMissedStagesQuiz() {
+    if (!this.app.currentProblem || !this.lastMissedStages.length) return;
+
+    const problemId =
+      this.app.currentProblem.id || this.app.currentProblem.frontend_id;
+    const problemTitle = this.app.currentProblem.title;
+    const problemDescription =
+      this.app.currentProblem.content ||
+      this.app.currentProblem.description ||
+      "";
+    const snippets = this.app.currentProblem.code_snippets || [];
+    const pythonSnippet = snippets.find(
+      (s) => s.lang === "python3" || s.lang === "python",
+    );
+    const starterCode = pythonSnippet ? pythonSnippet.code : "";
+
+    const regenerateMissedQuizBtn = document.getElementById(
+      "regenerateMissedQuizBtn",
+    );
+    if (regenerateMissedQuizBtn) {
+      regenerateMissedQuizBtn.disabled = true;
+      regenerateMissedQuizBtn.innerHTML = `${iconHtml("refresh-cw", 14, "btn-icon spin")} Regenerating missed...`;
     }
 
-    retakeQuiz() {
-        // Reset quiz state
+    try {
+      const response = await fetch("/api/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problem_id: problemId,
+          problem_title: problemTitle,
+          problem_description: problemDescription,
+          starter_code: starterCode,
+          force_regenerate: true,
+          regenerate_stages: this.lastMissedStages,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.quiz) {
+        this.currentQuiz = result.quiz;
+        this.currentQuizProblemId = String(problemId);
+        this.quizGenerated = false;
+        this.quizExistsForProblem = true;
         this.currentQuestionIndex = 0;
         this.userAnswers = {};
+        this.lastMissedStages = [];
 
-        // Get quiz container to scope selections
-        const quizQuestionsArea = document.getElementById('quizQuestionsArea');
-        if (!quizQuestionsArea) return;
-
-        // Remove answered classes and explanations
-        quizQuestionsArea.querySelectorAll('.quiz-question-card').forEach(card => {
-            card.classList.remove('answered');
-            const explanationDiv = card.querySelector('.quiz-explanation');
-            if (explanationDiv) explanationDiv.remove();
-
-            // Reset option states
-            card.querySelectorAll('.quiz-option').forEach(opt => {
-                opt.classList.remove('correct', 'incorrect', 'selected');
-                const input = opt.querySelector('input');
-                if (input) input.checked = false;
-            });
-
-            // Re-enable options
-            card.querySelectorAll('input[type="radio"]').forEach(input => {
-                input.disabled = false;
-            });
-        });
-
-        // Re-render quiz
         this.renderQuiz();
+        this.showToast("Missed stages regenerated successfully!", "success");
+      } else if (result.error) {
+        this.showToast(
+          `Failed to regenerate missed stages: ${result.error}`,
+          "error",
+        );
+      } else {
+        this.showToast("Failed to regenerate missed stages", "error");
+      }
+    } catch (error) {
+      console.error("Failed to regenerate missed stages quiz:", error);
+      this.showToast("Failed to connect to server", "error");
+    } finally {
+      if (regenerateMissedQuizBtn) {
+        regenerateMissedQuizBtn.disabled = false;
+        regenerateMissedQuizBtn.innerHTML = "Regenerate Missed Stages";
+      }
     }
+  }
 
-    showToast(message, type = 'info') {
-        // Reuse app's toast method
-        if (this.app.showToast) {
-            this.app.showToast(message, type);
-        }
+  showToast(message, type = "info") {
+    // Reuse app's toast method
+    if (this.app.showToast) {
+      this.app.showToast(message, type);
     }
+  }
 }
 
 class LeetCodeApp {
-    constructor() {
-        this.problems = [];
-        this.currentProblem = null;
-        this.allTags = new Set();
-        this.searchDebounce = null;
-        this.saveCodeDebounce = null;
-        this.editor = null;
-        this.customSelects = {};
-        this.roadmap = null;
-        this.learning = null;
-        this.topSolutions = null;
-        this.currentSolutionPath = null;
+  constructor() {
+    this.problems = [];
+    this.currentProblem = null;
+    this.allTags = new Set();
+    this.searchDebounce = null;
+    this.saveCodeDebounce = null;
+    this.editor = null;
+    this.customSelects = {};
+    this.roadmap = null;
+    this.learning = null;
+    this.topSolutions = null;
+    this.currentSolutionPath = null;
 
-        this.hintsSection = null;
-        this.hintsList = null;
-        this.hintLevel = 0;
-        this.viewingHintLevel = 0;
-        this.currentHints = [];
+    this.hintsSection = null;
+    this.hintsList = null;
+    this.hintLevel = 0;
+    this.viewingHintLevel = 0;
+    this.currentHints = [];
 
-        this.init();
+    this.init();
+  }
+
+  async init() {
+    this.cacheElements();
+    this.bindEvents();
+    await this.loadProblems();
+    this.initCustomSelects();
+    this.initCodeMirror();
+
+    // Load API key from localStorage
+    this.apiKey = localStorage.getItem("openrouter_api_key") || "";
+
+    // Load Top Solutions
+    try {
+      const resp = await fetch("/static/top_solutions.json");
+      this.topSolutions = await resp.json();
+    } catch (e) {
+      console.error("Failed to load top solutions:", e);
     }
 
-    async init() {
-        this.cacheElements();
-        this.bindEvents();
-        await this.loadProblems();
-        this.initCustomSelects();
-        this.initCodeMirror();
+    // Instantiate managers first
+    this.roadmap = new RoadmapManager(this);
+    this.learning = new LearningManager(this);
+    this.quiz = new QuizManager(this);
 
-        // Load API key from localStorage
-        this.apiKey = localStorage.getItem('openrouter_api_key') || '';
+    // Then initialize them (can run in parallel)
+    await Promise.all([
+      this.roadmap.init(),
+      this.learning.init(),
+      this.quiz.init(),
+    ]);
+  }
 
-        // Load Top Solutions
-        try {
-            const resp = await fetch('/static/top_solutions.json');
-            this.topSolutions = await resp.json();
-        } catch (e) {
-            console.error('Failed to load top solutions:', e);
-        }
+  cacheElements() {
+    // Header elements
+    this.searchInput = document.getElementById("searchInput");
+    this.difficultyFilterEl = document.getElementById("difficultyFilter");
+    this.statusFilterEl = document.getElementById("statusFilter");
+    this.tagFilterEl = document.getElementById("tagFilter");
+    this.randomBtn = document.getElementById("randomBtn");
+    this.collapseBtn = document.getElementById("collapseBtn");
+    this.collapseIcon = document.getElementById("collapseIcon");
+    this.settingsBtn = document.getElementById("settingsBtn");
 
-        // Instantiate managers first
-        this.roadmap = new RoadmapManager(this);
-        this.learning = new LearningManager(this);
-        this.quiz = new QuizManager(this);
+    // Settings modal
+    this.settingsModal = document.getElementById("settingsModal");
+    this.closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    this.apiKeyInput = document.getElementById("apiKeyInput");
+    this.saveApiKeyBtn = document.getElementById("saveApiKeyBtn");
 
-        // Then initialize them (can run in parallel)
-        await Promise.all([
-            this.roadmap.init(),
-            this.learning.init(),
-            this.quiz.init()
-        ]);
+    // Main container
+    this.mainContainer = document.querySelector(".main-container");
+
+    // Sidebar elements
+    this.problemCount = document.getElementById("problemCount");
+    this.problemList = document.getElementById("problemList");
+
+    // Main content elements
+    this.welcomeScreen = document.getElementById("welcomeScreen");
+    this.problemView = document.getElementById("problemView");
+    this.totalProblems = document.getElementById("totalProblems");
+
+    // Problem detail elements
+    this.problemId = document.getElementById("problemId");
+    this.problemTitle = document.getElementById("problemTitle");
+    this.problemDifficulty = document.getElementById("problemDifficulty");
+    this.problemMeta = document.getElementById("problemMeta");
+    this.problemTags = document.getElementById("problemTags");
+    this.problemContent = document.getElementById("problemContent");
+    this.testCasesList = document.getElementById("testCasesList");
+    this.codeEditor = document.getElementById("codeEditor");
+    this.solvedBtn = document.getElementById("solvedBtn");
+
+    // Test results
+    this.testResults = document.getElementById("testResults");
+    this.resultsHeader = document.getElementById("resultsHeader");
+    this.resultsSummary = document.getElementById("resultsSummary");
+    this.resultsList = document.getElementById("resultsList");
+    this.closeResults = document.getElementById("closeResults");
+    this.expandResults = document.getElementById("expandResults");
+    this.runBtn = document.getElementById("runBtn");
+    this.submitBtn = document.getElementById("submitBtn");
+    this.aiBtn = document.getElementById("aiBtn");
+    this.resetBtn = document.getElementById("resetBtn");
+    this.draftBadge = document.getElementById("draftBadge");
+    this.hintBadge = document.getElementById("hintBadge");
+    this.quizBtn = document.getElementById("quizBtn");
+  }
+
+  bindEvents() {
+    // Search
+    this.searchInput.addEventListener("input", () => {
+      clearTimeout(this.searchDebounce);
+      this.searchDebounce = setTimeout(() => this.filterProblems(), 150);
+    });
+
+    // Sidebar tabs / content switching
+    document.querySelectorAll(".panel-tab").forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        const contentId = e.target.dataset.content;
+        this.switchDescriptionTab(contentId);
+      });
+    });
+
+    // Collapse button
+    this.collapseBtn.addEventListener("click", () => this.toggleSidebar());
+
+    // Random button
+    this.randomBtn.addEventListener("click", () => this.loadRandomProblem());
+
+    // Settings button
+    this.settingsBtn.addEventListener("click", () => this.openSettings());
+    this.closeSettingsBtn.addEventListener("click", () => this.closeSettings());
+    this.settingsModal.addEventListener("click", (e) => {
+      if (e.target === this.settingsModal) this.closeSettings();
+    });
+    this.saveApiKeyBtn.addEventListener("click", () => this.saveApiKey());
+
+    // Run button
+    this.runBtn.addEventListener("click", () => this.runTests());
+
+    // Ask AI button
+    if (this.aiBtn) {
+      this.aiBtn.addEventListener("click", () => this.startAISolution());
     }
 
-    cacheElements() {
-        // Header elements
-        this.searchInput = document.getElementById('searchInput');
-        this.difficultyFilterEl = document.getElementById('difficultyFilter');
-        this.statusFilterEl = document.getElementById('statusFilter');
-        this.tagFilterEl = document.getElementById('tagFilter');
-        this.randomBtn = document.getElementById('randomBtn');
-        this.collapseBtn = document.getElementById('collapseBtn');
-        this.collapseIcon = document.getElementById('collapseIcon');
-        this.settingsBtn = document.getElementById('settingsBtn');
+    // Hint modal backdrop close
+    document.getElementById("hintModal").addEventListener("click", (e) => {
+      if (e.target.id === "hintModal") {
+        document.getElementById("hintModal").style.display = "none";
+      }
+    });
 
-        // Settings modal
-        this.settingsModal = document.getElementById('settingsModal');
-        this.closeSettingsBtn = document.getElementById('closeSettingsBtn');
-        this.apiKeyInput = document.getElementById('apiKeyInput');
-        this.saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+    // Hint modal footer buttons
+    const hintPrevBtn = document.getElementById("hintPrevBtn");
+    if (hintPrevBtn)
+      hintPrevBtn.addEventListener("click", () => this.navigateToPrevHint());
 
-        // Main container
-        this.mainContainer = document.querySelector('.main-container');
+    const hintNextBtn = document.getElementById("hintNextBtn");
+    if (hintNextBtn)
+      hintNextBtn.addEventListener("click", () => this.navigateToNextHint());
 
-        // Sidebar elements
-        this.problemCount = document.getElementById('problemCount');
-        this.problemList = document.getElementById('problemList');
+    const hintNewAngleBtn = document.getElementById("hintNewAngleBtn");
+    if (hintNewAngleBtn)
+      hintNewAngleBtn.addEventListener("click", () =>
+        this.regenerateCurrentHint(),
+      );
 
-        // Main content elements
-        this.welcomeScreen = document.getElementById('welcomeScreen');
-        this.problemView = document.getElementById('problemView');
-        this.totalProblems = document.getElementById('totalProblems');
+    const hintInsertBtn = document.getElementById("hintInsertBtn");
+    if (hintInsertBtn)
+      hintInsertBtn.addEventListener("click", () => this.applyHintToEditor());
 
-        // Problem detail elements
-        this.problemId = document.getElementById('problemId');
-        this.problemTitle = document.getElementById('problemTitle');
-        this.problemDifficulty = document.getElementById('problemDifficulty');
-        this.problemMeta = document.getElementById('problemMeta');
-        this.problemTags = document.getElementById('problemTags');
-        this.problemContent = document.getElementById('problemContent');
-        this.testCasesList = document.getElementById('testCasesList');
-        this.codeEditor = document.getElementById('codeEditor');
-        this.solvedBtn = document.getElementById('solvedBtn');
-
-        // Test results
-        this.testResults = document.getElementById('testResults');
-        this.resultsHeader = document.getElementById('resultsHeader');
-        this.resultsSummary = document.getElementById('resultsSummary');
-        this.resultsList = document.getElementById('resultsList');
-        this.closeResults = document.getElementById('closeResults');
-        this.expandResults = document.getElementById('expandResults');
-        this.runBtn = document.getElementById('runBtn');
-        this.submitBtn = document.getElementById('submitBtn');
-        this.aiBtn = document.getElementById('aiBtn');
-        this.resetBtn = document.getElementById('resetBtn');
-        this.draftBadge = document.getElementById('draftBadge');
-        this.hintBadge = document.getElementById('hintBadge');
-        this.quizBtn = document.getElementById('quizBtn');
+    // Reset code button
+    if (this.resetBtn) {
+      this.resetBtn.addEventListener("click", () => this.resetCode());
     }
 
-    bindEvents() {
-        // Search
-        this.searchInput.addEventListener('input', () => {
-            clearTimeout(this.searchDebounce);
-            this.searchDebounce = setTimeout(() => this.filterProblems(), 150);
-        });
-
-        // Sidebar tabs / content switching
-        document.querySelectorAll('.panel-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const contentId = e.target.dataset.content;
-                this.switchDescriptionTab(contentId);
-            });
-        });
-
-        // Collapse button
-        this.collapseBtn.addEventListener('click', () => this.toggleSidebar());
-
-        // Random button
-        this.randomBtn.addEventListener('click', () => this.loadRandomProblem());
-
-        // Settings button
-        this.settingsBtn.addEventListener('click', () => this.openSettings());
-        this.closeSettingsBtn.addEventListener('click', () => this.closeSettings());
-        this.settingsModal.addEventListener('click', (e) => {
-            if (e.target === this.settingsModal) this.closeSettings();
-        });
-        this.saveApiKeyBtn.addEventListener('click', () => this.saveApiKey());
-
-        // Run button
-        this.runBtn.addEventListener('click', () => this.runTests());
-
-        // Ask AI button
-        if (this.aiBtn) {
-            this.aiBtn.addEventListener('click', () => this.startAISolution());
-        }
-
-        // Hint modal backdrop close
-        document.getElementById('hintModal').addEventListener('click', (e) => {
-            if (e.target.id === 'hintModal') {
-                document.getElementById('hintModal').style.display = 'none';
-            }
-        });
-
-        // Hint modal footer buttons
-        const hintPrevBtn = document.getElementById('hintPrevBtn');
-        if (hintPrevBtn) hintPrevBtn.addEventListener('click', () => this.navigateToPrevHint());
-
-        const hintNextBtn = document.getElementById('hintNextBtn');
-        if (hintNextBtn) hintNextBtn.addEventListener('click', () => this.navigateToNextHint());
-
-        const hintNewAngleBtn = document.getElementById('hintNewAngleBtn');
-        if (hintNewAngleBtn) hintNewAngleBtn.addEventListener('click', () => this.regenerateCurrentHint());
-
-        const hintInsertBtn = document.getElementById('hintInsertBtn');
-        if (hintInsertBtn) hintInsertBtn.addEventListener('click', () => this.applyHintToEditor());
-
-        // Reset code button
-        if (this.resetBtn) {
-            this.resetBtn.addEventListener('click', () => this.resetCode());
-        }
-
-        // Quiz button
-        if (this.quizBtn) {
-            this.quizBtn.addEventListener('click', () => {
-                // Show quiz tab and load quiz
-                this.switchDescriptionTab('quiz');
-                if (this.quiz) this.quiz.loadQuiz();
-            });
-        }
-
-        // Close results
-        this.closeResults.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.resultsList.style.display = 'none';
-            this.expandResults.textContent = '▲';
-        });
-
-        // Toggle results/console
-        this.resultsHeader.addEventListener('click', () => {
-            const isVisible = this.resultsList.style.display !== 'none';
-            this.resultsList.style.display = isVisible ? 'none' : 'block';
-            this.expandResults.textContent = isVisible ? '▲' : '▼';
-        });
-
-        // Submit button - runs tests and marks as solved if all pass
-        this.submitBtn.addEventListener('click', () => this.runTests(true));
+    // Quiz button
+    if (this.quizBtn) {
+      this.quizBtn.addEventListener("click", () => {
+        // Show quiz tab and load quiz
+        this.switchDescriptionTab("quiz");
+        if (this.quiz) this.quiz.loadQuiz();
+      });
     }
 
-    switchDescriptionTab(tabId) {
-        document.querySelectorAll('.panel-tab').forEach(t => {
-            t.classList.toggle('active', t.dataset.content === tabId);
-        });
-        document.querySelectorAll('.tab-content').forEach(c => {
-            c.classList.toggle('active', c.id === `content-${tabId}`);
-        });
-    }
+    // Close results
+    this.closeResults.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.resultsList.style.display = "none";
+      this.expandResults.textContent = "▲";
+    });
 
-    initCustomSelects() {
-        // Difficulty chips
-        this.difficultyFilterEl = document.getElementById('difficultyFilter');
-        if (this.difficultyFilterEl) {
-            this.difficultyFilterEl.querySelectorAll('.filter-chip').forEach(chip => {
-                chip.addEventListener('click', (e) => {
-                    this.difficultyFilterEl.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                    e.target.classList.add('active');
-                    this.filterProblems();
-                });
-            });
-        }
+    // Toggle results/console
+    this.resultsHeader.addEventListener("click", () => {
+      const isVisible = this.resultsList.style.display !== "none";
+      this.resultsList.style.display = isVisible ? "none" : "block";
+      this.expandResults.textContent = isVisible ? "▲" : "▼";
+    });
 
-        // Status chips
-        this.statusFilterEl = document.getElementById('statusFilter');
-        if (this.statusFilterEl) {
-            this.statusFilterEl.querySelectorAll('.filter-chip').forEach(chip => {
-                chip.addEventListener('click', (e) => {
-                    this.statusFilterEl.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                    e.target.classList.add('active');
-                    this.filterProblems();
-                });
-            });
-        }
+    // Submit button - runs tests and marks as solved if all pass
+    this.submitBtn.addEventListener("click", () => this.runTests(true));
+  }
 
-        // Tags Native Select
-        this.tagFilterEl = document.getElementById('tagFilter');
-        if (this.tagFilterEl) {
-            this.tagFilterEl.addEventListener('change', () => {
-                this.filterProblems();
-            });
-        }
-    }
+  switchDescriptionTab(tabId) {
+    document.querySelectorAll(".panel-tab").forEach((t) => {
+      t.classList.toggle("active", t.dataset.content === tabId);
+    });
+    document.querySelectorAll(".tab-content").forEach((c) => {
+      c.classList.toggle("active", c.id === `content-${tabId}`);
+    });
+  }
 
-    initCodeMirror() {
-        const mount = document.getElementById('editor-main-mount');
-        if (!mount) { console.error('editor-main-mount not found'); return; }
-
-        const tryInit = () => {
-            if (!window.ace) {
-                setTimeout(tryInit, 50);
-                return;
-            }
-
-            try {
-                this.editorView = ace.edit("editor-main-mount");
-                this.editorView.setTheme("ace/theme/github");
-                this.editorView.session.setMode("ace/mode/python");
-                this.editorView.setOptions({
-                    fontSize: "13px",
-                    fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace",
-                    tabSize: 4,
-                    useSoftTabs: true,
-                    showPrintMargin: false,
-                    displayIndentGuides: false,
-                    wrap: true,
-                    highlightActiveLine: true,
-                    showGutter: true,
-                    behavioursEnabled: true
-                });
-
-                // Set initial value
-                const initialCode = this.codeEditor ? this.codeEditor.value : '';
-                this.editorView.setValue(initialCode, -1);
-
-                // Add run keybindings
-                this.editorView.commands.addCommand({
-                    name: 'runTests',
-                    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
-                    exec: (editor) => {
-                        this.runTests();
-                    }
-                });
-
-                // Listen to changes
-                this.editorView.session.on('change', () => {
-                    clearTimeout(this.saveCodeDebounce);
-                    this.saveCodeDebounce = setTimeout(() => this.saveCode(), 1000);
-                    if (this.currentProblem && !this.currentProblem.solved && this.draftBadge) {
-                        this.draftBadge.style.display = '';
-                    }
-                });
-            } catch (err) {
-                console.error('Failed to create Ace editor:', err);
-            }
-        };
-
-        tryInit();
-    }
-
-    // Helper methods for Ace Editor compatibility
-    getEditorValue() {
-        if (this.editorView) {
-            return this.editorView.getValue();
-        }
-        return this.codeEditor.value;
-    }
-
-    setEditorValue(code) {
-        if (this.editorView) {
-            this.editorView.setValue(code, -1);
-            return;
-        }
-        this.codeEditor.value = code;
-    }
-
-    focusEditor() {
-        if (this.editorView) {
-            this.editorView.focus();
-        }
-    }
-
-    editorExists() {
-        return this.editorView !== null && this.editorView !== undefined;
-    }
-
-    async loadProblems() {
-        try {
-            const response = await fetch('/api/problems');
-            this.problems = await response.json();
-
-            // Populate all tags
-            this.problems.forEach(p => {
-                if (p.topic_tags) {
-                    p.topic_tags.forEach(t => this.allTags.add(t));
-                }
-            });
-
-            // Update tag dropdown
-            if (this.tagFilterEl) {
-                this.tagFilterEl.innerHTML = '<option value="">All Tags</option>';
-                Array.from(this.allTags).sort().forEach(tag => {
-                    const option = document.createElement('option');
-                    option.value = tag;
-                    option.textContent = tag;
-                    this.tagFilterEl.appendChild(option);
-                });
-            }
-
-            this.problemCount.textContent = `${this.problems.length} problems`;
-            this.totalProblems.textContent = this.problems.length;
-
-            this.renderProblemList(this.problems);
-        } catch (error) {
-            console.error('Failed to load problems:', error);
-            this.problemCount.textContent = 'Failed to load';
-        }
-    }
-
-    filterProblems() {
-        const search = this.searchInput.value.toLowerCase();
-        
-        let difficulty = '';
-        if (this.difficultyFilterEl) {
-            const activeChip = this.difficultyFilterEl.querySelector('.filter-chip.active');
-            difficulty = activeChip ? activeChip.dataset.value : '';
-        }
-
-        let status = '';
-        if (this.statusFilterEl) {
-            const activeChip = this.statusFilterEl.querySelector('.filter-chip.active');
-            status = activeChip ? activeChip.dataset.value : '';
-        }
-        
-        const tagFilter = this.tagFilterEl ? this.tagFilterEl.value : '';
-
-        const filtered = this.problems.filter(p => {
-            // Search
-            if (search && !p.title.toLowerCase().includes(search)) {
-                const tags = (p.topic_tags || []).join(' ').toLowerCase();
-                if (!tags.includes(search)) return false;
-            }
-
-            // Difficulty
-            if (difficulty && p.difficulty !== difficulty) return false;
-
-            // Status
-            if (status === 'solved' && !p.solved) return false;
-            if (status === 'unsolved' && p.solved) return false;
-
-            // Tag filter
-            if (tagFilter && !(p.topic_tags || []).includes(tagFilter)) return false;
-
-            return true;
-        });
-
-        this.renderProblemList(filtered);
-    }
-
-    getFilteredProblems() {
-        const search = this.searchInput.value.toLowerCase();
-        
-        let difficulty = '';
-        if (this.difficultyFilterEl) {
-            const activeChip = this.difficultyFilterEl.querySelector('.filter-chip.active');
-            difficulty = activeChip ? activeChip.dataset.value : '';
-        }
-
-        let status = '';
-        if (this.statusFilterEl) {
-            const activeChip = this.statusFilterEl.querySelector('.filter-chip.active');
-            status = activeChip ? activeChip.dataset.value : '';
-        }
-        
-        const tagFilter = this.tagFilterEl ? this.tagFilterEl.value : '';
-
-        return this.problems.filter(p => {
-            // Search
-            if (search && !p.title.toLowerCase().includes(search)) {
-                const tags = (p.topic_tags || []).join(' ').toLowerCase();
-                if (!tags.includes(search)) return false;
-            }
-
-            // Difficulty
-            if (difficulty && p.difficulty !== difficulty) return false;
-
-            // Status
-            if (status === 'solved' && !p.solved) return false;
-            if (status === 'unsolved' && p.solved) return false;
-
-            // Tag filter
-            if (tagFilter && !(p.topic_tags || []).includes(tagFilter)) return false;
-
-            return true;
+  initCustomSelects() {
+    // Difficulty chips
+    this.difficultyFilterEl = document.getElementById("difficultyFilter");
+    if (this.difficultyFilterEl) {
+      this.difficultyFilterEl
+        .querySelectorAll(".filter-chip")
+        .forEach((chip) => {
+          chip.addEventListener("click", (e) => {
+            this.difficultyFilterEl
+              .querySelectorAll(".filter-chip")
+              .forEach((c) => c.classList.remove("active"));
+            e.target.classList.add("active");
+            this.filterProblems();
+          });
         });
     }
 
-    loadRandomProblem() {
-        const filtered = this.getFilteredProblems();
-        if (filtered.length === 0) {
-            this.showToast('No problems match the current filters', 'warning');
-            return;
-        }
-        const random = filtered[Math.floor(Math.random() * filtered.length)];
-        this.loadProblem(random.id);
+    // Status chips
+    this.statusFilterEl = document.getElementById("statusFilter");
+    if (this.statusFilterEl) {
+      this.statusFilterEl.querySelectorAll(".filter-chip").forEach((chip) => {
+        chip.addEventListener("click", (e) => {
+          this.statusFilterEl
+            .querySelectorAll(".filter-chip")
+            .forEach((c) => c.classList.remove("active"));
+          e.target.classList.add("active");
+          this.filterProblems();
+        });
+      });
     }
 
-    toggleSidebar() {
-        this.mainContainer.classList.toggle('sidebar-collapsed');
-        const isCollapsed = this.mainContainer.classList.contains('sidebar-collapsed');
-        // Icon flips via CSS transform, no textContent change needed
-        this.collapseBtn.title = isCollapsed ? 'Show Sidebar' : 'Hide Sidebar';
-        // Re-render icon for the state change
-        if (window.lucide) lucide.createIcons();
+    // Tags Native Select
+    this.tagFilterEl = document.getElementById("tagFilter");
+    if (this.tagFilterEl) {
+      this.tagFilterEl.addEventListener("change", () => {
+        this.filterProblems();
+      });
+    }
+  }
+
+  initCodeMirror() {
+    const mount = document.getElementById("editor-main-mount");
+    if (!mount) {
+      console.error("editor-main-mount not found");
+      return;
     }
 
-    renderProblemList(problems) {
-        this.problemList.innerHTML = '';
+    const tryInit = () => {
+      if (!window.ace) {
+        setTimeout(tryInit, 50);
+        return;
+      }
 
-        if (problems.length === 0) {
-            this.problemList.innerHTML = '<div class="loading">No problems found</div>';
-            return;
+      try {
+        this.editorView = ace.edit("editor-main-mount");
+        this.editorView.setTheme("ace/theme/github");
+        this.editorView.session.setMode("ace/mode/python");
+        this.editorView.setOptions({
+          fontSize: "13px",
+          fontFamily:
+            "'JetBrains Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace",
+          tabSize: 4,
+          useSoftTabs: true,
+          showPrintMargin: false,
+          displayIndentGuides: false,
+          wrap: true,
+          highlightActiveLine: true,
+          showGutter: true,
+          behavioursEnabled: true,
+        });
+
+        // Set initial value
+        const initialCode = this.codeEditor ? this.codeEditor.value : "";
+        this.editorView.setValue(initialCode, -1);
+
+        // Add run keybindings
+        this.editorView.commands.addCommand({
+          name: "runTests",
+          bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
+          exec: (editor) => {
+            this.runTests();
+          },
+        });
+
+        // Listen to changes
+        this.editorView.session.on("change", () => {
+          clearTimeout(this.saveCodeDebounce);
+          this.saveCodeDebounce = setTimeout(() => this.saveCode(), 1000);
+          if (
+            this.currentProblem &&
+            !this.currentProblem.solved &&
+            this.draftBadge
+          ) {
+            this.draftBadge.style.display = "";
+          }
+        });
+      } catch (err) {
+        console.error("Failed to create Ace editor:", err);
+      }
+    };
+
+    tryInit();
+  }
+
+  // Helper methods for Ace Editor compatibility
+  getEditorValue() {
+    if (this.editorView) {
+      return this.editorView.getValue();
+    }
+    return this.codeEditor.value;
+  }
+
+  setEditorValue(code) {
+    if (this.editorView) {
+      this.editorView.setValue(code, -1);
+      return;
+    }
+    this.codeEditor.value = code;
+  }
+
+  focusEditor() {
+    if (this.editorView) {
+      this.editorView.focus();
+    }
+  }
+
+  editorExists() {
+    return this.editorView !== null && this.editorView !== undefined;
+  }
+
+  async loadProblems() {
+    try {
+      const response = await fetch("/api/problems");
+      this.problems = await response.json();
+
+      // Populate all tags
+      this.problems.forEach((p) => {
+        if (p.topic_tags) {
+          p.topic_tags.forEach((t) => this.allTags.add(t));
         }
+      });
 
-        const fragment = document.createDocumentFragment();
+      // Update tag dropdown
+      if (this.tagFilterEl) {
+        this.tagFilterEl.innerHTML = '<option value="">All Tags</option>';
+        Array.from(this.allTags)
+          .sort()
+          .forEach((tag) => {
+            const option = document.createElement("option");
+            option.value = tag;
+            option.textContent = tag;
+            this.tagFilterEl.appendChild(option);
+          });
+      }
 
-        problems.forEach(p => {
-            const item = document.createElement('div');
-            item.className = `problem-item${p.solved ? ' solved' : ''}${this.currentProblem?.id === p.id ? ' active' : ''}`;
-            item.dataset.id = p.id;
+      this.problemCount.textContent = `${this.problems.length} problems`;
+      this.totalProblems.textContent = this.problems.length;
 
-            const difficultyClass = p.difficulty || 'Medium';
-            const solvedIcon = p.solved ? iconHtml('check', 10) : '';
+      this.renderProblemList(this.problems);
+    } catch (error) {
+      console.error("Failed to load problems:", error);
+      this.problemCount.textContent = "Failed to load";
+    }
+  }
 
-            item.innerHTML = `
-                <div class="problem-item-title">${this.escapeHtml(p.title)}</div>
-                <div class="problem-item-meta">
-                    <span class="problem-item-id">#${p.frontend_id || p.id}</span>
-                    <span class="problem-item-difficulty ${difficultyClass}">${p.difficulty || 'Medium'}</span>
-                    <span class="problem-item-solved">${solvedIcon}</span>
-                </div>
+  filterProblems() {
+    const search = this.searchInput.value.toLowerCase();
+
+    let difficulty = "";
+    if (this.difficultyFilterEl) {
+      const activeChip = this.difficultyFilterEl.querySelector(
+        ".filter-chip.active",
+      );
+      difficulty = activeChip ? activeChip.dataset.value : "";
+    }
+
+    let status = "";
+    if (this.statusFilterEl) {
+      const activeChip = this.statusFilterEl.querySelector(
+        ".filter-chip.active",
+      );
+      status = activeChip ? activeChip.dataset.value : "";
+    }
+
+    const tagFilter = this.tagFilterEl ? this.tagFilterEl.value : "";
+
+    const filtered = this.problems.filter((p) => {
+      // Search
+      if (search && !p.title.toLowerCase().includes(search)) {
+        const tags = (p.topic_tags || []).join(" ").toLowerCase();
+        if (!tags.includes(search)) return false;
+      }
+
+      // Difficulty
+      if (difficulty && p.difficulty !== difficulty) return false;
+
+      // Status
+      if (status === "solved" && !p.solved) return false;
+      if (status === "unsolved" && p.solved) return false;
+
+      // Tag filter
+      if (tagFilter && !(p.topic_tags || []).includes(tagFilter)) return false;
+
+      return true;
+    });
+
+    this.renderProblemList(filtered);
+  }
+
+  getFilteredProblems() {
+    const search = this.searchInput.value.toLowerCase();
+
+    let difficulty = "";
+    if (this.difficultyFilterEl) {
+      const activeChip = this.difficultyFilterEl.querySelector(
+        ".filter-chip.active",
+      );
+      difficulty = activeChip ? activeChip.dataset.value : "";
+    }
+
+    let status = "";
+    if (this.statusFilterEl) {
+      const activeChip = this.statusFilterEl.querySelector(
+        ".filter-chip.active",
+      );
+      status = activeChip ? activeChip.dataset.value : "";
+    }
+
+    const tagFilter = this.tagFilterEl ? this.tagFilterEl.value : "";
+
+    return this.problems.filter((p) => {
+      // Search
+      if (search && !p.title.toLowerCase().includes(search)) {
+        const tags = (p.topic_tags || []).join(" ").toLowerCase();
+        if (!tags.includes(search)) return false;
+      }
+
+      // Difficulty
+      if (difficulty && p.difficulty !== difficulty) return false;
+
+      // Status
+      if (status === "solved" && !p.solved) return false;
+      if (status === "unsolved" && p.solved) return false;
+
+      // Tag filter
+      if (tagFilter && !(p.topic_tags || []).includes(tagFilter)) return false;
+
+      return true;
+    });
+  }
+
+  loadRandomProblem() {
+    const filtered = this.getFilteredProblems();
+    if (filtered.length === 0) {
+      this.showToast("No problems match the current filters", "warning");
+      return;
+    }
+    const random = filtered[Math.floor(Math.random() * filtered.length)];
+    this.loadProblem(random.id);
+  }
+
+  toggleSidebar() {
+    this.mainContainer.classList.toggle("sidebar-collapsed");
+    const isCollapsed =
+      this.mainContainer.classList.contains("sidebar-collapsed");
+    // Icon flips via CSS transform, no textContent change needed
+    this.collapseBtn.title = isCollapsed ? "Show Sidebar" : "Hide Sidebar";
+    // Re-render icon for the state change
+    if (window.lucide) lucide.createIcons();
+  }
+
+  renderProblemList(problems) {
+    this.problemList.innerHTML = "";
+
+    if (problems.length === 0) {
+      this.problemList.innerHTML =
+        '<div class="loading">No problems found</div>';
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    problems.forEach((p) => {
+      const item = document.createElement("div");
+      item.className = `problem-item${p.solved ? " solved" : ""}${this.currentProblem?.id === p.id ? " active" : ""}`;
+      item.dataset.id = p.id;
+
+      const difficultyClass = p.difficulty || "Medium";
+      const solvedIcon = p.solved ? iconHtml("check", 10) : "";
+
+      const difficultyDot = `<span class="problem-item-difficulty ${difficultyClass}" title="${p.difficulty || "Medium"}"></span>`;
+      const solvedMark = p.solved
+        ? `<span class="problem-item-solved">${iconHtml("check", 11)}</span>`
+        : "";
+
+      item.innerHTML = `
+                <span class="problem-item-id">${p.frontend_id || p.id}</span>
+                <span class="problem-item-title">${this.escapeHtml(p.title)}</span>
+                <span class="problem-item-meta">${difficultyDot}${solvedMark}</span>
             `;
 
-            item.addEventListener('click', () => this.loadProblem(p.id));
-            fragment.appendChild(item);
-        });
+      item.addEventListener("click", () => this.loadProblem(p.id));
+      fragment.appendChild(item);
+    });
 
-        this.problemList.appendChild(fragment);
-        // Initialize Lucide icons for newly added elements
-        if (window.lucide) lucide.createIcons();
+    this.problemList.appendChild(fragment);
+    // Initialize Lucide icons for newly added elements
+    if (window.lucide) lucide.createIcons();
+  }
+
+  async loadProblem(problemId) {
+    try {
+      // Update active state in list
+      document.querySelectorAll(".problem-item").forEach((item) => {
+        item.classList.toggle("active", item.dataset.id === problemId);
+      });
+
+      const response = await fetch(`/api/problem/${problemId}`);
+      const problem = await response.json();
+
+      this.currentProblem = problem;
+      this.renderProblem(problem);
+
+      // Ensure we are on the description tab
+      this.switchDescriptionTab("description");
+
+      // Clear hints and draft badge when loading new problem
+      this.clearHints();
+      if (this.draftBadge) this.draftBadge.style.display = "none";
+
+      // Check if quiz exists for this problem and show quiz tab button
+      if (this.quiz) this.quiz.checkQuizAvailability(problemId);
+
+      // Show problem view
+      this.welcomeScreen.style.display = "none";
+      this.problemView.style.display = "flex";
+      this.testResults.style.display = "none";
+
+      // Refresh editor after showing problem view (CodeMirror 6 doesn't need manual refresh)
+    } catch (error) {
+      console.error("Failed to load problem:", error);
+    }
+  }
+
+  async loadCustomProblem(problemData) {
+    // Prepare the data to match expected structure
+    const problem = {
+      id: problemData.id,
+      frontend_id: "Custom",
+      title: problemData.title,
+      difficulty: problemData.difficulty,
+      content: problemData.description,
+      example_test_cases: (problemData.testCases || []).join("\n"),
+      test_cases: problemData.testCases || [],
+      expected_outputs: problemData.expectedOutputs || [],
+      code_snippets: [{ lang: "python3", code: problemData.starterCode }],
+      type: "custom",
+      topic_tags: ["Starter"],
+      solved: false,
+    };
+
+    // Check if solved from local problems list or progress
+    const pid = String(problem.id);
+    const isSolved = this.problems.some(
+      (p) => String(p.id) === pid && p.solved,
+    );
+    problem.solved = isSolved;
+
+    this.currentProblem = problem;
+    this.renderProblem(problem);
+
+    // Ensure we are on the description tab
+    this.switchDescriptionTab("description");
+
+    // Clear hints and draft badge when loading new problem
+    this.clearHints();
+    if (this.draftBadge) this.draftBadge.style.display = "none";
+
+    // Show problem view
+    this.welcomeScreen.style.display = "none";
+    this.problemView.style.display = "flex";
+    this.testResults.style.display = "none";
+  }
+
+  renderProblem(problem) {
+    // Basic info
+    this.problemId.textContent = `#${problem.frontend_id || problem.id}`;
+    this.problemTitle.textContent = problem.title;
+    this.problemDifficulty.textContent = problem.difficulty || "Medium";
+    this.problemDifficulty.className = `badge difficulty-badge ${problem.difficulty || "Medium"}`;
+
+    // Solved button state
+    this.updateSolvedButton(problem.solved);
+
+    // Pattern identification
+    const patternId = this.getPatternFromTags(problem.topic_tags || []);
+    const patternName = patternId
+      ? this.learning.patternsData[patternId]?.title || "Miscellaneous"
+      : "Miscellaneous";
+
+    // Meta info
+    const acceptance = problem.acceptance_rate
+      ? `${(problem.acceptance_rate * 100).toFixed(1)}% Acceptance`
+      : "";
+    const patternLabel = `<span class="pattern-link" data-pattern-id="${patternId}">${patternName}</span>`;
+    this.problemMeta.innerHTML = `${patternLabel} • ${acceptance}`;
+
+    // Tags
+    this.problemTags.innerHTML = "";
+    (problem.topic_tags || []).forEach((tag) => {
+      const tagEl = document.createElement("span");
+      tagEl.className = "tag";
+      tagEl.textContent = tag;
+      tagEl.addEventListener("click", () => {
+        this.searchInput.value = tag;
+        this.filterProblems();
+      });
+      this.problemTags.appendChild(tagEl);
+    });
+
+    // Add pattern link listener
+    const pl = document.querySelector(".pattern-link");
+    if (pl && patternId && this.learning.patternsData[patternId]) {
+      pl.addEventListener("click", () => {
+        this.roadmap.switchPage("learning");
+        const curated = this.learning.learningData?.topics.find(
+          (t) => t.id === patternId,
+        );
+        this.learning.openTopic(
+          patternId,
+          this.learning.patternsData[patternId],
+          curated,
+        );
+      });
     }
 
+    // Description
+    this.problemContent.innerHTML =
+      problem.content || "No description available.";
 
-    async loadProblem(problemId) {
-        try {
-            // Update active state in list
-            document.querySelectorAll('.problem-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.id === problemId);
-            });
+    // Test cases
+    this.renderTestCases(problem.example_test_cases);
 
-            const response = await fetch(`/api/problem/${problemId}`);
-            const problem = await response.json();
+    // Code editor
+    this.loadProblemCode(problem);
 
-            this.currentProblem = problem;
-            this.renderProblem(problem);
+    // Best Solution check
+    this.renderBestSolution(problem.id);
+  }
 
-            // Ensure we are on the description tab
-            this.switchDescriptionTab('description');
+  getPatternFromTags(tags) {
+    const patternMapping = {
+      "hash-table": ["Hash Table", "Counting"],
+      "two-pointers": ["Two Pointers", "Two-Pointers", "Array", "String"],
+      "sliding-window": ["Sliding Window"],
+      "binary-search": ["Binary Search"],
+      dfs: ["Depth-First Search", "Tree", "Binary Tree", "Binary Search Tree"],
+      bfs: ["Breadth-First Search"],
+      backtracking: ["Backtracking"],
+      "dynamic-programming": ["Dynamic Programming"],
+      greedy: ["Greedy", "Sorting"],
+      heap: ["Heap (Priority Queue)", "Heap"],
+      "monotonic-stack": ["Monotonic Stack", "Stack"],
+      "prefix-sum": ["Prefix Sum"],
+      "union-find": ["Union Find", "Union-Find", "Disjoint Set"],
+      "topological-sort": ["Topological Sort"],
+      trie: ["Trie"],
+      "bit-manipulation": ["Bit Manipulation"],
+      "linked-list": ["Linked List"],
+      "math-geometry": ["Math", "Geometry", "Number Theory", "Combinatorics"],
+    };
 
-            // Clear hints and draft badge when loading new problem
-            this.clearHints();
-            if (this.draftBadge) this.draftBadge.style.display = 'none';
+    for (const [patternId, searchTags] of Object.entries(patternMapping)) {
+      if (tags.some((tag) => searchTags.includes(tag))) {
+        return patternId;
+      }
+    }
+    return null;
+  }
 
-            // Check if quiz exists for this problem and show quiz tab button
-            if (this.quiz) this.quiz.checkQuizAvailability(problemId);
+  renderBestSolution(problemId) {
+    const btn = document.getElementById("bestSolutionTabBtn");
+    if (!btn) return;
 
-            // Show problem view
-            this.welcomeScreen.style.display = 'none';
-            this.problemView.style.display = 'flex';
-            this.testResults.style.display = 'none';
+    const solution = this.topSolutions
+      ? this.topSolutions[String(problemId)]
+      : null;
+    if (solution) {
+      btn.style.display = "flex";
 
-            // Refresh editor after showing problem view (CodeMirror 6 doesn't need manual refresh)
+      document.getElementById("bestSolutionMeta").textContent =
+        `${solution.pattern} • ${solution.complexity}`;
+      document.getElementById("bestSolutionExplanation").innerHTML =
+        this.renderAiExplanation(solution.explanation);
+      document.getElementById("bestSolutionCode").innerHTML =
+        `<pre class="code-block"><code>${this.escapeHtml(solution.code)}</code></pre>`;
 
-        } catch (error) {
-            console.error('Failed to load problem:', error);
-        }
+      document.getElementById("applyBestSolutionBtn").onclick = () => {
+        this.setEditorValue(solution.code);
+        this.showToast("Expert solution applied to editor", "success");
+        this.focusEditor();
+      };
+    } else {
+      btn.style.display = "none";
+    }
+  }
+
+  async loadProblemCode(problem) {
+    const problemId = problem.id || problem.frontend_id;
+
+    // First, try to load saved code from progress
+    try {
+      const progressResponse = await fetch("/api/progress");
+      const progress = await progressResponse.json();
+
+      if (
+        progress.solved &&
+        progress.solved[problemId] &&
+        progress.solved[problemId].code
+      ) {
+        // Load saved code
+        const savedCode = progress.solved[problemId].code;
+        this.setEditorValue(savedCode);
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to load saved code:", error);
     }
 
-    async loadCustomProblem(problemData) {
-        // Prepare the data to match expected structure
-        const problem = {
-            id: problemData.id,
-            frontend_id: 'Custom',
-            title: problemData.title,
-            difficulty: problemData.difficulty,
-            content: problemData.description,
-            example_test_cases: (problemData.testCases || []).join('\n'),
-            test_cases: problemData.testCases || [],
-            expected_outputs: problemData.expectedOutputs || [],
-            code_snippets: [
-                { lang: 'python3', code: problemData.starterCode }
-            ],
-            type: 'custom',
-            topic_tags: ['Starter'],
-            solved: false
-        };
+    // No saved code, load starter code
+    this.loadStarterCode(problem);
+  }
 
-        // Check if solved from local problems list or progress
-        const pid = String(problem.id);
-        const isSolved = this.problems.some(p => String(p.id) === pid && p.solved);
-        problem.solved = isSolved;
+  loadStarterCode(problem) {
+    // Find Python3 snippet
+    const snippets = problem.code_snippets || [];
+    const pythonSnippet = snippets.find(
+      (s) => s.lang === "python3" || s.lang === "python",
+    );
 
-        this.currentProblem = problem;
-        this.renderProblem(problem);
-
-        // Ensure we are on the description tab
-        this.switchDescriptionTab('description');
-
-        // Clear hints and draft badge when loading new problem
-        this.clearHints();
-        if (this.draftBadge) this.draftBadge.style.display = 'none';
-
-        // Show problem view
-        this.welcomeScreen.style.display = 'none';
-        this.problemView.style.display = 'flex';
-        this.testResults.style.display = 'none';
-    }
-
-    renderProblem(problem) {
-        // Basic info
-        this.problemId.textContent = `#${problem.frontend_id || problem.id}`;
-        this.problemTitle.textContent = problem.title;
-        this.problemDifficulty.textContent = problem.difficulty || 'Medium';
-        this.problemDifficulty.className = `badge difficulty-badge ${problem.difficulty || 'Medium'}`;
-
-        // Solved button state
-        this.updateSolvedButton(problem.solved);
-
-        // Pattern identification
-        const patternId = this.getPatternFromTags(problem.topic_tags || []);
-        const patternName = patternId ? (this.learning.patternsData[patternId]?.title || 'Miscellaneous') : 'Miscellaneous';
-        
-        // Meta info
-        const acceptance = problem.acceptance_rate ? `${(problem.acceptance_rate * 100).toFixed(1)}% Acceptance` : '';
-        const patternLabel = `<span class="pattern-link" data-pattern-id="${patternId}">${patternName}</span>`;
-        this.problemMeta.innerHTML = `${patternLabel} • ${acceptance}`;
-
-        // Tags
-        this.problemTags.innerHTML = '';
-        (problem.topic_tags || []).forEach(tag => {
-            const tagEl = document.createElement('span');
-            tagEl.className = 'tag';
-            tagEl.textContent = tag;
-            tagEl.addEventListener('click', () => {
-                this.searchInput.value = tag;
-                this.filterProblems();
-            });
-            this.problemTags.appendChild(tagEl);
-        });
-
-        // Add pattern link listener
-        const pl = document.querySelector('.pattern-link');
-        if (pl && patternId && this.learning.patternsData[patternId]) {
-            pl.addEventListener('click', () => {
-                this.roadmap.switchPage('learning');
-                const curated = this.learning.learningData?.topics.find(t => t.id === patternId);
-                this.learning.openTopic(patternId, this.learning.patternsData[patternId], curated);
-            });
-        }
-
-        // Description
-        this.problemContent.innerHTML = problem.content || 'No description available.';
-
-        // Test cases
-        this.renderTestCases(problem.example_test_cases);
-
-        // Code editor
-        this.loadProblemCode(problem);
-
-        // Best Solution check
-        this.renderBestSolution(problem.id);
-    }
-
-    getPatternFromTags(tags) {
-        const patternMapping = {
-            "hash-table": ["Hash Table", "Counting"],
-            "two-pointers": ["Two Pointers", "Two-Pointers", "Array", "String"],
-            "sliding-window": ["Sliding Window"],
-            "binary-search": ["Binary Search"],
-            "dfs": ["Depth-First Search", "Tree", "Binary Tree", "Binary Search Tree"],
-            "bfs": ["Breadth-First Search"],
-            "backtracking": ["Backtracking"],
-            "dynamic-programming": ["Dynamic Programming"],
-            "greedy": ["Greedy", "Sorting"],
-            "heap": ["Heap (Priority Queue)", "Heap"],
-            "monotonic-stack": ["Monotonic Stack", "Stack"],
-            "prefix-sum": ["Prefix Sum"],
-            "union-find": ["Union Find", "Union-Find", "Disjoint Set"],
-            "topological-sort": ["Topological Sort"],
-            "trie": ["Trie"],
-            "bit-manipulation": ["Bit Manipulation"],
-            "linked-list": ["Linked List"],
-            "math-geometry": ["Math", "Geometry", "Number Theory", "Combinatorics"]
-        };
-
-        for (const [patternId, searchTags] of Object.entries(patternMapping)) {
-            if (tags.some(tag => searchTags.includes(tag))) {
-                return patternId;
-            }
-        }
-        return null;
-    }
-
-    renderBestSolution(problemId) {
-        const btn = document.getElementById('bestSolutionTabBtn');
-        if (!btn) return;
-
-        const solution = this.topSolutions ? this.topSolutions[String(problemId)] : null;
-        if (solution) {
-            btn.style.display = 'flex';
-            
-            document.getElementById('bestSolutionMeta').textContent = `${solution.pattern} • ${solution.complexity}`;
-            document.getElementById('bestSolutionExplanation').innerHTML = this.renderAiExplanation(solution.explanation);
-            document.getElementById('bestSolutionCode').innerHTML = `<pre class="code-block"><code>${this.escapeHtml(solution.code)}</code></pre>`;
-            
-            document.getElementById('applyBestSolutionBtn').onclick = () => {
-                this.setEditorValue(solution.code);
-                this.showToast('Expert solution applied to editor', 'success');
-                this.focusEditor();
-            };
-        } else {
-            btn.style.display = 'none';
-        }
-    }
-
-    async loadProblemCode(problem) {
-        const problemId = problem.id || problem.frontend_id;
-
-        // First, try to load saved code from progress
-        try {
-            const progressResponse = await fetch('/api/progress');
-            const progress = await progressResponse.json();
-
-            if (progress.solved && progress.solved[problemId] && progress.solved[problemId].code) {
-                // Load saved code
-                const savedCode = progress.solved[problemId].code;
-                this.setEditorValue(savedCode);
-                return;
-            }
-        } catch (error) {
-            console.error('Failed to load saved code:', error);
-        }
-
-        // No saved code, load starter code
-        this.loadStarterCode(problem);
-    }
-
-    loadStarterCode(problem) {
-        // Find Python3 snippet
-        const snippets = problem.code_snippets || [];
-        const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
-
-        let code = '';
-        if (pythonSnippet) {
-            code = pythonSnippet.code || '';
-        } else {
-            // Default template
-            code = `class Solution:
+    let code = "";
+    if (pythonSnippet) {
+      code = pythonSnippet.code || "";
+    } else {
+      // Default template
+      code = `class Solution:
     def solve(self, *args):
         # Your solution here
         pass
 `;
-        }
-
-        this.setEditorValue(code);
     }
 
-    async saveCode() {
-        if (!this.currentProblem) return;
+    this.setEditorValue(code);
+  }
 
-        const code = this.getEditorValue();
-        const problemId = this.currentProblem.id || this.currentProblem.frontend_id;
+  async saveCode() {
+    if (!this.currentProblem) return;
 
-        try {
-            await fetch('/api/progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'save_code',
-                    problem_id: problemId,
-                    code: code
-                })
-            });
-        } catch (error) {
-            console.error('Failed to save code:', error);
-        }
+    const code = this.getEditorValue();
+    const problemId = this.currentProblem.id || this.currentProblem.frontend_id;
+
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_code",
+          problem_id: problemId,
+          code: code,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to save code:", error);
+    }
+  }
+
+  renderTestCases(testCasesStr) {
+    this.testCasesList.innerHTML = "";
+
+    if (
+      !testCasesStr &&
+      (!this.currentProblem || !this.currentProblem.test_cases)
+    ) {
+      this.testCasesList.innerHTML =
+        '<p style="color: var(--text-3);">No example test cases available.</p>';
+      return;
     }
 
-    renderTestCases(testCasesStr) {
-        this.testCasesList.innerHTML = '';
+    let testCases = [];
+    if (
+      this.currentProblem &&
+      this.currentProblem.type === "custom" &&
+      this.currentProblem.test_cases
+    ) {
+      testCases = this.currentProblem.test_cases;
+    } else {
+      // Parse test cases (newline separated)
+      testCases = (testCasesStr || "").split("\n").filter((t) => t.trim());
+    }
 
-        if (!testCasesStr && (!this.currentProblem || !this.currentProblem.test_cases)) {
-            this.testCasesList.innerHTML = '<p style="color: var(--text-3);">No example test cases available.</p>';
-            return;
-        }
+    testCases.forEach((testCase, index) => {
+      const item = document.createElement("div");
+      item.className = "test-case-item";
 
-        let testCases = [];
-        if (this.currentProblem && this.currentProblem.type === 'custom' && this.currentProblem.test_cases) {
-            testCases = this.currentProblem.test_cases;
-        } else {
-            // Parse test cases (newline separated)
-            testCases = (testCasesStr || '').split('\n').filter(t => t.trim());
-        }
+      // Try to parse input/output
+      let input = Array.isArray(testCase)
+        ? testCase.join(", ")
+        : testCase.trim();
+      let output = "";
 
-        testCases.forEach((testCase, index) => {
-            const item = document.createElement('div');
-            item.className = 'test-case-item';
+      // Look for output patterns
+      if (typeof input === "string" && input.includes("Output:")) {
+        const parts = input.split("Output:");
+        input = parts[0].replace(/Input:/, "").trim();
+        output = parts[1].trim();
+      } else if (
+        this.currentProblem &&
+        this.currentProblem.type === "custom" &&
+        this.currentProblem.expected_outputs
+      ) {
+        output = this.currentProblem.expected_outputs[index] || "";
+      }
 
-            // Try to parse input/output
-            let input = Array.isArray(testCase) ? testCase.join(', ') : testCase.trim();
-            let output = '';
-
-            // Look for output patterns
-            if (typeof input === 'string' && input.includes('Output:')) {
-                const parts = input.split('Output:');
-                input = parts[0].replace(/Input:/, '').trim();
-                output = parts[1].trim();
-            } else if (this.currentProblem && this.currentProblem.type === 'custom' && this.currentProblem.expected_outputs) {
-                output = this.currentProblem.expected_outputs[index] || '';
-            }
-
-            item.innerHTML = `
+      item.innerHTML = `
                 <div class="test-case-input">Case ${index + 1}: <span>${this.escapeHtml(input)}</span></div>
-                ${output ? `<div class="test-case-output">Output: ${this.escapeHtml(output)}</div>` : ''}
+                ${output ? `<div class="test-case-output">Output: ${this.escapeHtml(output)}</div>` : ""}
             `;
 
-            this.testCasesList.appendChild(item);
-        });
+      this.testCasesList.appendChild(item);
+    });
+  }
+
+  async runTests(markAsSolvedIfPassed = false) {
+    if (!this.currentProblem) return;
+
+    const code = this.getEditorValue();
+    let testCases, expectedOutputs;
+
+    if (this.currentProblem.type === "custom") {
+      testCases = this.currentProblem.test_cases;
+      expectedOutputs = this.currentProblem.expected_outputs;
+    } else {
+      const testCasesStr = this.currentProblem.example_test_cases;
+      const problemContent = this.currentProblem.content || "";
+
+      // Parse test cases and extract expected outputs
+      testCases = this.parseTestCases(testCasesStr);
+      expectedOutputs = this.extractExpectedOutputs(problemContent);
     }
 
-    async runTests(markAsSolvedIfPassed = false) {
-        if (!this.currentProblem) return;
+    // Show loading state
+    this.runBtn.disabled = true;
+    this.runBtn.innerHTML = `${iconHtml("refresh-cw", 14, "btn-icon spin")} Running...`;
 
-        const code = this.getEditorValue();
-        let testCases, expectedOutputs;
+    try {
+      const response = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: code,
+          problem_id: String(
+            this.currentProblem.id || this.currentProblem.frontend_id,
+          ),
+          use_local_solution: true,
+          test_cases: testCases,
+          expected_outputs: expectedOutputs,
+          function_name: "solve",
+          class_name: "Solution",
+        }),
+      });
 
-        if (this.currentProblem.type === 'custom') {
-            testCases = this.currentProblem.test_cases;
-            expectedOutputs = this.currentProblem.expected_outputs;
-        } else {
-            const testCasesStr = this.currentProblem.example_test_cases;
-            const problemContent = this.currentProblem.content || '';
-
-            // Parse test cases and extract expected outputs
-            testCases = this.parseTestCases(testCasesStr);
-            expectedOutputs = this.extractExpectedOutputs(problemContent);
-        }
-
-        // Show loading state
-        this.runBtn.disabled = true;
-        this.runBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Running...`;
-
-        try {
-            const response = await fetch('/api/run', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    code: code,
-                    problem_id: String(this.currentProblem.id || this.currentProblem.frontend_id),
-                    use_local_solution: true,
-                    test_cases: testCases,
-                    expected_outputs: expectedOutputs,
-                    function_name: 'solve',
-                    class_name: 'Solution'
-                })
-            });
-
-            const result = await response.json();
-            await this.displayResults(result, markAsSolvedIfPassed);
-
-        } catch (error) {
-            console.error('Failed to run tests:', error);
-            await this.displayResults({
-                results: [{ passed: false, error: 'Failed to connect to server' }],
-                passed: 0,
-                total: 1
-            });
-        } finally {
-            this.runBtn.disabled = false;
-            this.runBtn.innerHTML = `${iconHtml('play', 14, 'btn-icon')} Run All Tests`;
-        }
+      const result = await response.json();
+      await this.displayResults(result, markAsSolvedIfPassed);
+    } catch (error) {
+      console.error("Failed to run tests:", error);
+      await this.displayResults({
+        results: [{ passed: false, error: "Failed to connect to server" }],
+        passed: 0,
+        total: 1,
+      });
+    } finally {
+      this.runBtn.disabled = false;
+      this.runBtn.innerHTML = `${iconHtml("play", 14, "btn-icon")} Run All Tests`;
     }
+  }
 
-    async startAISolution() {
-        if (!this.currentProblem) return;
+  async startAISolution() {
+    if (!this.currentProblem) return;
 
-        const problemTitle = this.currentProblem.title || '';
-        const problemDescription = this.currentProblem.content || this.currentProblem.description || '';
-        const testCases = this.parseTestCases(this.currentProblem.example_test_cases || '');
+    const problemTitle = this.currentProblem.title || "";
+    const problemDescription =
+      this.currentProblem.content || this.currentProblem.description || "";
+    const testCases = this.parseTestCases(
+      this.currentProblem.example_test_cases || "",
+    );
 
-        const snippets = this.currentProblem.code_snippets || [];
-        const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
-        const starterCode = pythonSnippet ? pythonSnippet.code : '';
+    const snippets = this.currentProblem.code_snippets || [];
+    const pythonSnippet = snippets.find(
+      (s) => s.lang === "python3" || s.lang === "python",
+    );
+    const starterCode = pythonSnippet ? pythonSnippet.code : "";
 
-        this.aiBtn.disabled = true;
-        this.aiBtn.innerHTML = `${iconHtml('refresh-cw', 14, 'btn-icon spin')} Generating...`;
+    this.aiBtn.disabled = true;
+    this.aiBtn.innerHTML = `${iconHtml("refresh-cw", 14, "btn-icon spin")} Generating...`;
 
-        this.showAIPanelLoading();
+    this.showAIPanelLoading();
 
-        try {
-            const response = await fetch('/api/ai/solution', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    problem_title: problemTitle,
-                    problem_description: problemDescription.substring(0, 3000),
-                    test_cases: testCases.slice(0, 3),
-                    starter_code: starterCode
-                })
-            });
+    try {
+      const response = await fetch("/api/ai/solution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problem_title: problemTitle,
+          problem_description: problemDescription.substring(0, 3000),
+          test_cases: testCases.slice(0, 3),
+          starter_code: starterCode,
+        }),
+      });
 
-            const result = await response.json();
+      const result = await response.json();
 
-            if (result.error) {
-                this.showToast('AI error: ' + result.error, 'error');
-                this.closeAIPanel();
-                return;
-            }
+      if (result.error) {
+        this.showToast("AI error: " + result.error, "error");
+        this.closeAIPanel();
+        return;
+      }
 
-            if (result.solution) {
-                const solutionText = typeof result.solution === 'string' ? result.solution : (result.solution.code || '');
+      if (result.solution) {
+        const solutionText =
+          typeof result.solution === "string"
+            ? result.solution
+            : result.solution.code || "";
 
-                const chatArea = document.getElementById('aiChatArea');
-                const loadingBubble = chatArea.querySelector('.chat-bubble.loading');
-                if (loadingBubble) loadingBubble.remove();
+        const chatArea = document.getElementById("aiChatArea");
+        const loadingBubble = chatArea.querySelector(".chat-bubble.loading");
+        if (loadingBubble) loadingBubble.remove();
 
-                const aiBubble = document.createElement('div');
-                aiBubble.className = 'chat-bubble ai';
-                aiBubble.innerHTML = this.renderAiExplanation(solutionText);
-                chatArea.appendChild(aiBubble);
-                chatArea.scrollTop = chatArea.scrollHeight;
-
-                const codeMatch = solutionText.match(/```(?:python)?\n([\s\S]*?)```/i);
-                if (codeMatch) {
-                    this._lastAiCode = codeMatch[1].trim();
-                } else {
-                    this._lastAiCode = solutionText;
-                }
-
-                this._currentProblemTitle = problemTitle;
-
-                const useBtn = document.getElementById('copyToEditorBtn');
-                if (useBtn && codeMatch) {
-                    useBtn.style.display = 'inline-flex';
-                }
-            }
-
-        } catch (error) {
-            console.error('Failed to get AI solution:', error);
-            this.showToast('Failed to connect to AI service. Please try again.', 'error');
-            this.closeAIPanel();
-        } finally {
-            this.aiBtn.disabled = false;
-            this.aiBtn.innerHTML = `${iconHtml('sparkles', 14, 'btn-icon')}`;
-        }
-    }
-
-    showAIPanelLoading() {
-        const aiTabBtn = document.getElementById('aiTabBtn');
-        if (aiTabBtn) aiTabBtn.style.display = 'flex';
-
-        this.switchDescriptionTab('ai-solution');
-
-        const useBtn = document.getElementById('copyToEditorBtn');
-        if (useBtn) useBtn.style.display = 'none';
-
-        const chatArea = document.getElementById('aiChatArea');
-        if (chatArea) {
-            chatArea.innerHTML = '';
-
-            const aiBubble = document.createElement('div');
-            aiBubble.className = 'chat-bubble ai loading';
-            aiBubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
-            chatArea.appendChild(aiBubble);
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }
-
-        const useActionBtn = document.getElementById('copyToEditorBtn');
-        if (useActionBtn) {
-            useActionBtn.onclick = () => {
-                if (this._lastAiCode) {
-                    this.setEditorValue(this._lastAiCode);
-                    this.showToast('AI solution inserted into editor', 'success');
-                    this.focusEditor();
-                }
-            };
-        }
-
-        const askInput = document.getElementById('aiAskInput');
-        const askSend = document.getElementById('aiAskSendBtn');
-        if (askInput && askSend) {
-            askSend.onclick = () => {
-                const q = askInput.value.trim();
-                if (q) {
-                    this.handleAiAsk(q);
-                    askInput.value = '';
-                }
-            };
-            askInput.onkeydown = (e) => {
-                if (e.key === 'Enter') askSend.click();
-            };
-        }
-    }
-
-    closeAIPanel() {
-        const aiTabBtn = document.getElementById('aiTabBtn');
-        if (aiTabBtn) aiTabBtn.style.display = 'none';
-        this.switchDescriptionTab('description');
-    }
-
-    async handleAiAsk(question) {
-        if (!question) return;
-        const chatArea = document.getElementById('aiChatArea');
-        if (!chatArea) return;
-
-        // User message bubble
-        const userBubble = document.createElement('div');
-        userBubble.className = 'chat-bubble user';
-        userBubble.textContent = question;
-        chatArea.appendChild(userBubble);
-
-        // AI loading bubble
-        const aiBubble = document.createElement('div');
-        aiBubble.className = 'chat-bubble ai loading';
-        aiBubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+        const aiBubble = document.createElement("div");
+        aiBubble.className = "chat-bubble ai";
+        aiBubble.innerHTML = this.renderAiExplanation(solutionText);
         chatArea.appendChild(aiBubble);
         chatArea.scrollTop = chatArea.scrollHeight;
 
-        const codeSnippet = this._lastAiCode || '';
-        const problemTitle = this._currentProblemTitle || '';
-
-        try {
-            const response = await fetch('/api/ai/explain', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question, code_snippet: codeSnippet, problem_title: problemTitle })
-            });
-            const result = await response.json();
-
-            aiBubble.classList.remove('loading');
-            if (result.error) {
-                aiBubble.innerHTML = `<span style="color:var(--error)">${this.escapeHtml(result.error)}</span>`;
-            } else {
-                aiBubble.innerHTML = this.renderAiExplanation(result.answer || '');
-            }
-        } catch (e) {
-            aiBubble.classList.remove('loading');
-            aiBubble.innerHTML = '<span style="color:var(--error)">Connection failed. Please try again.</span>';
-        }
-        chatArea.scrollTop = chatArea.scrollHeight;
-    }
-
-    renderAiExplanation(text) {
-        if (window.marked) {
-            return marked.parse(text);
-        }
-        // Fallback
-        let result = text;
-        result = result.replace(/```python\n([\s\S]*?)```/g, (_, code) =>
-            `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`);
-        result = result.replace(/```([\s\S]*?)```/g, (_, code) =>
-            `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`);
-        result = result.replace(/`([^`]+)`/g, '<code class="hint-inline-code">$1</code>');
-        result = result.replace(/\n/g, '<br>');
-        return result;
-    }
-
-    parseTestCases(testCasesStr) {
-        if (!testCasesStr) return [];
-
-        const cases = [];
-        const lines = testCasesStr.split('\n').filter(l => l.trim());
-
-        // Group lines by pairs (or triples for some problems)
-        // Most LeetCode problems have 2 args per test case
-        let currentCase = [];
-        lines.forEach(line => {
-            const trimmed = line.trim();
-            // Remove Input: prefix if present
-            let input = trimmed.replace(/^Input:\s*/i, '');
-
-            // Extract output if present
-            if (input.includes('Output:')) {
-                const parts = input.split('Output:');
-                input = parts[0].trim();
-            }
-
-            currentCase.push(input);
-
-            // Group by 2 lines (most common pattern)
-            if (currentCase.length >= 2) {
-                cases.push(currentCase);
-                currentCase = [];
-            }
-        });
-
-        // Handle remaining lines
-        if (currentCase.length > 0) {
-            cases.push(currentCase);
-        }
-
-        return cases.length > 0 ? cases : [['None']];
-    }
-
-    extractExpectedOutputs(content) {
-        // Extract expected outputs from problem content HTML
-        const outputs = [];
-
-        // Match patterns like "Output: [0,1]" or "<strong>Output:</strong> [0,1]"
-        const outputPatterns = [
-            /Output:\s*([^\n<]+)/gi,
-            /<strong>Output:<\/strong>\s*([^\n<]+)/gi
-        ];
-
-        for (const pattern of outputPatterns) {
-            let match;
-            while ((match = pattern.exec(content)) !== null) {
-                const output = match[1].trim();
-                if (output && !outputs.includes(output)) {
-                    outputs.push(output);
-                }
-            }
-        }
-
-        return outputs;
-    }
-
-    async displayResults(result, markAsSolvedIfPassed = false) {
-        this.testResults.style.display = 'flex';
-        this.resultsList.style.display = 'block';
-        this.expandResults.textContent = '▼';
-        this.resultsList.innerHTML = '';
-
-        // Summary
-        const allPassed = result.passed === result.total;
-        this.resultsSummary.textContent = `${result.passed}/${result.total} tests passed`;
-        this.resultsSummary.className = allPassed ? 'passed' : 'failed';
-
-        // Individual results
-        result.results.forEach((r, i) => {
-            const item = document.createElement('div');
-            item.className = `result-item ${r.passed ? 'pass' : 'fail'}`;
-
-            if (r.passed) {
-                item.innerHTML = `<span class="result-status">${iconHtml('check', 14)} Test case ${i + 1} passed</span>`;
-            } else {
-                let html = `<span class="result-status">${iconHtml('x-circle', 14)} Test case ${i + 1} failed</span>`;
-
-                if (r.input) {
-                    html += `<div class="result-input">Input: ${this.escapeHtml(r.input)}</div>`;
-                }
-
-                if (r.expected && r.expected !== 'N/A') {
-                    html += `<div class="result-expected">Expected: ${this.escapeHtml(r.expected)}</div>`;
-                }
-
-                if (r.actual) {
-                    html += `<div class="result-actual">Actual: ${this.escapeHtml(r.actual)}</div>`;
-                }
-
-                if (r.error) {
-                    html += `<div class="result-error">Error: ${this.escapeHtml(r.error)}</div>`;
-                }
-
-                item.innerHTML = html;
-            }
-
-            this.resultsList.appendChild(item);
-        });
-
-        // Auto-mark as solved if all tests passed and this is a submission
-        if (allPassed && markAsSolvedIfPassed && !this.currentProblem.solved) {
-            await this.markAsSolved();
-        }
-    }
-
-    async markAsSolved() {
-        if (!this.currentProblem) return;
-
-        const problemId = this.currentProblem.id || this.currentProblem.frontend_id;
-        const code = this.getEditorValue();
-
-        try {
-            await fetch('/api/progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'mark_solved',
-                    problem_id: problemId,
-                    code: code
-                })
-            });
-
-            // Update local state
-            this.currentProblem.solved = true;
-
-            // Hide draft badge when marking solved
-            if (this.draftBadge) this.draftBadge.style.display = 'none';
-
-            // Update problem in list if it exists
-            const problem = this.problems.find(p => String(p.id) === String(problemId));
-            if (problem) {
-                problem.solved = true;
-                this.filterProblems(); // Refresh list to show checkmark
-            }
-
-            this.updateSolvedButton(true);
-
-            // Notify roadmap of progress change
-            if (this.roadmap) {
-                this.roadmap.updateProgress();
-            }
-
-            this.showToast('Problem marked as solved!', 'success');
-
-        } catch (error) {
-            console.error('Failed to mark as solved:', error);
-        }
-    }
-
-    updateSolvedButton(isSolved) {
-        if (isSolved) {
-            this.solvedBtn.classList.add('solved');
-            this.solvedBtn.textContent = ''; // Clear text
-            this.solvedBtn.innerHTML = iconHtml('check', 16);
-            if (window.lucide) lucide.createIcons();
-            this.solvedBtn.title = 'Problem solved';
+        const codeMatch = solutionText.match(/```(?:python)?\n([\s\S]*?)```/i);
+        if (codeMatch) {
+          this._lastAiCode = codeMatch[1].trim();
         } else {
-            this.solvedBtn.classList.remove('solved');
-            this.solvedBtn.textContent = '';
-            this.solvedBtn.title = 'Not solved';
-        }
-    }
-
-    openSettings() {
-        this.apiKeyInput.value = this.apiKey || '';
-        this.settingsModal.style.display = 'flex';
-    }
-
-    closeSettings() {
-        this.settingsModal.style.display = 'none';
-    }
-
-    saveApiKey() {
-        const key = this.apiKeyInput.value.trim();
-        if (key) {
-            this.apiKey = key;
-            localStorage.setItem('openrouter_api_key', key);
-            this.closeSettings();
-            this.showToast('API key saved', 'success');
-        }
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    isProblemSolved(problemId) {
-        // Check if problem is in the solved list
-        const pid = String(problemId);
-        return this.problems.some(p => String(p.id) === pid && p.solved);
-    }
-
-    async getNextHint() {
-        if (!this.currentProblem) return;
-
-        const nextLevel = this.hintLevel + 1;
-        if (nextLevel > 3) {
-            // All hints revealed — re-open modal showing hint 3
-            if (this.currentHints[2]) {
-                this.showHintModal(this.currentHints[2], 3);
-            } else {
-                this.showToast('All 3 hints have already been revealed', 'info');
-            }
-            return;
+          this._lastAiCode = solutionText;
         }
 
-        this.hintBtn.disabled = true;
-        const hintIcon = this.hintBtn.querySelector('.btn-icon');
-        if (hintIcon) {
-            hintIcon.outerHTML = iconHtml('refresh-cw', 14, 'btn-icon spin');
-        }
+        this._currentProblemTitle = problemTitle;
 
-        // Open modal immediately with a skeleton so it feels instant
-        const modal = document.getElementById('hintModal');
-        document.getElementById('hintModalContent').innerHTML = this.getHintSkeleton();
-        this.viewingHintLevel = nextLevel;
-        this.updateHintDots();
-        this.updateHintNavButtons();
-        modal.style.display = 'flex';
-
-        try {
-            await this._fetchHintAtLevel(nextLevel, false);
-        } finally {
-            this.hintBtn.disabled = false;
-            // Reset the hint button icon
-            const btnIcon = this.hintBtn.querySelector('.btn-icon') || this.hintBtn.querySelector('[data-lucide]');
-            if (btnIcon) {
-                btnIcon.outerHTML = iconHtml('lightbulb', 14, 'btn-icon');
-            }
-            if (window.lucide) lucide.createIcons();
+        const useBtn = document.getElementById("copyToEditorBtn");
+        if (useBtn && codeMatch) {
+          useBtn.style.display = "inline-flex";
         }
+      }
+    } catch (error) {
+      console.error("Failed to get AI solution:", error);
+      this.showToast(
+        "Failed to connect to AI service. Please try again.",
+        "error",
+      );
+      this.closeAIPanel();
+    } finally {
+      this.aiBtn.disabled = false;
+      this.aiBtn.innerHTML = `${iconHtml("sparkles", 14, "btn-icon")}`;
+    }
+  }
+
+  showAIPanelLoading() {
+    const aiTabBtn = document.getElementById("aiTabBtn");
+    if (aiTabBtn) aiTabBtn.style.display = "flex";
+
+    this.switchDescriptionTab("ai-solution");
+
+    const useBtn = document.getElementById("copyToEditorBtn");
+    if (useBtn) useBtn.style.display = "none";
+
+    const chatArea = document.getElementById("aiChatArea");
+    if (chatArea) {
+      chatArea.innerHTML = "";
+
+      const aiBubble = document.createElement("div");
+      aiBubble.className = "chat-bubble ai loading";
+      aiBubble.innerHTML =
+        '<span class="typing-dots"><span></span><span></span><span></span></span>';
+      chatArea.appendChild(aiBubble);
+      chatArea.scrollTop = chatArea.scrollHeight;
     }
 
-    showHintModal(hint, level) {
-        const modal = document.getElementById('hintModal');
-        const content = document.getElementById('hintModalContent');
-
-        this.viewingHintLevel = level;
-        content.innerHTML = `<div class="hint-modal-body">${this.renderHintContent(hint)}</div>`;
-        this.updateHintDots();
-        this.updateHintNavButtons();
-        modal.style.display = 'flex';
+    const useActionBtn = document.getElementById("copyToEditorBtn");
+    if (useActionBtn) {
+      useActionBtn.onclick = () => {
+        if (this._lastAiCode) {
+          this.setEditorValue(this._lastAiCode);
+          this.showToast("AI solution inserted into editor", "success");
+          this.focusEditor();
+        }
+      };
     }
 
-    async regenerateHints() {
-        if (!this.currentProblem) return;
-        this.hintLevel = 0;
-        this.viewingHintLevel = 1;
-        this.currentHints = [];
+    const askInput = document.getElementById("aiAskInput");
+    const askSend = document.getElementById("aiAskSendBtn");
+    if (askInput && askSend) {
+      askSend.onclick = () => {
+        const q = askInput.value.trim();
+        if (q) {
+          this.handleAiAsk(q);
+          askInput.value = "";
+        }
+      };
+      askInput.onkeydown = (e) => {
+        if (e.key === "Enter") askSend.click();
+      };
+    }
+  }
+
+  closeAIPanel() {
+    const aiTabBtn = document.getElementById("aiTabBtn");
+    if (aiTabBtn) aiTabBtn.style.display = "none";
+    this.switchDescriptionTab("description");
+  }
+
+  async handleAiAsk(question) {
+    if (!question) return;
+    const chatArea = document.getElementById("aiChatArea");
+    if (!chatArea) return;
+
+    // User message bubble
+    const userBubble = document.createElement("div");
+    userBubble.className = "chat-bubble user";
+    userBubble.textContent = question;
+    chatArea.appendChild(userBubble);
+
+    // AI loading bubble
+    const aiBubble = document.createElement("div");
+    aiBubble.className = "chat-bubble ai loading";
+    aiBubble.innerHTML =
+      '<span class="typing-dots"><span></span><span></span><span></span></span>';
+    chatArea.appendChild(aiBubble);
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    const codeSnippet = this._lastAiCode || "";
+    const problemTitle = this._currentProblemTitle || "";
+
+    try {
+      const response = await fetch("/api/ai/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          code_snippet: codeSnippet,
+          problem_title: problemTitle,
+        }),
+      });
+      const result = await response.json();
+
+      aiBubble.classList.remove("loading");
+      if (result.error) {
+        aiBubble.innerHTML = `<span style="color:var(--error)">${this.escapeHtml(result.error)}</span>`;
+      } else {
+        aiBubble.innerHTML = this.renderAiExplanation(result.answer || "");
+      }
+    } catch (e) {
+      aiBubble.classList.remove("loading");
+      aiBubble.innerHTML =
+        '<span style="color:var(--error)">Connection failed. Please try again.</span>';
+    }
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  renderAiExplanation(text) {
+    if (window.marked) {
+      return marked.parse(text);
+    }
+    // Fallback
+    let result = text;
+    result = result.replace(
+      /```python\n([\s\S]*?)```/g,
+      (_, code) =>
+        `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`,
+    );
+    result = result.replace(
+      /```([\s\S]*?)```/g,
+      (_, code) =>
+        `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`,
+    );
+    result = result.replace(
+      /`([^`]+)`/g,
+      '<code class="hint-inline-code">$1</code>',
+    );
+    result = result.replace(/\n/g, "<br>");
+    return result;
+  }
+
+  parseTestCases(testCasesStr) {
+    if (!testCasesStr) return [];
+
+    const cases = [];
+    const lines = testCasesStr.split("\n").filter((l) => l.trim());
+
+    // Group lines by pairs (or triples for some problems)
+    // Most LeetCode problems have 2 args per test case
+    let currentCase = [];
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+      // Remove Input: prefix if present
+      let input = trimmed.replace(/^Input:\s*/i, "");
+
+      // Extract output if present
+      if (input.includes("Output:")) {
+        const parts = input.split("Output:");
+        input = parts[0].trim();
+      }
+
+      currentCase.push(input);
+
+      // Group by 2 lines (most common pattern)
+      if (currentCase.length >= 2) {
+        cases.push(currentCase);
+        currentCase = [];
+      }
+    });
+
+    // Handle remaining lines
+    if (currentCase.length > 0) {
+      cases.push(currentCase);
+    }
+
+    return cases.length > 0 ? cases : [["None"]];
+  }
+
+  extractExpectedOutputs(content) {
+    // Extract expected outputs from problem content HTML
+    const outputs = [];
+
+    // Match patterns like "Output: [0,1]" or "<strong>Output:</strong> [0,1]"
+    const outputPatterns = [
+      /Output:\s*([^\n<]+)/gi,
+      /<strong>Output:<\/strong>\s*([^\n<]+)/gi,
+    ];
+
+    for (const pattern of outputPatterns) {
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        const output = match[1].trim();
+        if (output && !outputs.includes(output)) {
+          outputs.push(output);
+        }
+      }
+    }
+
+    return outputs;
+  }
+
+  async displayResults(result, markAsSolvedIfPassed = false) {
+    this.testResults.style.display = "flex";
+    this.resultsList.style.display = "block";
+    this.expandResults.textContent = "▼";
+    this.resultsList.innerHTML = "";
+
+    // Summary
+    const allPassed = result.passed === result.total;
+    this.resultsSummary.textContent = `${result.passed}/${result.total} tests passed`;
+    this.resultsSummary.className = allPassed ? "passed" : "failed";
+
+    // Individual results
+    result.results.forEach((r, i) => {
+      const item = document.createElement("div");
+      item.className = `result-item ${r.passed ? "pass" : "fail"}`;
+
+      if (r.passed) {
+        item.innerHTML = `<span class="result-status">${iconHtml("check", 14)} Test case ${i + 1} passed</span>`;
+      } else {
+        let html = `<span class="result-status">${iconHtml("x-circle", 14)} Test case ${i + 1} failed</span>`;
+
+        if (r.input) {
+          html += `<div class="result-input">Input: ${this.escapeHtml(r.input)}</div>`;
+        }
+
+        if (r.expected && r.expected !== "N/A") {
+          html += `<div class="result-expected">Expected: ${this.escapeHtml(r.expected)}</div>`;
+        }
+
+        if (r.actual) {
+          html += `<div class="result-actual">Actual: ${this.escapeHtml(r.actual)}</div>`;
+        }
+
+        if (r.error) {
+          html += `<div class="result-error">Error: ${this.escapeHtml(r.error)}</div>`;
+        }
+
+        item.innerHTML = html;
+      }
+
+      this.resultsList.appendChild(item);
+    });
+
+    // Auto-mark as solved if all tests passed and this is a submission
+    if (allPassed && markAsSolvedIfPassed && !this.currentProblem.solved) {
+      await this.markAsSolved();
+    }
+  }
+
+  async markAsSolved() {
+    if (!this.currentProblem) return;
+
+    const problemId = this.currentProblem.id || this.currentProblem.frontend_id;
+    const code = this.getEditorValue();
+
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "mark_solved",
+          problem_id: problemId,
+          code: code,
+        }),
+      });
+
+      // Update local state
+      this.currentProblem.solved = true;
+
+      // Hide draft badge when marking solved
+      if (this.draftBadge) this.draftBadge.style.display = "none";
+
+      // Update problem in list if it exists
+      const problem = this.problems.find(
+        (p) => String(p.id) === String(problemId),
+      );
+      if (problem) {
+        problem.solved = true;
+        this.filterProblems(); // Refresh list to show checkmark
+      }
+
+      this.updateSolvedButton(true);
+
+      // Notify roadmap of progress change
+      if (this.roadmap) {
+        this.roadmap.updateProgress();
+      }
+
+      this.showToast("Problem marked as solved!", "success");
+    } catch (error) {
+      console.error("Failed to mark as solved:", error);
+    }
+  }
+
+  updateSolvedButton(isSolved) {
+    if (isSolved) {
+      this.solvedBtn.classList.add("solved");
+      this.solvedBtn.textContent = ""; // Clear text
+      this.solvedBtn.innerHTML = iconHtml("check", 16);
+      if (window.lucide) lucide.createIcons();
+      this.solvedBtn.title = "Problem solved";
+    } else {
+      this.solvedBtn.classList.remove("solved");
+      this.solvedBtn.textContent = "";
+      this.solvedBtn.title = "Not solved";
+    }
+  }
+
+  openSettings() {
+    this.apiKeyInput.value = this.apiKey || "";
+    this.settingsModal.style.display = "flex";
+  }
+
+  closeSettings() {
+    this.settingsModal.style.display = "none";
+  }
+
+  saveApiKey() {
+    const key = this.apiKeyInput.value.trim();
+    if (key) {
+      this.apiKey = key;
+      localStorage.setItem("openrouter_api_key", key);
+      this.closeSettings();
+      this.showToast("API key saved", "success");
+    }
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  isProblemSolved(problemId) {
+    // Check if problem is in the solved list
+    const pid = String(problemId);
+    return this.problems.some((p) => String(p.id) === pid && p.solved);
+  }
+
+  async getNextHint() {
+    if (!this.currentProblem) return;
+
+    const nextLevel = this.hintLevel + 1;
+    if (nextLevel > 3) {
+      // All hints revealed — re-open modal showing hint 3
+      if (this.currentHints[2]) {
+        this.showHintModal(this.currentHints[2], 3);
+      } else {
+        this.showToast("All 3 hints have already been revealed", "info");
+      }
+      return;
+    }
+
+    this.hintBtn.disabled = true;
+    const hintIcon = this.hintBtn.querySelector(".btn-icon");
+    if (hintIcon) {
+      hintIcon.outerHTML = iconHtml("refresh-cw", 14, "btn-icon spin");
+    }
+
+    // Open modal immediately with a skeleton so it feels instant
+    const modal = document.getElementById("hintModal");
+    document.getElementById("hintModalContent").innerHTML =
+      this.getHintSkeleton();
+    this.viewingHintLevel = nextLevel;
+    this.updateHintDots();
+    this.updateHintNavButtons();
+    modal.style.display = "flex";
+
+    try {
+      await this._fetchHintAtLevel(nextLevel, false);
+    } finally {
+      this.hintBtn.disabled = false;
+      // Reset the hint button icon
+      const btnIcon =
+        this.hintBtn.querySelector(".btn-icon") ||
+        this.hintBtn.querySelector("[data-lucide]");
+      if (btnIcon) {
+        btnIcon.outerHTML = iconHtml("lightbulb", 14, "btn-icon");
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+
+  showHintModal(hint, level) {
+    const modal = document.getElementById("hintModal");
+    const content = document.getElementById("hintModalContent");
+
+    this.viewingHintLevel = level;
+    content.innerHTML = `<div class="hint-modal-body">${this.renderHintContent(hint)}</div>`;
+    this.updateHintDots();
+    this.updateHintNavButtons();
+    modal.style.display = "flex";
+  }
+
+  async regenerateHints() {
+    if (!this.currentProblem) return;
+    this.hintLevel = 0;
+    this.viewingHintLevel = 1;
+    this.currentHints = [];
+    this.updateHintButton();
+    document.getElementById("hintModalContent").innerHTML =
+      this.getHintSkeleton();
+    await this._fetchHintAtLevel(1, true);
+  }
+
+  renderHintContent(text) {
+    // Convert markdown code blocks to HTML
+    let result = text;
+
+    // Replace code blocks with pre/code tags
+    result = result.replace(/```python\n([\s\S]*?)```/g, (match, code) => {
+      return `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`;
+    });
+
+    result = result.replace(/```\n([\s\S]*?)```/g, (match, code) => {
+      return `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`;
+    });
+
+    // Replace inline code with code tags
+    result = result.replace(
+      /`([^`]+)`/g,
+      '<code class="hint-inline-code">$1</code>',
+    );
+
+    // Convert newlines to <br> for non-code text
+    result = result.replace(/\n/g, "<br>");
+
+    return result;
+  }
+
+  clearHints() {
+    this.hintLevel = 0;
+    this.currentHints = [];
+  }
+
+  async regenerateCurrentHint() {
+    if (!this.currentProblem) return;
+    const level = this.viewingHintLevel || 1;
+    // Clear cached hint for this level so it will be re-fetched
+    this.currentHints[level - 1] = "";
+    document.getElementById("hintModalContent").innerHTML =
+      this.getHintSkeleton();
+    const btn = document.getElementById("hintNewAngleBtn");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `${iconHtml("refresh-cw", 14, "spin")} Generating…`;
+      if (window.lucide) lucide.createIcons();
+    }
+    try {
+      await this._fetchHintAtLevel(level, true);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `${iconHtml("refresh-cw", 12)} New Angle`;
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+  }
+
+  navigateToPrevHint() {
+    if (this.viewingHintLevel <= 1) return;
+    const newLevel = this.viewingHintLevel - 1;
+    if (this.currentHints[newLevel - 1]) {
+      this.viewingHintLevel = newLevel;
+      this.showHintModal(this.currentHints[newLevel - 1], newLevel);
+    }
+  }
+
+  async navigateToNextHint() {
+    const newLevel = this.viewingHintLevel + 1;
+    if (newLevel > 3) return;
+
+    if (this.currentHints[newLevel - 1]) {
+      // Already fetched — just show it
+      this.viewingHintLevel = newLevel;
+      this.showHintModal(this.currentHints[newLevel - 1], newLevel);
+    } else {
+      // Need to fetch
+      document.getElementById("hintModalContent").innerHTML =
+        this.getHintSkeleton();
+      this.viewingHintLevel = newLevel;
+      this.updateHintDots();
+      this.updateHintNavButtons();
+      const btn = document.getElementById("hintNextBtn");
+      if (btn) btn.disabled = true;
+      try {
+        await this._fetchHintAtLevel(newLevel, false);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+  }
+
+  applyHintToEditor() {
+    const level = this.viewingHintLevel;
+    const hint = this.currentHints[level - 1];
+    if (!hint) return;
+
+    // Extract raw code without markdown fences
+    let code = hint;
+    const fenced = hint.match(/```(?:python)?\n([\s\S]*?)```/);
+    if (fenced) {
+      code = fenced[1].trim();
+    }
+
+    this.setEditorValue(code);
+    this.focusEditor();
+    document.getElementById("hintModal").style.display = "none";
+    this.showToast("Hint inserted into editor", "success");
+  }
+
+  resetCode() {
+    if (!this.currentProblem) return;
+    if (
+      !confirm("Reset editor to starter code? Your current code will be lost.")
+    )
+      return;
+    this.loadStarterCode(this.currentProblem);
+    if (this.draftBadge) this.draftBadge.style.display = "none";
+    this.showToast("Editor reset to starter code", "info");
+  }
+
+  async _fetchHintAtLevel(level, regenerate) {
+    if (!this.currentProblem) return;
+    const problemId = String(
+      this.currentProblem.id || this.currentProblem.frontend_id,
+    );
+    const problemTitle = this.currentProblem.title || "";
+    const problemDescription = (
+      this.currentProblem.content ||
+      this.currentProblem.description ||
+      ""
+    ).substring(0, 3000);
+    const snippets = this.currentProblem.code_snippets || [];
+    const pythonSnippet = snippets.find(
+      (s) => s.lang === "python3" || s.lang === "python",
+    );
+    const starterCode = pythonSnippet ? pythonSnippet.code : "";
+
+    try {
+      const response = await fetch("/api/hints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problem_id: problemId,
+          hint_level: level,
+          regenerate,
+          problem_title: problemTitle,
+          problem_description: problemDescription,
+          starter_code: starterCode,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        this.showToast(
+          `Hint error: server returned ${response.status}`,
+          "error",
+        );
+        document.getElementById("hintModalContent").innerHTML =
+          `<div class="hint-modal-body" style="color:var(--error)">Failed to load hint. Please try again.</div>`;
+        return;
+      }
+
+      const result = await response.json();
+      if (result.error) {
+        this.showToast("Hint error: " + result.error, "error");
+        document.getElementById("hintModalContent").innerHTML =
+          `<div class="hint-modal-body" style="color:var(--error)">${this.escapeHtml(result.error)}</div>`;
+        return;
+      }
+
+      if (result.hint) {
+        // Track max fetched level
+        if (level > this.hintLevel) this.hintLevel = level;
+        while (this.currentHints.length < level) this.currentHints.push("");
+        this.currentHints[level - 1] = result.hint;
         this.updateHintButton();
-        document.getElementById('hintModalContent').innerHTML = this.getHintSkeleton();
-        await this._fetchHintAtLevel(1, true);
-    }
 
-    renderHintContent(text) {
-        // Convert markdown code blocks to HTML
-        let result = text;
-
-        // Replace code blocks with pre/code tags
-        result = result.replace(/```python\n([\s\S]*?)```/g, (match, code) => {
-            return `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`;
-        });
-
-        result = result.replace(/```\n([\s\S]*?)```/g, (match, code) => {
-            return `<pre class="hint-code-block"><code>${this.escapeHtml(code.trim())}</code></pre>`;
-        });
-
-        // Replace inline code with code tags
-        result = result.replace(/`([^`]+)`/g, '<code class="hint-inline-code">$1</code>');
-
-        // Convert newlines to <br> for non-code text
-        result = result.replace(/\n/g, '<br>');
-
-        return result;
-    }
-
-    clearHints() {
-        this.hintLevel = 0;
-        this.currentHints = [];
-    }
-
-    async regenerateCurrentHint() {
-        if (!this.currentProblem) return;
-        const level = this.viewingHintLevel || 1;
-        // Clear cached hint for this level so it will be re-fetched
-        this.currentHints[level - 1] = '';
-        document.getElementById('hintModalContent').innerHTML = this.getHintSkeleton();
-        const btn = document.getElementById('hintNewAngleBtn');
-        if (btn) { btn.disabled = true; btn.innerHTML = `${iconHtml('refresh-cw', 14, 'spin')} Generating…`; if (window.lucide) lucide.createIcons(); }
-        try {
-            await this._fetchHintAtLevel(level, true);
-        } finally {
-            if (btn) { btn.disabled = false; btn.innerHTML = `${iconHtml('refresh-cw', 12)} New Angle`; if (window.lucide) lucide.createIcons(); }
+        // Render in the open modal
+        const content = document.getElementById("hintModalContent");
+        if (content) {
+          content.innerHTML = `<div class="hint-modal-body">${this.renderHintContent(result.hint)}</div>`;
         }
+        this.viewingHintLevel = level;
+        this.updateHintDots();
+        this.updateHintNavButtons();
+      }
+    } catch (error) {
+      console.error("Failed to get hint:", error);
+      this.showToast("Failed to connect to hint service", "error");
+      document.getElementById("hintModalContent").innerHTML =
+        `<div class="hint-modal-body" style="color:var(--error)">Connection failed. Please try again.</div>`;
+    }
+  }
+
+  updateHintButton() {
+    if (!this.hintBadge) return;
+    if (this.hintLevel > 0) {
+      this.hintBadge.textContent = `${this.hintLevel}/3`;
+      this.hintBadge.style.display = "";
+    } else {
+      this.hintBadge.style.display = "none";
+    }
+  }
+
+  updateHintDots() {
+    const dots = document.querySelectorAll("#hintProgressDots .hint-dot");
+    dots.forEach((dot) => {
+      const dotLevel = parseInt(dot.dataset.level, 10);
+      dot.classList.toggle(
+        "revealed",
+        dotLevel <= this.hintLevel && dotLevel !== this.viewingHintLevel,
+      );
+      dot.classList.toggle("active", dotLevel === this.viewingHintLevel);
+    });
+  }
+
+  updateHintNavButtons() {
+    const prevBtn = document.getElementById("hintPrevBtn");
+    const nextBtn = document.getElementById("hintNextBtn");
+    const insertBtn = document.getElementById("hintInsertBtn");
+
+    if (prevBtn) prevBtn.disabled = this.viewingHintLevel <= 1;
+
+    if (nextBtn) {
+      const isLastLevel = this.viewingHintLevel >= 3;
+      nextBtn.disabled = isLastLevel;
+      nextBtn.innerHTML = isLastLevel
+        ? "Max hints reached"
+        : `Next Hint ${iconHtml("arrow-right", 12)}`;
     }
 
-    navigateToPrevHint() {
-        if (this.viewingHintLevel <= 1) return;
-        const newLevel = this.viewingHintLevel - 1;
-        if (this.currentHints[newLevel - 1]) {
-            this.viewingHintLevel = newLevel;
-            this.showHintModal(this.currentHints[newLevel - 1], newLevel);
-        }
+    if (insertBtn) {
+      const hasCode = this.currentHints[this.viewingHintLevel - 1];
+      insertBtn.disabled = !hasCode || !this.editorExists();
     }
+  }
 
-    async navigateToNextHint() {
-        const newLevel = this.viewingHintLevel + 1;
-        if (newLevel > 3) return;
-
-        if (this.currentHints[newLevel - 1]) {
-            // Already fetched — just show it
-            this.viewingHintLevel = newLevel;
-            this.showHintModal(this.currentHints[newLevel - 1], newLevel);
-        } else {
-            // Need to fetch
-            document.getElementById('hintModalContent').innerHTML = this.getHintSkeleton();
-            this.viewingHintLevel = newLevel;
-            this.updateHintDots();
-            this.updateHintNavButtons();
-            const btn = document.getElementById('hintNextBtn');
-            if (btn) btn.disabled = true;
-            try {
-                await this._fetchHintAtLevel(newLevel, false);
-            } finally {
-                if (btn) btn.disabled = false;
-            }
-        }
-    }
-
-    applyHintToEditor() {
-        const level = this.viewingHintLevel;
-        const hint = this.currentHints[level - 1];
-        if (!hint) return;
-
-        // Extract raw code without markdown fences
-        let code = hint;
-        const fenced = hint.match(/```(?:python)?\n([\s\S]*?)```/);
-        if (fenced) {
-            code = fenced[1].trim();
-        }
-
-        this.setEditorValue(code);
-        this.focusEditor();
-        document.getElementById('hintModal').style.display = 'none';
-        this.showToast('Hint inserted into editor', 'success');
-    }
-
-    resetCode() {
-        if (!this.currentProblem) return;
-        if (!confirm('Reset editor to starter code? Your current code will be lost.')) return;
-        this.loadStarterCode(this.currentProblem);
-        if (this.draftBadge) this.draftBadge.style.display = 'none';
-        this.showToast('Editor reset to starter code', 'info');
-    }
-
-    async _fetchHintAtLevel(level, regenerate) {
-        if (!this.currentProblem) return;
-        const problemId = String(this.currentProblem.id || this.currentProblem.frontend_id);
-        const problemTitle = this.currentProblem.title || '';
-        const problemDescription = (this.currentProblem.content || this.currentProblem.description || '').substring(0, 3000);
-        const snippets = this.currentProblem.code_snippets || [];
-        const pythonSnippet = snippets.find(s => s.lang === 'python3' || s.lang === 'python');
-        const starterCode = pythonSnippet ? pythonSnippet.code : '';
-
-        try {
-            const response = await fetch('/api/hints', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    problem_id: problemId,
-                    hint_level: level,
-                    regenerate,
-                    problem_title: problemTitle,
-                    problem_description: problemDescription,
-                    starter_code: starterCode
-                })
-            });
-
-            if (!response.ok) {
-                const err = await response.text();
-                this.showToast(`Hint error: server returned ${response.status}`, 'error');
-                document.getElementById('hintModalContent').innerHTML =
-                    `<div class="hint-modal-body" style="color:var(--error)">Failed to load hint. Please try again.</div>`;
-                return;
-            }
-
-            const result = await response.json();
-            if (result.error) {
-                this.showToast('Hint error: ' + result.error, 'error');
-                document.getElementById('hintModalContent').innerHTML =
-                    `<div class="hint-modal-body" style="color:var(--error)">${this.escapeHtml(result.error)}</div>`;
-                return;
-            }
-
-            if (result.hint) {
-                // Track max fetched level
-                if (level > this.hintLevel) this.hintLevel = level;
-                while (this.currentHints.length < level) this.currentHints.push('');
-                this.currentHints[level - 1] = result.hint;
-                this.updateHintButton();
-
-                // Render in the open modal
-                const content = document.getElementById('hintModalContent');
-                if (content) {
-                    content.innerHTML = `<div class="hint-modal-body">${this.renderHintContent(result.hint)}</div>`;
-                }
-                this.viewingHintLevel = level;
-                this.updateHintDots();
-                this.updateHintNavButtons();
-            }
-        } catch (error) {
-            console.error('Failed to get hint:', error);
-            this.showToast('Failed to connect to hint service', 'error');
-            document.getElementById('hintModalContent').innerHTML =
-                `<div class="hint-modal-body" style="color:var(--error)">Connection failed. Please try again.</div>`;
-        }
-    }
-
-    updateHintButton() {
-        if (!this.hintBadge) return;
-        if (this.hintLevel > 0) {
-            this.hintBadge.textContent = `${this.hintLevel}/3`;
-            this.hintBadge.style.display = '';
-        } else {
-            this.hintBadge.style.display = 'none';
-        }
-    }
-
-    updateHintDots() {
-        const dots = document.querySelectorAll('#hintProgressDots .hint-dot');
-        dots.forEach(dot => {
-            const dotLevel = parseInt(dot.dataset.level, 10);
-            dot.classList.toggle('revealed', dotLevel <= this.hintLevel && dotLevel !== this.viewingHintLevel);
-            dot.classList.toggle('active', dotLevel === this.viewingHintLevel);
-        });
-    }
-
-    updateHintNavButtons() {
-        const prevBtn = document.getElementById('hintPrevBtn');
-        const nextBtn = document.getElementById('hintNextBtn');
-        const insertBtn = document.getElementById('hintInsertBtn');
-
-        if (prevBtn) prevBtn.disabled = this.viewingHintLevel <= 1;
-
-        if (nextBtn) {
-            const isLastLevel = this.viewingHintLevel >= 3;
-            nextBtn.disabled = isLastLevel;
-            nextBtn.innerHTML = isLastLevel ? 'Max hints reached' : `Next Hint ${iconHtml('arrow-right', 12)}`;
-        }
-
-        if (insertBtn) {
-            const hasCode = this.currentHints[this.viewingHintLevel - 1];
-            insertBtn.disabled = !hasCode || !this.editorExists();
-        }
-    }
-
-    getHintSkeleton() {
-        return `<div class="hint-skeleton">
+  getHintSkeleton() {
+    return `<div class="hint-skeleton">
             <div class="hint-skeleton-line"></div>
             <div class="hint-skeleton-line"></div>
             <div class="hint-skeleton-line"></div>
             <div class="hint-skeleton-line"></div>
             <div class="hint-skeleton-line"></div>
         </div>`;
-    }
+  }
 
-    showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
+  showToast(message, type = "info") {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
 
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
 
-        const icons = { info: 'info', success: 'check-circle', error: 'x-circle', warning: 'alert-triangle' };
-        toast.innerHTML = `<i data-lucide="${icons[type] || 'info'}" class="icon-sm"></i><span>${this.escapeHtml(message)}</span>`;
-        container.appendChild(toast);
-        if (window.lucide) lucide.createIcons();
+    const icons = {
+      info: "info",
+      success: "check-circle",
+      error: "x-circle",
+      warning: "alert-triangle",
+    };
+    toast.innerHTML = `<i data-lucide="${icons[type] || "info"}" class="icon-sm"></i><span>${this.escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+    if (window.lucide) lucide.createIcons();
 
-        // Auto-remove
-        const remove = () => {
-            toast.classList.add('toast-hiding');
-            toast.addEventListener('animationend', () => toast.remove(), { once: true });
-        };
-        setTimeout(remove, type === 'error' ? 5000 : 3000);
-    }
+    // Auto-remove
+    const remove = () => {
+      toast.classList.add("toast-hiding");
+      toast.addEventListener("animationend", () => toast.remove(), {
+        once: true,
+      });
+    };
+    setTimeout(remove, type === "error" ? 5000 : 3000);
+  }
 }
 
 // Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    new LeetCodeApp();
+document.addEventListener("DOMContentLoaded", () => {
+  new LeetCodeApp();
 });
