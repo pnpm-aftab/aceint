@@ -1253,6 +1253,19 @@ class QuizManager {
       ? this.app.escapeHtml(question.difficulty)
       : "";
 
+    const syntaxTipHtml = question.syntax_tip
+      ? `
+            <div class="quiz-syntax-tip">
+                <div class="quiz-syntax-tip-header">
+                    ${iconHtml("lightbulb", 12, "btn-icon")} Syntax Tip
+                </div>
+                <div class="quiz-syntax-tip-content">
+                    ${this.formatQuizQuestion(question.syntax_tip)}
+                </div>
+            </div>
+        `
+      : "";
+
     card.innerHTML = `
             <div class="quiz-question-header">
                 <span class="quiz-question-number">Question ${index + 1}</span>
@@ -1261,6 +1274,7 @@ class QuizManager {
             ${objectiveText ? `<div class="quiz-question-objective"><strong>Objective:</strong> ${objectiveText}</div>` : ""}
             ${difficultyText ? `<div class="quiz-question-difficulty"><strong>Difficulty:</strong> ${difficultyText}</div>` : ""}
             <div class="quiz-question-text">${this.formatQuizQuestion(question.question)}</div>
+            ${syntaxTipHtml}
             <div class="quiz-options">
                 ${optionsHtml}
             </div>
@@ -1277,18 +1291,71 @@ class QuizManager {
   }
 
   selectAnswer(questionIndex, optionIndex) {
+    const question = this.currentQuiz.questions[questionIndex];
+    const isCorrect = optionIndex === question.correct_index;
+
     this.userAnswers[questionIndex] = optionIndex;
 
     // Update UI
     const questionCard = document.querySelector(
       `.quiz-question-card[data-index="${questionIndex}"]`,
     );
-    if (questionCard) {
-      questionCard.querySelectorAll(".quiz-option").forEach((opt, idx) => {
-        opt.classList.toggle("selected", idx === optionIndex);
-        opt.querySelector("input").checked = idx === optionIndex;
+    if (!questionCard) return;
+
+    // Add "answered" class
+    questionCard.classList.add("answered");
+
+    // Remove existing explanation if any
+    const existingExplanation = questionCard.querySelector(".quiz-explanation");
+    if (existingExplanation) existingExplanation.remove();
+
+    // Update options UI
+    questionCard.querySelectorAll(".quiz-option").forEach((opt, idx) => {
+      const isSelected = idx === optionIndex;
+      // Only change selected state for the current click
+      if (isSelected) {
+        opt.classList.add("selected");
+        const input = opt.querySelector("input");
+        if (input) input.checked = true;
+        
+        // Mark as correct or incorrect
+        opt.classList.add(isCorrect ? "correct" : "incorrect");
+        opt.classList.remove(isCorrect ? "incorrect" : "correct");
+      } else {
+        // For other options, if they were already marked incorrect, keep them
+        // otherwise just remove selected state
+        opt.classList.remove("selected");
+      }
+    });
+
+    // Show explanation
+    const explanationDiv = document.createElement("div");
+    explanationDiv.className = `quiz-explanation ${isCorrect ? "correct" : "incorrect"}`;
+    explanationDiv.innerHTML = `
+        <strong>${isCorrect ? `${iconHtml("check", 14)} Correct!` : `${iconHtml("x-circle", 14)} Incorrect`}</strong>
+        <p>${this.app.escapeHtml(question.explanation)}</p>
+    `;
+    questionCard.appendChild(explanationDiv);
+
+    // Update buttons
+    const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+    const submitQuizBtn = document.getElementById("submitQuizBtn");
+
+    if (isCorrect) {
+      if (nextQuestionBtn) nextQuestionBtn.disabled = false;
+      if (submitQuizBtn) submitQuizBtn.disabled = false;
+
+      // Lock other options once correct answer is found
+      questionCard.querySelectorAll('input[type="radio"]').forEach((input) => {
+        input.disabled = true;
       });
+    } else {
+      // Still disable Next button if wrong
+      if (nextQuestionBtn) nextQuestionBtn.disabled = true;
+      if (submitQuizBtn) submitQuizBtn.disabled = true;
     }
+
+    if (window.lucide) lucide.createIcons();
   }
 
   async submitQuiz() {
@@ -1297,49 +1364,18 @@ class QuizManager {
     const questions = this.currentQuiz.questions;
     let correctCount = 0;
 
-    // Calculate score
+    // In this new mode, they must get everything right to finish,
+    // but we'll count based on their final answers (which should all be correct)
     questions.forEach((question, index) => {
       const userAnswer = this.userAnswers[index];
       const isCorrect = userAnswer === question.correct_index;
       if (isCorrect) correctCount++;
-
-      // Update UI to show correct/incorrect
-      const questionCard = document.querySelector(
-        `.quiz-question-card[data-index="${index}"]`,
-      );
-      if (questionCard) {
-        questionCard.classList.add("answered");
-
-        // Only highlight selected option if user answered this question
-        if (userAnswer !== undefined) {
-          const selectedOption =
-            questionCard.querySelectorAll(".quiz-option")[userAnswer];
-          if (selectedOption) {
-            selectedOption.classList.add(isCorrect ? "correct" : "incorrect");
-
-            // Show explanation
-            const explanationDiv = document.createElement("div");
-            explanationDiv.className = `quiz-explanation ${isCorrect ? "correct" : "incorrect"}`;
-            explanationDiv.innerHTML = `
-                            <strong>${isCorrect ? `${iconHtml("check", 14)} Correct!` : `${iconHtml("x-circle", 14)} Incorrect`}</strong>
-                            <p>${this.app.escapeHtml(question.explanation)}</p>
-                        `;
-            questionCard.appendChild(explanationDiv);
-          }
-        }
-
-        // Disable options
-        questionCard
-          .querySelectorAll('input[type="radio"]')
-          .forEach((input) => {
-            input.disabled = true;
-          });
-      }
     });
 
     // Show results
     this.showResults(correctCount, questions.length);
   }
+
 
   showResults(correctCount, totalQuestions) {
     const quizResultsArea = document.getElementById("quizResultsArea");
@@ -1360,16 +1396,19 @@ class QuizManager {
 
     // Calculate percentage safely (avoid division by zero)
     const percentage =
-      totalQuestions > 0
-        ? Math.round((correctCount / totalQuestions) * 100)
-        : 0;
+      totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
     const checklistByStage = {
-      understanding: "Restate input/output in your own words before coding.",
-      pattern: "Commit to one pattern + data structure before writing loops.",
-      invariant: "Write the key invariant as a comment above your loop.",
-      implementation: "Outline exact step order, then fill code top-down.",
-      edge_case: "Run manual checks: empty/single/boundary/duplicate cases.",
+      input_mapping: "Confirm input ranges and special values before coding.",
+      pattern_choice: "Commit to one algorithm + data structure.",
+      initialization: "Name your variables and set initial states.",
+      control_flow: "Choose the right loop (for/while) and bounds.",
+      core_condition: "Write the primary 'if' logic first.",
+      state_update: "Update your counters/pointers carefully.",
+      ds_interaction: "Use stacks, maps, or sets correctly.",
+      edge_case_logic: "Handle empty or single inputs in-flow.",
+      termination: "Ensure the loop stops correctly.",
+      final_return: "Format the output as required.",
     };
 
     const missedItems = [];
@@ -1379,7 +1418,7 @@ class QuizManager {
       const userAnswer = this.userAnswers[index];
       const isCorrect = userAnswer === question.correct_index;
       if (!isCorrect) {
-        const stage = question.stage || "understanding";
+        const stage = question.stage || "input_mapping";
         missedStagesSet.add(stage);
         const stageTitle = stage
           .replace(/_/g, " ")
@@ -1397,7 +1436,7 @@ class QuizManager {
     const readyToCodeChecklistHtml =
       missedItems.length > 0
         ? `<div class="quiz-ready-checklist">
-                <h4>Ready-to-Code Checklist (based on missed stages)</h4>
+                <h4>Focus Areas (based on missed questions)</h4>
                 <ul>
                     ${missedItems.join("")}
                 </ul>
@@ -1405,24 +1444,46 @@ class QuizManager {
         : `<div class="quiz-ready-checklist">
                 <h4>Ready-to-Code Checklist</h4>
                 <ul>
-                    <li><strong>Understanding:</strong> You can explain exactly what output is required.</li>
-                    <li><strong>Pattern:</strong> You know which strategy/data structure to use.</li>
-                    <li><strong>Invariant:</strong> You can state what must remain true during iteration.</li>
-                    <li><strong>Implementation:</strong> You can code the steps in correct order.</li>
-                    <li><strong>Edge Cases:</strong> You can test tricky boundaries before submit.</li>
+                    <li><strong>Inputs:</strong> You've mapped concrete values/types.</li>
+                    <li><strong>Logic:</strong> You know the loop structure and conditions.</li>
+                    <li><strong>State:</strong> You've initialized pointers and results.</li>
+                    <li><strong>Edge Cases:</strong> You've addressed boundary conditions.</li>
                 </ul>
            </div>`;
+
+    // Solution Accordion HTML
+    let solutionAccordionHtml = "";
+    if (this.currentQuiz && this.currentQuiz.simplified_solution) {
+      solutionAccordionHtml = `
+            <div class="solution-accordion">
+                <div class="solution-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                    <span>${iconHtml("code", 14, "btn-icon")} Suggested Solution (Simplified)</span>
+                    ${iconHtml("chevron-down", 14)}
+                </div>
+                <div class="solution-content">
+                    <pre class="solution-code"><code>${this.app.escapeHtml(this.currentQuiz.simplified_solution)}</code></pre>
+                    <button class="btn btn-sm btn-secondary copy-solution-btn" onclick="navigator.clipboard.writeText(\`${this.currentQuiz.simplified_solution.replace(/`/g, "\\`")}\`); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy Solution', 2000)">
+                        ${iconHtml("copy", 12, "btn-icon")} Copy Solution
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 
     quizScore.innerHTML = `
             <div class="quiz-score-summary">
                 <div class="quiz-score-large">${correctCount}/${totalQuestions}</div>
                 <div class="quiz-score-percent">${percentage}%</div>
-                <p class="quiz-score-message">${percentage >= 80 ? "Excellent! You have a good understanding." : percentage >= 60 ? "Good! Keep learning." : "Review the problem and try again."}</p>
+                <p class="quiz-score-message">
+                    ${percentage === 100 ? "Perfect! You are ready to implement this solution." : "Review the areas below and then start coding."}
+                </p>
                 ${readyToCodeChecklistHtml}
+                ${solutionAccordionHtml}
             </div>
         `;
 
     quizResultsArea.style.display = "block";
+    if (window.lucide) lucide.createIcons();
 
     if (regenerateMissedQuizBtn) {
       if (this.lastMissedStages.length > 0) {
@@ -1492,14 +1553,22 @@ class QuizManager {
       this.currentQuiz.questions.length &&
       this.currentQuestionIndex >= this.currentQuiz.questions.length - 1;
 
+    // Check if current question is already answered correctly
+    const currentQuestion = this.currentQuiz ? this.currentQuiz.questions[this.currentQuestionIndex] : null;
+    const userAnswer = this.userAnswers[this.currentQuestionIndex];
+    const isCorrect = currentQuestion && userAnswer === currentQuestion.correct_index;
+
     if (prevQuestionBtn) {
       prevQuestionBtn.style.display = isFirstQuestion ? "none" : "inline-block";
     }
     if (nextQuestionBtn) {
       nextQuestionBtn.style.display = isLastQuestion ? "none" : "inline-block";
+      nextQuestionBtn.disabled = !isCorrect;
     }
     if (submitQuizBtn) {
       submitQuizBtn.style.display = isLastQuestion ? "inline-block" : "none";
+      submitQuizBtn.disabled = !isCorrect;
+      submitQuizBtn.innerHTML = `${iconHtml("check-circle", 14, "btn-icon")} Finish Quiz`;
     }
   }
 
@@ -1807,14 +1876,17 @@ class LeetCodeApp {
     this.closeResults.addEventListener("click", (e) => {
       e.stopPropagation();
       this.resultsList.style.display = "none";
-      this.expandResults.textContent = "▲";
+      this.expandResults.innerHTML = iconHtml("chevron-up", 18);
+      if (this.editorView) this.editorView.resize();
     });
 
     // Toggle results/console
     this.resultsHeader.addEventListener("click", () => {
       const isVisible = this.resultsList.style.display !== "none";
       this.resultsList.style.display = isVisible ? "none" : "block";
-      this.expandResults.textContent = isVisible ? "▲" : "▼";
+      this.expandResults.innerHTML = iconHtml(isVisible ? "chevron-up" : "chevron-down", 18);
+      if (window.lucide) lucide.createIcons();
+      if (this.editorView) this.editorView.resize();
     });
 
     // Submit button - runs tests and marks as solved if all pass
@@ -1885,6 +1957,10 @@ class LeetCodeApp {
 
       try {
         this.editorView = ace.edit("editor-main-mount");
+        
+        // Point to CDN for worker files if they aren't loading
+        ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/');
+        
         this.editorView.setTheme("ace/theme/github");
         this.editorView.session.setMode("ace/mode/python");
         this.editorView.setOptions({
@@ -1899,6 +1975,7 @@ class LeetCodeApp {
           highlightActiveLine: true,
           showGutter: true,
           behavioursEnabled: true,
+          useWorker: true,
         });
 
         // Set initial value
@@ -1925,6 +2002,11 @@ class LeetCodeApp {
           ) {
             this.draftBadge.style.display = "";
           }
+        });
+
+        // Add window resize listener
+        window.addEventListener("resize", () => {
+          if (this.editorView) this.editorView.resize();
         });
       } catch (err) {
         console.error("Failed to create Ace editor:", err);
@@ -2099,6 +2181,10 @@ class LeetCodeApp {
     this.collapseBtn.title = isCollapsed ? "Show Sidebar" : "Hide Sidebar";
     // Re-render icon for the state change
     if (window.lucide) lucide.createIcons();
+    // Resize editor after transition
+    setTimeout(() => {
+      if (this.editorView) this.editorView.resize();
+    }, 250);
   }
 
   renderProblemList(problems) {

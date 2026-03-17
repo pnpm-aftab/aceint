@@ -309,7 +309,7 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
         for i, test_input in enumerate(test_cases):
             expected = expected_outputs[i] if i < len(expected_outputs) else None
             result = self.execute_test(
-                code, test_input, i, class_name, function_name, expected
+                code, test_input, i, class_name, function_name, expected, starter
             )
             results.append(result)
 
@@ -323,12 +323,21 @@ class LeetCodeHandler(http.server.BaseHTTPRequestHandler):
         )
 
     def execute_test(
-        self, code, test_input, index, class_name, function_name, expected_output=None
+        self,
+        code,
+        test_input,
+        index,
+        class_name,
+        function_name,
+        expected_output=None,
+        starter_code=None,
     ):
         """Execute a single test case using the new runner."""
         try:
             # The test_input from the web might be a list of inputs already
-            actual = execute_code(code, test_input, class_name, function_name)
+            actual = execute_code(
+                code, test_input, class_name, function_name, starter_code
+            )
 
             # Compare output with expected
             if expected_output:
@@ -1288,11 +1297,16 @@ Output only the Python code (no ```python``` wrapper)."""
             return
 
         allowed_stages = {
-            "understanding",
-            "pattern",
-            "invariant",
-            "implementation",
-            "edge_case",
+            "input_mapping",
+            "pattern_choice",
+            "initialization",
+            "control_flow",
+            "core_condition",
+            "state_update",
+            "ds_interaction",
+            "edge_case_logic",
+            "termination",
+            "final_return",
         }
         if regenerate_stages is None:
             regenerate_stages = []
@@ -1335,63 +1349,51 @@ Output only the Python code (no ```python``` wrapper)."""
 {context_str}
 
 Task:
-Create exactly 5 multiple-choice questions that guide the user from understanding to implementation, so they are ready to code the solution afterward.
+Create exactly 10 multiple-choice questions that guide the user through the practical "flow" of implementation, from input analysis to final return.
 
 Required staged sequence (exact order):
-1. understanding: Clarify what the function must compute for concrete input/output.
-2. pattern: Identify the best algorithmic pattern/data structure.
-3. invariant: Identify the key invariant or state relationship that remains true while iterating/processing.
-4. implementation: Choose the correct next code step / code fill-in aligned to Python starter structure.
-5. edge_case: Validate behavior on tricky boundary/edge cases and confirm complexity target.
+1. input_mapping: Concrete values and expected types/bounds.
+2. pattern_choice: Selecting the high-level strategy (e.g., Sliding Window, DFS).
+3. initialization: Naming and setting up state (pointers, counters, results).
+4. control_flow: Choosing loops (for/while) and defining their range/bounds.
+5. core_condition: The primary "if" statement logic inside the loop.
+6. state_update: How variables change safely during iteration.
+7. ds_interaction: Correct usage of stacks, maps, or sets.
+8. edge_case_logic: Handling tricky inputs (empty, single-element) in-flow.
+9. termination: Ensuring the loop stops correctly.
+10. final_return: Formatting the result for the final output.
 
-Targeted regeneration mode:
-- The client may request a partial regeneration with regenerate_stages.
-- If regenerate_stages is provided and non-empty, ONLY regenerate questions whose "stage" is in regenerate_stages.
-- For stages not listed in regenerate_stages, keep existing questions unchanged from the provided existing quiz context.
-- Return a full 5-question quiz in final output (all stages present exactly once), preserving stage order above.
+Also, provide a "simplified_solution" which is a clean, well-commented Python 3 version of the solution. Use clear variable names and avoid complex one-liners.
 
 Rules:
-1. Provide exactly 5 questions (no more, no less), one per stage above, in that order.
+1. Provide exactly 10 questions (no more, no less), one per stage above, in that order.
 2. Each question must have exactly 4 options.
 3. Indicate correct answer with index (0-3).
 4. Include a concise explanation focused on how this helps coding.
-5. Keep options plausible and non-trivial.
-6. Keep wording specific to this problem (avoid generic advice).
-7. Focus on Python implementation details when relevant.
-8. For at least one question, force reasoning over a concrete mini example.
+5. Provide a "syntax_tip" which is a specific Python syntax or library tip relevant to that question.
+6. Keep options plausible and non-trivial.
+7. Keep wording specific to this problem (avoid generic advice).
+8. Focus on Python implementation details when relevant.
 9. Return strict JSON only.
 
 IMPORTANT: Return your response as valid JSON matching this exact schema:
 {{
   "questions": [
     {{
-      "stage": "understanding",
+      "stage": "input_mapping",
       "objective": "what this question unlocks for solving",
       "difficulty": "easy",
       "question": "question text here",
       "options": ["option A", "option B", "option C", "option D"],
       "correct_index": 0,
-      "explanation": "brief explanation here"
+      "explanation": "brief explanation here",
+      "syntax_tip": "a python syntax tip related to this step"
     }}
-  ]
+  ],
+  "simplified_solution": "python code here"
 }}
 
-Allowed values:
-- stage: one of ["understanding", "pattern", "invariant", "implementation", "edge_case"]
-- difficulty: one of ["easy", "medium", "hard"]
-
-Existing quiz context (if available) and requested regenerate_stages:
-{
-            json.dumps(
-                {
-                    "regenerate_stages": regenerate_stages,
-                    "existing_quiz": quizzes.get(problem_id, {}).get("questions", [])
-                    if problem_id in quizzes
-                    else [],
-                },
-                ensure_ascii=False,
-            )
-        }
+Allowed values for stage: ["input_mapping", "pattern_choice", "initialization", "control_flow", "core_condition", "state_update", "ds_interaction", "edge_case_logic", "termination", "final_return"]
 
 Do not include markdown code fences, comments, or extra text. Return ONLY the JSON."""
 
@@ -1429,19 +1431,24 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
                                 "properties": {
                                     "questions": {
                                         "type": "array",
-                                        "minItems": 5,
-                                        "maxItems": 5,
+                                        "minItems": 10,
+                                        "maxItems": 10,
                                         "items": {
                                             "type": "object",
                                             "properties": {
                                                 "stage": {
                                                     "type": "string",
                                                     "enum": [
-                                                        "understanding",
-                                                        "pattern",
-                                                        "invariant",
-                                                        "implementation",
-                                                        "edge_case",
+                                                        "input_mapping",
+                                                        "pattern_choice",
+                                                        "initialization",
+                                                        "control_flow",
+                                                        "core_condition",
+                                                        "state_update",
+                                                        "ds_interaction",
+                                                        "edge_case_logic",
+                                                        "termination",
+                                                        "final_return",
                                                     ],
                                                 },
                                                 "objective": {"type": "string"},
@@ -1462,6 +1469,7 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
                                                     "maximum": 3,
                                                 },
                                                 "explanation": {"type": "string"},
+                                                "syntax_tip": {"type": "string"},
                                             },
                                             "required": [
                                                 "stage",
@@ -1471,19 +1479,21 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
                                                 "options",
                                                 "correct_index",
                                                 "explanation",
+                                                "syntax_tip",
                                             ],
                                             "additionalProperties": False,
                                         },
-                                    }
+                                    },
+                                    "simplified_solution": {"type": "string"},
                                 },
-                                "required": ["questions"],
+                                "required": ["questions", "simplified_solution"],
                                 "additionalProperties": False,
                             },
                         },
                     },
-                    "max_tokens": 3000,
+                    "max_tokens": 4000,
                 },
-                timeout=60,
+                timeout=90,
             )
 
             if response.status_code != 200:
@@ -1540,11 +1550,16 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
                 return mapping
 
             target_stage_order = [
-                "understanding",
-                "pattern",
-                "invariant",
-                "implementation",
-                "edge_case",
+                "input_mapping",
+                "pattern_choice",
+                "initialization",
+                "control_flow",
+                "core_condition",
+                "state_update",
+                "ds_interaction",
+                "edge_case_logic",
+                "termination",
+                "final_return",
             ]
             generated_by_stage = _stage_index_map(generated_questions)
             existing_by_stage = _stage_index_map(existing_questions)
@@ -1573,6 +1588,7 @@ Do not include markdown code fences, comments, or extra text. Return ONLY the JS
             # Save quiz
             quiz_data = {
                 "questions": final_questions,
+                "simplified_solution": quiz_json.get("simplified_solution", ""),
                 "generated_at": datetime.datetime.now().isoformat(),
             }
 

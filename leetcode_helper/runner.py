@@ -213,10 +213,15 @@ def execute_code(
     test_input: Any,
     class_name: str = "Solution",
     function_name: str | None = None,
+    starter_code: str | None = None,
 ) -> Any:
     """Execute code against test input."""
     # Setup environment
     import typing
+
+    # Get the base classes
+    base_list_node = ListNode
+    base_tree_node = TreeNode
 
     safe_globals = {
         "ListNode": ListNode,
@@ -233,7 +238,10 @@ def execute_code(
     }
 
     # Execute solution code
-    exec(code, safe_globals)
+    try:
+        exec(code, safe_globals)
+    except Exception as e:
+        raise e
 
     if class_name not in safe_globals:
         raise ValueError(f"Class {class_name} not found in code")
@@ -277,6 +285,7 @@ def execute_code(
         args = [test_input]
 
     # Find the function to call
+    func = None
     if function_name and hasattr(instance, function_name):
         func = getattr(instance, function_name)
     else:
@@ -294,9 +303,48 @@ def execute_code(
     # Convert args based on type hints if possible
     import typing
     try:
-        # Use get_type_hints on the method
+        # 1. Try native type hints
         hints = typing.get_type_hints(func, globalns=safe_globals)
         
+        # 2. If no native hints, try docstring hints (common in Python 2 style snippets)
+        if not hints:
+            doc = getattr(func, "__doc__", "")
+            if doc:
+                import re
+                matches = re.findall(r":type\s+(\w+):\s+([\w\[\], ]+)", doc)
+                for p_name, p_type in matches:
+                    if "ListNode" in p_type:
+                        hints[p_name] = safe_globals.get("ListNode", ListNode)
+                    elif "TreeNode" in p_type:
+                        hints[p_name] = safe_globals.get("TreeNode", TreeNode)
+
+        # 3. If still no hints and we have starter_code, try to get hints from starter_code
+        if not hints and starter_code:
+            try:
+                starter_globals = {
+                    "ListNode": base_list_node,
+                    "TreeNode": base_tree_node,
+                    "Optional": typing.Optional,
+                    "List": typing.List,
+                    "Dict": typing.Dict,
+                    "Set": typing.Set,
+                    "Tuple": typing.Tuple,
+                    "Any": typing.Any,
+                    "Union": typing.Union,
+                    "defaultdict": defaultdict,
+                    "__builtins__": __builtins__,
+                }
+                compilable_starter = make_compilable_starter(starter_code)
+                exec(compilable_starter, starter_globals)
+                if class_name in starter_globals:
+                    s_cls = starter_globals[class_name]
+                    s_inst = s_cls()
+                    s_func = getattr(s_inst, function_name, None)
+                    if s_func:
+                        hints = typing.get_type_hints(s_func, globalns=starter_globals)
+            except Exception:
+                pass
+
         # Get the classes from safe_globals to match redefined classes in code
         env_list_node = safe_globals.get("ListNode", ListNode)
         env_tree_node = safe_globals.get("TreeNode", TreeNode)
@@ -326,20 +374,18 @@ def execute_code(
                 hint = next((t for t in args_types if t is not type(None)), Any)
 
             # Conversion based on hint
-            # We check if hint is our ListNode OR the one from the environment
-            if (hint is ListNode or hint is env_list_node) and isinstance(arg_val, list):
-                # We need to use the constructor of the class that the function expects
-                # But our list_to_list_node uses our ListNode. 
-                # Let's make a more generic converter.
+            if (hint is ListNode or hint is env_list_node or hint is base_list_node) and isinstance(arg_val, list):
                 converted_args.append(to_env_list_node(arg_val, env_list_node))
-            elif (hint is TreeNode or hint is env_tree_node) and isinstance(arg_val, list):
+            elif (hint is TreeNode or hint is env_tree_node or hint is base_tree_node) and isinstance(arg_val, list):
                 converted_args.append(to_env_tree_node(arg_val, env_tree_node))
             else:
                 converted_args.append(arg_val)
         
-        args = converted_args
+        if converted_args:
+            args = converted_args
     except Exception as e:
         # Fallback to original args if hints fail
+        print(f"Hint conversion error: {e}")
         pass
 
     # Call the function
@@ -347,10 +393,12 @@ def execute_code(
 
     # Convert results back to serializable types if they are ListNode/TreeNode
     # Use __class__.__name__ to be more resilient to redefined classes
-    if result.__class__.__name__ == "ListNode":
-        return list_node_to_list(result)
-    if result.__class__.__name__ == "TreeNode":
-        return tree_node_to_list(result)
+    if result is not None:
+        cls_name = result.__class__.__name__
+        if cls_name == "ListNode":
+            return list_node_to_list(result)
+        if cls_name == "TreeNode":
+            return tree_node_to_list(result)
 
     return result
 

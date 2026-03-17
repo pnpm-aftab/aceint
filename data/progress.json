@@ -2,7 +2,7 @@
   "solved": {
     "1": {
       "code": "# Time: O(n)\n# Space: O(n)\nclass Solution(object):\n    def twoSum(self, nums, target):\n        # Initialize an empty dictionary to store numbers we've seen and their indices.\n        seen = {}\n        # Loop through the list of numbers, 'nums'.\n        # 'enumerate' gives us both the index and the value for each element.\n        for index, num in enumerate(nums):\n            # Calculate the 'complement' number needed to reach the target.\n            # This is 'target' minus the current 'num'.\n            complement = target - num\n            # Check if this 'complement' number is already in our 'seen' dictionary.\n            if complement in seen:\n                # If it is, we've found the two numbers!\n                # Return a list containing the index of the 'complement' (from 'seen')\n                # and the 'index' of the current 'num'.\n                return [seen[complement], index]\n            # If the 'complement' is not in 'seen', add the current 'num' and its 'index'\n            # to the 'seen' dictionary. This way, it can be a complement for future numbers.\n            seen[num] = index\n        # This line will not be reached given the problem constraints (exactly one solution).\n        # It's here for completeness in case no solution is found.\n        return []",
-      "timestamp": "2026-03-16T13:42:49.214731",
+      "timestamp": "2026-03-17T13:05:31.895379",
       "passed": true
     },
     "217": {
@@ -14,13 +14,20 @@
       "code": "class Solution(object):\n    def isAnagram(self, s, t):\n        \"\"\"\n        :type s: str\n        :type t: str\n        :rtype: bool\n        \"\"\"\n        if len(s) != len(t):\n            return False\n\n        return sorted(s) == sorted(t)",
       "timestamp": "2026-02-22T12:57:49.245052",
       "passed": true
+    },
+    "2": {
+      "code": "# Definition for singly-linked list.\n# class ListNode(object):\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\nclass Solution(object):\n    def addTwoNumbers(self, l1, l2):\n        \"\"\"\n        :type l1: Optional[ListNode]\n        :type l2: Optional[ListNode]\n        :rtype: Optional[ListNode]\n        \"\"\"\n        \n        dummy_head = ListNode(0)\n        current = dummy_head\n        carry = 0\n        \n        while l1 is not None or l2 is not None or carry != 0:\n            \n            val1 = l1.val if l1 else 0\n            val2 = l2.val if l2 else 0\n            \n            total  = val1 + val2 + carry\n            \n            carry = total // 10\n            \n            digit = total % 10\n            \n            current.next  = ListNode(digit)\n            current = current.next\n            \n            if l1 is not None:\n                l1 = l1.next\n            if l2 is not None:\n                l2 = l2.next\n                \n            \n        return dummy_head.next\n            \n            \n            \n            ",
+      "timestamp": "2026-03-17T14:26:44.121832",
+      "passed": true
     }
   },
   "submissions": {},
   "roadmap": {
-    "currentDay": 1,
+    "currentDay": 2,
     "currentPhase": 1,
-    "completedDays": [],
+    "completedDays": [
+      1
+    ],
     "unlockedPhases": [
       1
     ]

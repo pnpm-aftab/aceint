@@ -58,5 +58,226 @@
       }
     ],
     "generated_at": "2026-02-26T15:07:22.292913"
+  },
+  "49": {
+    "questions": [
+      {
+        "stage": "understanding",
+        "objective": "Clarify what the function must compute for concrete input/output",
+        "difficulty": "easy",
+        "question": "Given the input ['eat', 'tea', 'tan', 'ate', 'nat', 'bat'], which output correctly groups anagrams?",
+        "options": [
+          "[['eat', 'tea', 'ate'], ['tan', 'nat'], ['bat']]",
+          "[['eat', 'tan', 'bat'], ['tea', 'ate', 'nat']]",
+          "[['bat'], ['nat', 'tan'], ['ate', 'eat', 'tea']]",
+          "[['eat', 'tea', 'ate', 'tan', 'nat', 'bat']]"
+        ],
+        "correct_index": 2,
+        "explanation": "This confirms understanding by requiring matching of anagram groups to the example, ensuring you know the desired grouping before coding."
+      },
+      {
+        "stage": "pattern",
+        "objective": "Identify the best algorithmic pattern/data structure",
+        "difficulty": "medium",
+        "question": "To group anagrams efficiently, which approach is most suitable?",
+        "options": [
+          "Sort each string and use it as a key in a hash map",
+          "Compare every pair of strings for anagram relationship",
+          "Use a trie to store characters and group by path",
+          "Count vowels and consonants separately as grouping criteria"
+        ],
+        "correct_index": 0,
+        "explanation": "Sorting each string gives a canonical representation; using a hash map (dictionary in Python) allows O(1) lookup to group strings that share the same sorted key."
+      },
+      {
+        "stage": "invariant",
+        "objective": "Identify the key invariant or state relationship that remains true while iterating/processing",
+        "difficulty": "medium",
+        "question": "During iteration, what must remain true about strings that belong to the same group?",
+        "options": [
+          "They must have the same length and the same first character",
+          "They must have identical sorted character sequences",
+          "They must appear consecutively in the input list",
+          "They must have the same frequency of vowels"
+        ],
+        "correct_index": 1,
+        "explanation": "The invariant is that anagrams, when sorted, produce the same string; this invariant guides the grouping logic in the algorithm."
+      },
+      {
+        "stage": "implementation",
+        "objective": "Choose the correct next code step / code fill-in aligned to Python starter structure",
+        "difficulty": "medium",
+        "question": "Which code snippet correctly initializes the grouping structure and processes each string?",
+        "options": [
+          "result = []; for s in strs: sorted_s = ''.join(sorted(s)); if sorted_s not in result: result[sorted_s] = []",
+          "from collections import defaultdict; groups = defaultdict(list); for s in strs: groups[''.join(sorted(s))].append(s)",
+          "groups = {}; for s in strs: key = ''.join(sorted(s)); groups[key] = groups.get(key, []) + [s]",
+          "anagrams = []; for s in strs: anagrams.append(sorted(s))"
+        ],
+        "correct_index": 1,
+        "explanation": "This uses defaultdict(list) for clean appending, and the key from sorted string correctly groups anagrams, matching typical Python patterns."
+      },
+      {
+        "stage": "edge_case",
+        "objective": "Validate behavior on tricky boundary/edge cases and confirm complexity target",
+        "difficulty": "hard",
+        "question": "For input ['', '', 'a', 'a'], which output is correct, and what is the time complexity per string?",
+        "options": [
+          "[['', ''], ['a', 'a']] with O(n * k log k) where n is number of strings and k is max length",
+          "[['', '', 'a', 'a']] with O(n^2)",
+          "[[''], ['a'], ['a']] with O(n * k)",
+          "[['', ''], ['a'], ['a']] with O(n * k log k) but with sorting replaced by counting"
+        ],
+        "correct_index": 0,
+        "explanation": "Empty strings group together, 'a's group together, and the sorting-based approach gives O(n * k log k) complexity, handling the edge cases correctly."
+      }
+    ],
+    "generated_at": "2026-03-17T13:06:40.899305"
+  },
+  "2": {
+    "questions": [
+      {
+        "stage": "input_mapping",
+        "objective": "Understand the input format and constraints to correctly process the linked lists.",
+        "difficulty": "easy",
+        "question": "In this problem, each input linked list represents a non-negative integer with digits in reverse order. What does a node with value 2 in the first list and a node with value 5 in the first list of the second list signify when adding numbers?",
+        "options": [
+          "The digits 2 and 5 are in the tens place, so their sum contributes to the hundreds place.",
+          "The digits 2 and 5 are the least significant digits, so their sum contributes to the units place of the result.",
+          "The digits 2 and 5 are the most significant digits, so their sum contributes to the most significant place.",
+          "The digits 2 and 5 are in the hundreds place, so their sum contributes to the thousands place."
+        ],
+        "correct_index": 1,
+        "explanation": "Since digits are stored in reverse order, the first nodes represent the units (ones) place, so their sum directly affects the units digit of the result."
+      },
+      {
+        "stage": "pattern_choice",
+        "objective": "Select a high-level strategy to simulate addition with carry propagation.",
+        "difficulty": "easy",
+        "question": "Which high-level approach is most suitable for adding two numbers represented as reversed linked lists?",
+        "options": [
+          "Convert both lists to integers, add them, then convert the sum back to a reversed linked list.",
+          "Iterate through both lists simultaneously, adding corresponding digits and any carry, building the result list as you go.",
+          "Use recursion to reverse the lists, add them forward, then reverse the result.",
+          "Store the digits in stacks, pop and add with carry, then push results to a new stack and convert to a list."
+        ],
+        "correct_index": 1,
+        "explanation": "Iterating through both lists simultaneously is efficient and directly simulates digit-by-digit addition with carry, avoiding conversions that could overflow for very large numbers."
+      },
+      {
+        "stage": "initialization",
+        "objective": "Set up necessary variables and a dummy head for the result list.",
+        "difficulty": "easy",
+        "question": "What is the best way to initialize the result linked list to simplify node insertion?",
+        "options": [
+          "Start with an empty list and add nodes as needed.",
+          "Create a dummy head node (e.g., ListNode(0)) and use a pointer to track the current node for appending.",
+          "Initialize the result list with the first sum digit and then extend it.",
+          "Use a Python list to collect digits, then convert to a linked list at the end."
+        ],
+        "correct_index": 1,
+        "explanation": "A dummy head node simplifies code by avoiding edge cases for the first node; a pointer (e.g., 'current') can then build the list iteratively."
+      },
+      {
+        "stage": "control_flow",
+        "objective": "Choose the loop structure to traverse both lists until all digits and any remaining carry are processed.",
+        "difficulty": "easy",
+        "question": "Which loop condition ensures we process all digits from both lists and any final carry?",
+        "options": [
+          "while l1 is not None and l2 is not None:",
+          "while l1 is not None or l2 is not None or carry != 0:",
+          "for i in range(max(len(l1), len(l2))):",
+          "while l1 and l2:"
+        ],
+        "correct_index": 1,
+        "explanation": "The loop must continue if either list has remaining nodes or there is a carry, so using 'or' with carry check covers all cases."
+      },
+      {
+        "stage": "core_condition",
+        "objective": "Handle digit extraction from each list, accounting for unequal lengths.",
+        "difficulty": "easy",
+        "question": "Inside the loop, how should you get the current digit value from each list, given that one list might be shorter?",
+        "options": [
+          "Always use l1.val and l2.val, assuming lists are equal length.",
+          "Use l1.val if l1 else 0, and similarly for l2, to default to 0 for exhausted lists.",
+          "Use a try-except block to catch AttributeError when a list ends.",
+          "Skip processing if one list is shorter and only add the remaining digits of the longer list."
+        ],
+        "correct_index": 1,
+        "explanation": "Using conditional expressions (e.g., l1.val if l1 else 0) safely handles uneven lengths by treating missing digits as 0, which aligns with the addition algorithm."
+      },
+      {
+        "stage": "state_update",
+        "objective": "Update pointers and carry after each digit addition.",
+        "difficulty": "easy",
+        "question": "After adding two digits and the carry, what is the correct order of operations to update state?",
+        "options": [
+          "First advance l1 and l2 pointers, then compute sum and carry.",
+          "Compute the sum (including carry), determine new carry and digit, create a new node, then advance l1 and l2 if they exist.",
+          "Update carry first, then compute sum, then advance pointers.",
+          "Only advance pointers after the loop finishes."
+        ],
+        "correct_index": 1,
+        "explanation": "Computing sum first ensures carry is based on current digits; advancing pointers after node creation prevents skipping digits prematurely."
+      },
+      {
+        "stage": "ds_interaction",
+        "objective": "Properly link new nodes to build the result list.",
+        "difficulty": "easy",
+        "question": "How should new nodes be attached to the result list as you iterate?",
+        "options": [
+          "Append each new node to the tail of the list using a tail pointer.",
+          "Use the dummy head's next pointer directly for each new node.",
+          "Create all nodes first, then link them in a second pass.",
+          "Store nodes in a Python list and convert to a linked list after the loop."
+        ],
+        "correct_index": 0,
+        "explanation": "Using a tail pointer (e.g., 'current') to append nodes maintains the correct order and simplifies linking: current.next = new_node, then current = current.next."
+      },
+      {
+        "stage": "edge_case_logic",
+        "objective": "Handle edge cases like single-node lists or final carry within the main loop.",
+        "difficulty": "easy",
+        "question": "For the case where both lists are [0] (single node), how should the loop logic handle it?",
+        "options": [
+          "Special-case it before the loop and return early.",
+          "Ensure the loop runs at least once and processes the carry (0+0=0, carry remains 0), resulting in a single node [0].",
+          "Treat it as an error and raise an exception.",
+          "Skip the loop entirely and return an empty list."
+        ],
+        "correct_index": 1,
+        "explanation": "The general loop with carry=0 will process 0+0=0, create a node for 0, and stop since no carry remains, correctly outputting [0]."
+      },
+      {
+        "stage": "termination",
+        "objective": "Ensure the loop terminates after processing all digits and any final carry.",
+        "difficulty": "easy",
+        "question": "What condition should break the addition loop?",
+        "options": [
+          "When both l1 and l2 become None and carry is 0.",
+          "When the sum of lengths is processed, using a counter.",
+          "When a node's value is 0, assuming it's the end.",
+          "After a fixed number of iterations based on constraints."
+        ],
+        "correct_index": 0,
+        "explanation": "The loop naturally terminates when l1 and l2 are exhausted (None) and carry is 0, as the loop condition 'while l1 or l2 or carry' becomes false."
+      },
+      {
+        "stage": "final_return",
+        "objective": "Return the correct head of the result linked list.",
+        "difficulty": "easy",
+        "question": "After the loop, which part of the result structure should be returned?",
+        "options": [
+          "The dummy head node itself.",
+          "The node after the dummy head (dummy.next), as the dummy was just a placeholder.",
+          "The last node added (tail).",
+          "The original l1 or l2 list, modified."
+        ],
+        "correct_index": 1,
+        "explanation": "The dummy head's next pointer holds the start of the actual result list, so returning dummy.next gives the correct linked list without the placeholder."
+      }
+    ],
+    "simplified_solution": "# Definition for singly-linked list.\n# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\n\nclass Solution:\n    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:\n        # Dummy head to simplify result list construction\n        dummy_head = ListNode(0)\n        current = dummy_head  # Pointer to build the new list\n        carry = 0\n        \n        # Loop until both lists are exhausted and no carry remains\n        while l1 is not None or l2 is not None or carry != 0:\n            # Get digit from l1 (0 if list is done)\n            val1 = l1.val if l1 is not None else 0\n            # Get digit from l2 (0 if list is done)\n            val2 = l2.val if l2 is not None else 0\n            \n            # Compute sum with carry\n            total = val1 + val2 + carry\n            carry = total // 10  # New carry (tens digit)\n            digit = total % 10   # Result digit (units place)\n            \n            # Create new node and attach it\n            current.next = ListNode(digit)\n            current = current.next\n            \n            # Advance input pointers if available\n            if l1 is not None:\n                l1 = l1.next\n            if l2 is not None:\n                l2 = l2.next\n        \n        # Return the result list (skip dummy head)\n        return dummy_head.next",
+    "generated_at": "2026-03-17T13:29:15.265569"
   }
 }
